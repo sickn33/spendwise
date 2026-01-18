@@ -1,0 +1,510 @@
+import { useState, useEffect, useMemo } from 'react';
+import { getTransactions, getCategories, deleteTransaction } from '../db/database';
+import type { Transaction, Category } from '../types';
+import { format, startOfMonth, subMonths, parseISO } from 'date-fns';
+import { it } from 'date-fns/locale';
+import { Search, Filter, Trash2, Edit2, X, TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign } from 'lucide-react';
+import { TransactionForm } from './TransactionForm';
+
+interface TransactionListProps {
+    refreshTrigger?: number;
+}
+
+export function TransactionList({ refreshTrigger }: TransactionListProps) {
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+    const [dateRange, setDateRange] = useState<'all' | 'month' | '3months' | 'year' | 'custom'>('all');
+    const [customDateFrom, setCustomDateFrom] = useState('');
+    const [customDateTo, setCustomDateTo] = useState('');
+    const [transactionType, setTransactionType] = useState<'all' | 'expense' | 'income'>('all');
+    const [minAmount, setMinAmount] = useState('');
+    const [maxAmount, setMaxAmount] = useState('');
+    const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [showFilters, setShowFilters] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+    useEffect(() => {
+        loadData();
+    }, [refreshTrigger]);
+
+    async function loadData() {
+        setLoading(true);
+        try {
+            const [txs, cats] = await Promise.all([
+                getTransactions(),
+                getCategories()
+            ]);
+            setTransactions(txs);
+            setCategories(cats);
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const categoryMap = useMemo(() =>
+        new Map(categories.map(c => [c.id!, c])),
+        [categories]
+    );
+
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+        if (selectedCategoryId) count++;
+        if (dateRange !== 'all') count++;
+        if (transactionType !== 'all') count++;
+        if (minAmount || maxAmount) count++;
+        return count;
+    }, [selectedCategoryId, dateRange, transactionType, minAmount, maxAmount]);
+
+    const filteredTransactions = useMemo(() => {
+        let filtered = [...transactions];
+
+        // Date range filter
+        const now = new Date();
+        if (dateRange === 'month') {
+            const start = startOfMonth(now);
+            filtered = filtered.filter(t => new Date(t.date) >= start);
+        } else if (dateRange === '3months') {
+            const start = subMonths(now, 3);
+            filtered = filtered.filter(t => new Date(t.date) >= start);
+        } else if (dateRange === 'year') {
+            const start = new Date(now.getFullYear(), 0, 1);
+            filtered = filtered.filter(t => new Date(t.date) >= start);
+        } else if (dateRange === 'custom') {
+            if (customDateFrom) {
+                filtered = filtered.filter(t => new Date(t.date) >= parseISO(customDateFrom));
+            }
+            if (customDateTo) {
+                filtered = filtered.filter(t => new Date(t.date) <= parseISO(customDateTo));
+            }
+        }
+
+        // Transaction type filter
+        if (transactionType === 'expense') {
+            filtered = filtered.filter(t => t.amount < 0);
+        } else if (transactionType === 'income') {
+            filtered = filtered.filter(t => t.amount > 0);
+        }
+
+        // Amount range filter
+        if (minAmount) {
+            const min = parseFloat(minAmount);
+            filtered = filtered.filter(t => Math.abs(t.amount) >= min);
+        }
+        if (maxAmount) {
+            const max = parseFloat(maxAmount);
+            filtered = filtered.filter(t => Math.abs(t.amount) <= max);
+        }
+
+        // Category filter
+        if (selectedCategoryId) {
+            filtered = filtered.filter(t => t.categoryId === selectedCategoryId);
+        }
+
+        // Search filter
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(t =>
+                t.description.toLowerCase().includes(query) ||
+                t.details?.toLowerCase().includes(query) ||
+                categoryMap.get(t.categoryId)?.name.toLowerCase().includes(query)
+            );
+        }
+
+        // Sorting
+        filtered.sort((a, b) => {
+            let comparison = 0;
+            if (sortBy === 'date') {
+                comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+            } else if (sortBy === 'amount') {
+                comparison = Math.abs(a.amount) - Math.abs(b.amount);
+            }
+            return sortOrder === 'desc' ? -comparison : comparison;
+        });
+
+        return filtered;
+    }, [transactions, dateRange, customDateFrom, customDateTo, transactionType, minAmount, maxAmount, selectedCategoryId, searchQuery, sortBy, sortOrder, categoryMap]);
+
+    // Group transactions by date
+    const groupedTransactions = useMemo(() => {
+        const groups: Record<string, Transaction[]> = {};
+
+        for (const t of filteredTransactions) {
+            const dateKey = format(new Date(t.date), 'yyyy-MM-dd');
+            if (!groups[dateKey]) {
+                groups[dateKey] = [];
+            }
+            groups[dateKey].push(t);
+        }
+
+        return Object.entries(groups).sort((a, b) =>
+            sortOrder === 'desc' ? b[0].localeCompare(a[0]) : a[0].localeCompare(b[0])
+        );
+    }, [filteredTransactions, sortOrder]);
+
+    async function handleDelete(id: number) {
+        try {
+            await deleteTransaction(id);
+            setDeleteConfirm(null);
+            loadData();
+        } catch (error) {
+            console.error('Error deleting transaction:', error);
+        }
+    }
+
+    function clearAllFilters() {
+        setSelectedCategoryId(null);
+        setDateRange('all');
+        setCustomDateFrom('');
+        setCustomDateTo('');
+        setTransactionType('all');
+        setMinAmount('');
+        setMaxAmount('');
+        setSearchQuery('');
+    }
+
+    const totalFiltered = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = filteredTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = filteredTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+
+    if (loading) {
+        return (
+            <div className="loading">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <div className="page-header">
+                <div>
+                    <h1 className="page-title">Transazioni</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
+                        {filteredTransactions.length} transazioni
+                    </p>
+                </div>
+                <button
+                    className={`btn ${showFilters ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setShowFilters(!showFilters)}
+                >
+                    <Filter size={16} />
+                    Filtri
+                    {activeFiltersCount > 0 && (
+                        <span className="badge badge-success" style={{ marginLeft: 'var(--space-sm)', minWidth: '20px' }}>
+                            {activeFiltersCount}
+                        </span>
+                    )}
+                </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="stats-grid" style={{ marginBottom: 'var(--space-lg)' }}>
+                <div className="card stat-card" style={{ padding: 'var(--space-md)' }}>
+                    <div className="stat-label"><TrendingDown size={14} /> Spese</div>
+                    <div className="stat-value" style={{ fontSize: '1.25rem', color: 'var(--danger)' }}>
+                        €{Math.abs(totalExpenses).toFixed(2)}
+                    </div>
+                </div>
+                <div className="card stat-card" style={{ padding: 'var(--space-md)' }}>
+                    <div className="stat-label"><TrendingUp size={14} /> Entrate</div>
+                    <div className="stat-value" style={{ fontSize: '1.25rem', color: 'var(--success)' }}>
+                        €{totalIncome.toFixed(2)}
+                    </div>
+                </div>
+                <div className="card stat-card" style={{ padding: 'var(--space-md)' }}>
+                    <div className="stat-label"><ArrowUpDown size={14} /> Bilancio</div>
+                    <div className="stat-value" style={{ fontSize: '1.25rem', color: totalFiltered >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                        {totalFiltered >= 0 ? '+' : ''}€{totalFiltered.toFixed(2)}
+                    </div>
+                </div>
+            </div>
+
+            {/* Search and Filters */}
+            <div style={{ marginBottom: 'var(--space-lg)' }}>
+                <div style={{ position: 'relative' }}>
+                    <Search
+                        size={18}
+                        style={{
+                            position: 'absolute',
+                            left: 'var(--space-md)',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: 'var(--text-muted)'
+                        }}
+                    />
+                    <input
+                        type="text"
+                        className="input"
+                        placeholder="Cerca per descrizione, dettagli o categoria..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        style={{ paddingLeft: '2.5rem' }}
+                    />
+                    {searchQuery && (
+                        <button
+                            className="btn btn-ghost btn-icon"
+                            style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: 28, height: 28 }}
+                            onClick={() => setSearchQuery('')}
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
+                </div>
+
+                {showFilters && (
+                    <div className="card" style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-md)' }}>
+                            {/* Transaction Type */}
+                            <div>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                                    <TrendingDown size={14} style={{ marginRight: '4px' }} />
+                                    Tipo
+                                </label>
+                                <select
+                                    className="input"
+                                    value={transactionType}
+                                    onChange={e => setTransactionType(e.target.value as typeof transactionType)}
+                                >
+                                    <option value="all">Tutte</option>
+                                    <option value="expense">Solo spese</option>
+                                    <option value="income">Solo entrate</option>
+                                </select>
+                            </div>
+
+                            {/* Date Range */}
+                            <div>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                                    <Calendar size={14} style={{ marginRight: '4px' }} />
+                                    Periodo
+                                </label>
+                                <select
+                                    className="input"
+                                    value={dateRange}
+                                    onChange={e => setDateRange(e.target.value as typeof dateRange)}
+                                >
+                                    <option value="all">Tutte le date</option>
+                                    <option value="month">Questo mese</option>
+                                    <option value="3months">Ultimi 3 mesi</option>
+                                    <option value="year">Quest'anno</option>
+                                    <option value="custom">Personalizzato</option>
+                                </select>
+                            </div>
+
+                            {/* Category */}
+                            <div>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>Categoria</label>
+                                <select
+                                    className="input"
+                                    value={selectedCategoryId || ''}
+                                    onChange={e => setSelectedCategoryId(e.target.value ? Number(e.target.value) : null)}
+                                >
+                                    <option value="">Tutte le categorie</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.icon} {cat.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Amount Range */}
+                            <div>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                                    <DollarSign size={14} style={{ marginRight: '4px' }} />
+                                    Importo (€)
+                                </label>
+                                <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        placeholder="Min"
+                                        value={minAmount}
+                                        onChange={e => setMinAmount(e.target.value)}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        placeholder="Max"
+                                        value={maxAmount}
+                                        onChange={e => setMaxAmount(e.target.value)}
+                                        style={{ flex: 1 }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Sort */}
+                            <div>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                                    <ArrowUpDown size={14} style={{ marginRight: '4px' }} />
+                                    Ordina per
+                                </label>
+                                <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                                    <select
+                                        className="input"
+                                        value={sortBy}
+                                        onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                                        style={{ flex: 1 }}
+                                    >
+                                        <option value="date">Data</option>
+                                        <option value="amount">Importo</option>
+                                    </select>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                                        style={{ padding: 'var(--space-sm)' }}
+                                    >
+                                        {sortOrder === 'desc' ? '↓' : '↑'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Custom Date Range */}
+                        {dateRange === 'custom' && (
+                            <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>Da</label>
+                                    <input
+                                        type="date"
+                                        className="input"
+                                        value={customDateFrom}
+                                        onChange={e => setCustomDateFrom(e.target.value)}
+                                    />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>A</label>
+                                    <input
+                                        type="date"
+                                        className="input"
+                                        value={customDateTo}
+                                        onChange={e => setCustomDateTo(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Clear Filters */}
+                        {activeFiltersCount > 0 && (
+                            <button
+                                className="btn btn-ghost"
+                                onClick={clearAllFilters}
+                                style={{ marginTop: 'var(--space-md)' }}
+                            >
+                                <X size={16} />
+                                Resetta tutti i filtri
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Transaction Groups */}
+            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                {groupedTransactions.length > 0 ? (
+                    groupedTransactions.map(([dateKey, txs]) => (
+                        <div key={dateKey}>
+                            <div style={{
+                                padding: 'var(--space-sm) var(--space-md)',
+                                background: 'var(--bg-glass)',
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                color: 'var(--text-muted)',
+                                position: 'sticky',
+                                top: 0,
+                                display: 'flex',
+                                justifyContent: 'space-between'
+                            }}>
+                                <span>{format(new Date(dateKey), "EEEE d MMMM yyyy", { locale: it })}</span>
+                                <span style={{ fontFeatureSettings: 'tnum' }}>
+                                    {txs.length} transazioni
+                                </span>
+                            </div>
+                            <div className="transaction-list">
+                                {txs.map(t => {
+                                    const category = categoryMap.get(t.categoryId);
+                                    return (
+                                        <div key={t.id} className="transaction-item">
+                                            <div
+                                                className="transaction-icon"
+                                                style={{ background: category?.color ? `${category.color}20` : 'var(--bg-tertiary)' }}
+                                            >
+                                                {category?.icon || '📦'}
+                                            </div>
+                                            <div className="transaction-info">
+                                                <div className="transaction-description">{t.description}</div>
+                                                <div className="transaction-meta">
+                                                    {category?.name}
+                                                    {t.isRecurring && ' • 🔄 Ricorrente'}
+                                                </div>
+                                            </div>
+                                            <div className={`transaction-amount ${t.amount < 0 ? 'expense' : 'income'}`}>
+                                                {t.amount < 0 ? '-' : '+'}€{Math.abs(t.amount).toFixed(2)}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                                                <button
+                                                    className="btn btn-ghost btn-icon"
+                                                    style={{ width: 32, height: 32 }}
+                                                    onClick={() => setEditingTransaction(t)}
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                                {deleteConfirm === t.id ? (
+                                                    <button
+                                                        className="btn btn-danger btn-icon"
+                                                        style={{ width: 32, height: 32 }}
+                                                        onClick={() => handleDelete(t.id!)}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        className="btn btn-ghost btn-icon"
+                                                        style={{ width: 32, height: 32 }}
+                                                        onClick={() => setDeleteConfirm(t.id!)}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="empty-state">
+                        <div className="empty-state-icon">🔍</div>
+                        <div className="empty-state-title">Nessuna transazione trovata</div>
+                        <p>Prova a modificare i filtri di ricerca</p>
+                        {activeFiltersCount > 0 && (
+                            <button className="btn btn-secondary" onClick={clearAllFilters} style={{ marginTop: 'var(--space-md)' }}>
+                                Resetta filtri
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Edit Modal */}
+            {editingTransaction && (
+                <TransactionForm
+                    transaction={editingTransaction}
+                    onClose={() => setEditingTransaction(null)}
+                    onSave={() => {
+                        setEditingTransaction(null);
+                        loadData();
+                    }}
+                />
+            )}
+        </div>
+    );
+}
