@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getQuickAddPresets, addTransaction, getCategories, addQuickAddPreset, deleteQuickAddPreset, initializeQuickAddPresets } from '../db/database';
 import type { QuickAddPreset, Category } from '../types';
 import { Plus, X, Settings, Check } from 'lucide-react';
@@ -16,7 +16,7 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
     const [showAddNew, setShowAddNew] = useState(false);
     const [newPreset, setNewPreset] = useState({ name: '', amount: '', categoryId: 0, icon: '💰' });
 
-    async function loadData() {
+    const loadData = useCallback(async () => {
         await initializeQuickAddPresets();
         const [p, c] = await Promise.all([
             getQuickAddPresets(),
@@ -24,11 +24,12 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
         ]);
         setPresets(p);
         setCategories(c);
-    }
+    }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line
         loadData();
-    }, []);
+    }, [loadData]);
 
     async function handleQuickAdd(preset: QuickAddPreset) {
         if (isEditing) return;
@@ -84,21 +85,23 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
             {/* Quick Add Bar - Fixed at bottom on mobile, floating on desktop */}
             <div className={`quick-add-bar ${isExpanded ? 'expanded' : ''}`}>
                 <div className="quick-add-header" onClick={() => setIsExpanded(!isExpanded)}>
-                    <span style={{ fontWeight: 600 }}>⚡ Aggiunta Rapida</span>
-                    <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                    <span className="font-semibold">⚡ Aggiunta Rapida</span>
+                    <div className="flex gap-sm">
                         {isExpanded && (
                             <button
-                                className="btn btn-ghost btn-icon"
+                                className="btn btn-ghost btn-icon btn-small-icon"
                                 onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
-                                style={{ width: 28, height: 28 }}
+                                title={isEditing ? "Fine modifica" : "Modifica preset"}
+                                aria-label={isEditing ? "Fine modifica" : "Modifica preset"}
                             >
                                 <Settings size={16} />
                             </button>
                         )}
                         <button
-                            className="btn btn-ghost btn-icon"
+                            className={`btn btn-ghost btn-icon btn-small-icon transition-transform ${isExpanded ? 'rotate-45' : ''}`}
                             onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                            style={{ width: 28, height: 28, transform: isExpanded ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }}
+                            title={isExpanded ? "Chiudi" : "Espandi"}
+                            aria-label={isExpanded ? "Chiudi" : "Espandi"}
                         >
                             <Plus size={20} />
                         </button>
@@ -122,6 +125,8 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
                                             <button
                                                 className="quick-add-delete"
                                                 onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id!); }}
+                                                title="Elimina preset"
+                                                aria-label="Elimina preset"
                                             >
                                                 <X size={14} />
                                             </button>
@@ -131,7 +136,12 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
                                         </div>
                                         <div className="quick-add-name">{preset.name}</div>
                                         <div className="quick-add-amount">€{preset.amount.toFixed(2)}</div>
-                                        <div className="quick-add-category" style={{ color: category?.color }}>
+                                        <div 
+                                            className="quick-add-category" 
+                                            ref={el => {
+                                                if (el) el.style.setProperty('--category-color', category?.color || '');
+                                            }}
+                                        >
                                             {category?.icon}
                                         </div>
                                     </div>
@@ -158,7 +168,12 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
                     <div className="modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>Nuovo Preset</h2>
-                            <button className="btn btn-ghost btn-icon" onClick={() => setShowAddNew(false)}>
+                            <button 
+                                className="btn btn-ghost btn-icon" 
+                                onClick={() => setShowAddNew(false)}
+                                title="Chiudi"
+                                aria-label="Chiudi"
+                            >
                                 <X size={20} />
                             </button>
                         </div>
@@ -192,6 +207,7 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
                                 className="input"
                                 value={newPreset.categoryId}
                                 onChange={e => setNewPreset({ ...newPreset, categoryId: parseInt(e.target.value) })}
+                                title="Seleziona categoria"
                             >
                                 <option value={0}>Seleziona categoria</option>
                                 {categories.filter(c => !c.isIncome).map(c => (
@@ -202,14 +218,15 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
 
                         <div className="form-group">
                             <label className="form-label">Icona</label>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                            <div className="flex flex-wrap gap-sm">
                                 {['☕', '🍝', '🚇', '🛒', '🍕', '🚕', '🎬', '💊', '⛽', '🍺', '🥪', '💰'].map(icon => (
                                     <button
                                         key={icon}
                                         type="button"
-                                        className={`btn ${newPreset.icon === icon ? 'btn-primary' : 'btn-secondary'}`}
+                                        className={`btn btn-square ${newPreset.icon === icon ? 'btn-primary' : 'btn-secondary'}`}
                                         onClick={() => setNewPreset({ ...newPreset, icon })}
-                                        style={{ width: 40, height: 40, fontSize: '1.2rem', padding: 0 }}
+                                        title={`Seleziona icona ${icon}`}
+                                        aria-label={`Seleziona icona ${icon}`}
                                     >
                                         {icon}
                                     </button>

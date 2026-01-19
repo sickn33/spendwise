@@ -131,14 +131,7 @@ function App() {
 
     if (loading) {
         return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                flexDirection: 'column',
-                gap: 'var(--space-lg)'
-            }}>
+            <div className="loading-screen">
                 <div className="logo">
                     <div className="logo-icon">
                         <Wallet size={24} />
@@ -146,7 +139,7 @@ function App() {
                     <span>SpendWise</span>
                 </div>
                 <div className="spinner"></div>
-                <p style={{ color: 'var(--text-muted)' }}>Caricamento...</p>
+                <p className="loading-text">Caricamento...</p>
             </div>
         );
     }
@@ -268,9 +261,8 @@ function App() {
 
                 {/* Theme Toggle in Sidebar */}
                 <div
-                    className="theme-toggle"
+                    className="theme-toggle theme-toggle-mt-auto"
                     onClick={handleThemeToggle}
-                    style={{ cursor: 'pointer', marginTop: 'auto' }}
                 >
                     <div className={`theme-toggle-switch ${theme === 'light' ? 'active' : ''}`}>
                         <div className="theme-toggle-knob">

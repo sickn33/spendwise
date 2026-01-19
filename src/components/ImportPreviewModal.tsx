@@ -14,9 +14,9 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
 
     const getStatusIcon = (status: ImportPreviewItem['status']) => {
         switch (status) {
-            case 'new': return <Check size={16} style={{ color: 'var(--success)' }} />;
-            case 'duplicate': return <Copy size={16} style={{ color: 'var(--text-muted)' }} />;
-            case 'modified': return <AlertTriangle size={16} style={{ color: 'var(--warning)' }} />;
+            case 'new': return <Check size={16} className="text-success" />;
+            case 'duplicate': return <Copy size={16} className="text-muted" />;
+            case 'modified': return <AlertTriangle size={16} className="text-warning" />;
         }
     };
 
@@ -28,148 +28,92 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
         }
     };
 
-    const getStatusBg = (status: ImportPreviewItem['status']) => {
+    const getStatusBgClass = (status: ImportPreviewItem['status']) => {
         switch (status) {
-            case 'new': return 'var(--success-bg)';
-            case 'duplicate': return 'var(--bg-glass)';
-            case 'modified': return 'var(--warning-bg)';
+            case 'new': return 'bg-success-light';
+            case 'duplicate': return 'bg-glass';
+            case 'modified': return 'bg-warning-light';
         }
     };
 
     return (
         <div className="modal-overlay" onClick={onCancel}>
-            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '80vh' }}>
+            <div className="modal max-w-700 max-h-80vh" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <h2 className="modal-title">Anteprima Import</h2>
-                    <button className="btn-icon" onClick={onCancel}>
+                    <button 
+                        className="btn-icon" 
+                        onClick={onCancel}
+                        title="Chiudi"
+                        aria-label="Chiudi"
+                    >
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Summary */}
-                <div style={{ 
-                    display: 'flex', 
-                    gap: 'var(--space-lg)', 
-                    marginBottom: 'var(--space-lg)',
-                    flexWrap: 'wrap'
-                }}>
-                    <div style={{ 
-                        padding: 'var(--space-md)', 
-                        background: 'var(--success-bg)', 
-                        borderRadius: 'var(--radius-md)',
-                        flex: 1,
-                        minWidth: '120px',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--success)' }}>
+                <div className="flex gap-lg mb-lg flex-wrap">
+                    <div className="summary-box bg-success-light">
+                        <div className="font-xl font-semibold text-success">
                             {preview.newCount}
                         </div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Nuove</div>
+                        <div className="font-sm text-muted">Nuove</div>
                     </div>
-                    <div style={{ 
-                        padding: 'var(--space-md)', 
-                        background: 'var(--bg-glass)', 
-                        borderRadius: 'var(--radius-md)',
-                        flex: 1,
-                        minWidth: '120px',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                    <div className="summary-box bg-glass">
+                        <div className="font-xl font-semibold text-muted">
                             {preview.duplicateCount}
                         </div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Duplicate</div>
+                        <div className="font-sm text-muted">Duplicate</div>
                     </div>
-                    <div style={{ 
-                        padding: 'var(--space-md)', 
-                        background: 'var(--warning-bg)', 
-                        borderRadius: 'var(--radius-md)',
-                        flex: 1,
-                        minWidth: '120px',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--warning)' }}>
+                    <div className="summary-box bg-warning-light">
+                        <div className="font-xl font-semibold text-warning">
                             {preview.modifiedCount}
                         </div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Modificate</div>
+                        <div className="font-sm text-muted">Modificate</div>
                     </div>
                 </div>
 
                 {/* Update existing option */}
                 {preview.modifiedCount > 0 && (
-                    <label style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 'var(--space-sm)',
-                        padding: 'var(--space-md)',
-                        background: 'var(--warning-bg)',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: 'var(--space-lg)',
-                        cursor: 'pointer'
-                    }}>
+                    <label className="flex items-center gap-sm p-md bg-warning-light border-radius-md mb-lg cursor-pointer">
                         <input 
                             type="checkbox" 
+                            className="checkbox-lg"
                             checked={updateExisting} 
                             onChange={e => setUpdateExisting(e.target.checked)}
                         />
-                        <RefreshCw size={16} style={{ color: 'var(--warning)' }} />
+                        <RefreshCw size={16} className="text-warning" />
                         <span>Aggiorna transazioni modificate ({preview.modifiedCount})</span>
                     </label>
                 )}
 
                 {/* Transaction list */}
-                <div style={{ 
-                    maxHeight: '300px', 
-                    overflowY: 'auto',
-                    marginBottom: 'var(--space-lg)'
-                }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="h-300-scroll mb-lg">
+                    <table className="w-full border-collapse">
                         <thead>
-                            <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                <th style={{ padding: 'var(--space-sm)', textAlign: 'left' }}>Stato</th>
-                                <th style={{ padding: 'var(--space-sm)', textAlign: 'left' }}>Data</th>
-                                <th style={{ padding: 'var(--space-sm)', textAlign: 'left' }}>Descrizione</th>
-                                <th style={{ padding: 'var(--space-sm)', textAlign: 'right' }}>Importo</th>
+                            <tr className="border-b">
+                                <th className="p-sm text-left">Stato</th>
+                                <th className="p-sm text-left">Data</th>
+                                <th className="p-sm text-left">Descrizione</th>
+                                <th className="p-sm text-right">Importo</th>
                             </tr>
                         </thead>
                         <tbody>
                             {preview.items.slice(0, 50).map((item, idx) => (
-                                <tr key={idx} style={{ 
-                                    borderBottom: '1px solid var(--border-color)',
-                                    opacity: item.status === 'duplicate' ? 0.5 : 1
-                                }}>
-                                    <td style={{ padding: 'var(--space-sm)' }}>
-                                        <span style={{ 
-                                            display: 'inline-flex', 
-                                            alignItems: 'center', 
-                                            gap: '4px',
-                                            padding: '2px 8px',
-                                            borderRadius: 'var(--radius-sm)',
-                                            background: getStatusBg(item.status),
-                                            fontSize: '0.8rem'
-                                        }}>
+                                <tr key={idx} className={`border-b ${item.status === 'duplicate' ? 'opacity-50' : ''}`}>
+                                    <td className="p-sm">
+                                        <span className={`inline-flex items-center gap-xs px-sm py-xs border-radius-sm font-xs ${getStatusBgClass(item.status)}`}>
                                             {getStatusIcon(item.status)}
                                             {getStatusLabel(item.status)}
                                         </span>
                                     </td>
-                                    <td style={{ padding: 'var(--space-sm)', fontSize: '0.9rem' }}>
+                                    <td className="p-sm font-sm">
                                         {item.date.toLocaleDateString('it-IT')}
                                     </td>
-                                    <td style={{ 
-                                        padding: 'var(--space-sm)', 
-                                        fontSize: '0.9rem',
-                                        maxWidth: '200px',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                    }}>
+                                    <td className="p-sm font-sm text-ellipsis max-w-200">
                                         {item.description}
                                     </td>
-                                    <td style={{ 
-                                        padding: 'var(--space-sm)', 
-                                        textAlign: 'right',
-                                        fontWeight: 500,
-                                        color: item.amount > 0 ? 'var(--success)' : 'var(--danger)'
-                                    }}>
+                                    <td className={`p-sm text-right font-medium ${item.amount > 0 ? 'text-success' : 'text-danger'}`}>
                                         {item.amount > 0 ? '+' : ''}{item.amount.toFixed(2)} €
                                     </td>
                                 </tr>
@@ -177,14 +121,14 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                         </tbody>
                     </table>
                     {preview.items.length > 50 && (
-                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: 'var(--space-md)' }}>
+                        <p className="text-muted text-center mt-md">
                             ...e altre {preview.items.length - 50} transazioni
                         </p>
                     )}
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'flex-end' }}>
+                <div className="flex gap-md justify-end">
                     <button className="btn btn-secondary" onClick={onCancel} disabled={importing}>
                         Annulla
                     </button>

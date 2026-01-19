@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getCategories, addTransaction, updateTransaction } from '../db/database';
 import { classifyTransaction, learnFromCorrection } from '../services/classifier';
 import type { Category, Transaction } from '../types';
@@ -23,6 +23,17 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    const loadCategories = useCallback(async () => {
+        const cats = await getCategories();
+        setCategories(cats);
+
+        // Set default category if not editing
+        if (!transaction && !categoryId) {
+            const defaultCat = cats.find(c => c.name === 'Altre uscite');
+            if (defaultCat?.id) setCategoryId(defaultCat.id);
+        }
+    }, [transaction, categoryId]);
+
     useEffect(() => {
         loadCategories();
         if (transaction) {
@@ -34,18 +45,7 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
             setIsRecurring(transaction.isRecurring);
             setIsExpense(transaction.amount < 0);
         }
-    }, [transaction]);
-
-    async function loadCategories() {
-        const cats = await getCategories();
-        setCategories(cats);
-
-        // Set default category if not editing
-        if (!transaction && !categoryId) {
-            const defaultCat = cats.find(c => c.name === 'Altre uscite');
-            if (defaultCat?.id) setCategoryId(defaultCat.id);
-        }
-    }
+    }, [transaction, loadCategories]);
 
     async function handleDescriptionBlur() {
         if (description && !transaction) {
@@ -114,7 +114,12 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                     <h2 className="modal-title">
                         {transaction ? 'Modifica transazione' : 'Nuova transazione'}
                     </h2>
-                    <button className="btn btn-ghost btn-icon" onClick={onClose}>
+                    <button 
+                        className="btn btn-ghost btn-icon" 
+                        onClick={onClose}
+                        title="Chiudi"
+                        aria-label="Chiudi"
+                    >
                         <X size={20} />
                     </button>
                 </div>
@@ -123,19 +128,17 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                     <div className="modal-body">
                         <div className="form-grid">
                             {/* Expense/Income Toggle */}
-                            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
+                            <div className="flex gap-sm mb-md">
                                 <button
                                     type="button"
-                                    className={`btn ${isExpense ? 'btn-primary' : 'btn-secondary'}`}
-                                    style={{ flex: 1 }}
+                                    className={`btn flex-1 ${isExpense ? 'btn-primary' : 'btn-secondary'}`}
                                     onClick={() => setIsExpense(true)}
                                 >
                                     Spesa
                                 </button>
                                 <button
                                     type="button"
-                                    className={`btn ${!isExpense ? 'btn-primary' : 'btn-secondary'}`}
-                                    style={{ flex: 1 }}
+                                    className={`btn flex-1 ${!isExpense ? 'btn-primary' : 'btn-secondary'}`}
                                     onClick={() => setIsExpense(false)}
                                 >
                                     Entrata
@@ -145,28 +148,17 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                             {/* Amount */}
                             <div className="input-group">
                                 <label className="input-label">
-                                    <DollarSign size={14} style={{ verticalAlign: 'middle' }} /> Importo
+                                    <DollarSign size={14} className="vertical-middle" /> Importo
                                 </label>
-                                <div style={{ position: 'relative' }}>
-                                    <span style={{
-                                        position: 'absolute',
-                                        left: 'var(--space-md)',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        color: 'var(--text-muted)',
-                                        fontSize: '1.5rem',
-                                        fontWeight: 600
-                                    }}>
-                                        €
-                                    </span>
+                                <div className="relative">
+                                    <span className="currency-symbol">€</span>
                                     <input
                                         type="text"
                                         inputMode="decimal"
-                                        className="input input-amount"
+                                        className="input input-amount pl-amount"
                                         placeholder="0.00"
                                         value={amount}
                                         onChange={e => setAmount(e.target.value)}
-                                        style={{ paddingLeft: '2.5rem' }}
                                         required
                                         autoFocus
                                     />
@@ -176,7 +168,7 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                             {/* Description */}
                             <div className="input-group">
                                 <label className="input-label">
-                                    <FileText size={14} style={{ verticalAlign: 'middle' }} /> Descrizione
+                                    <FileText size={14} className="vertical-middle" /> Descrizione
                                 </label>
                                 <input
                                     type="text"
@@ -192,13 +184,14 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                             {/* Date */}
                             <div className="input-group">
                                 <label className="input-label">
-                                    <Calendar size={14} style={{ verticalAlign: 'middle' }} /> Data
+                                    <Calendar size={14} className="vertical-middle" /> Data
                                 </label>
                                 <input
                                     type="date"
                                     className="input"
                                     value={date}
                                     onChange={e => setDate(e.target.value)}
+                                    title="Seleziona data"
                                     required
                                 />
                             </div>
@@ -206,19 +199,13 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                             {/* Category */}
                             <div className="input-group">
                                 <label className="input-label">
-                                    <Tag size={14} style={{ verticalAlign: 'middle' }} /> Categoria
+                                    <Tag size={14} className="vertical-middle" /> Categoria
                                 </label>
                                 <button
                                     type="button"
-                                    className="input"
-                                    style={{
-                                        textAlign: 'left',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 'var(--space-sm)',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="input input-category-btn"
                                     onClick={() => setShowCategoryPicker(!showCategoryPicker)}
+                                    title="Seleziona categoria"
                                 >
                                     {selectedCategory ? (
                                         <>
@@ -226,12 +213,12 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                                             <span>{selectedCategory.name}</span>
                                         </>
                                     ) : (
-                                        <span style={{ color: 'var(--text-muted)' }}>Seleziona categoria</span>
+                                        <span className="text-muted">Seleziona categoria</span>
                                     )}
                                 </button>
 
                                 {showCategoryPicker && (
-                                    <div className="category-picker" style={{ marginTop: 'var(--space-sm)' }}>
+                                    <div className="category-picker mt-sm">
                                         {(isExpense ? expenseCategories : incomeCategories).map(cat => (
                                             <button
                                                 key={cat.id}
@@ -241,13 +228,10 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                                                     setCategoryId(cat.id!);
                                                     setShowCategoryPicker(false);
                                                 }}
+                                                title={`Seleziona ${cat.name}`}
                                             >
                                                 <span>{cat.icon}</span>
-                                                <span style={{
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
+                                                <span className="text-ellipsis">
                                                     {cat.name}
                                                 </span>
                                             </button>
@@ -269,15 +253,15 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
                             </div>
 
                             {/* Recurring */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                            <div className="flex items-center gap-md">
                                 <input
                                     type="checkbox"
                                     id="recurring"
                                     checked={isRecurring}
                                     onChange={e => setIsRecurring(e.target.checked)}
-                                    style={{ width: 20, height: 20 }}
+                                    className="checkbox-lg"
                                 />
-                                <label htmlFor="recurring" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', cursor: 'pointer' }}>
+                                <label htmlFor="recurring" className="flex items-center gap-sm cursor-pointer">
                                     <Repeat size={16} />
                                     Spesa ricorrente
                                 </label>

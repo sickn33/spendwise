@@ -84,8 +84,10 @@ export function BudgetManager() {
     }
 
     async function handleDelete(id: number) {
-        await deleteBudget(id);
-        loadData();
+        if (confirm('Sei sicuro di voler eliminare questo budget?')) {
+            await deleteBudget(id);
+            loadData();
+        }
     }
 
     function handleEdit(budget: Budget) {
@@ -115,12 +117,18 @@ export function BudgetManager() {
         );
     }
 
+    const getProgressColor = (progress: BudgetProgress) => {
+        if (progress.isOverBudget) return 'bg-danger';
+        if (progress.percentage > 80) return 'bg-warning';
+        return 'bg-success';
+    };
+
     return (
         <div>
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Budget</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
+                    <p className="text-muted mt-xs">
                         Imposta limiti di spesa per categoria
                     </p>
                 </div>
@@ -139,27 +147,29 @@ export function BudgetManager() {
                             className={`card budget-card ${progress.isOverBudget ? 'over-budget' : ''}`}
                         >
                             <div className="budget-header">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                    <span style={{ fontSize: '1.5rem' }}>{progress.category?.icon}</span>
+                                <div className="flex items-center gap-sm">
+                                    <span className="font-xl">{progress.category?.icon}</span>
                                     <div>
-                                        <div style={{ fontWeight: 600 }}>{progress.category?.name}</div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                        <div className="font-semibold">{progress.category?.name}</div>
+                                        <div className="font-sm text-muted">
                                             Budget mensile
                                         </div>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                                <div className="flex gap-xs">
                                     <button
-                                        className="btn btn-ghost btn-icon"
+                                        className="btn btn-ghost btn-icon btn-xs-icon"
                                         onClick={() => handleEdit(progress.budget)}
-                                        style={{ width: 32, height: 32 }}
+                                        title="Modifica budget"
+                                        aria-label="Modifica budget"
                                     >
                                         <Edit2 size={14} />
                                     </button>
                                     <button
-                                        className="btn btn-ghost btn-icon"
+                                        className="btn btn-ghost btn-icon btn-xs-icon"
                                         onClick={() => handleDelete(progress.budget.id!)}
-                                        style={{ width: 32, height: 32 }}
+                                        title="Elimina budget"
+                                        aria-label="Elimina budget"
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -168,14 +178,14 @@ export function BudgetManager() {
 
                             <div className="budget-amounts">
                                 <div>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Speso</span>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: progress.isOverBudget ? 'var(--danger)' : 'var(--text-primary)' }}>
+                                    <span className="text-muted font-sm">Speso</span>
+                                    <div className={`font-xl font-bold ${progress.isOverBudget ? 'text-danger' : ''}`}>
                                         €{progress.spent.toFixed(2)}
                                     </div>
                                 </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Budget</span>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                                <div className="text-right">
+                                    <span className="text-muted font-sm">Budget</span>
+                                    <div className="font-xl font-bold">
                                         €{progress.budget.amount.toFixed(2)}
                                     </div>
                                 </div>
@@ -183,31 +193,26 @@ export function BudgetManager() {
 
                             <div className="budget-progress-bar">
                                 <div
-                                    className="budget-progress-fill"
-                                    style={{
-                                        width: `${Math.min(progress.percentage, 100)}%`,
-                                        background: progress.isOverBudget
-                                            ? 'var(--danger)'
-                                            : progress.percentage > 80
-                                                ? 'var(--warning)'
-                                                : 'var(--success)'
+                                    className={`budget-progress-fill ${getProgressColor(progress)}`}
+                                    ref={el => {
+                                        if (el) el.style.setProperty('--progress-width', `${Math.min(progress.percentage, 100)}%`);
                                     }}
                                 />
                             </div>
 
                             <div className="budget-footer">
                                 {progress.isOverBudget ? (
-                                    <div style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                    <div className="text-danger flex items-center gap-xs">
                                         <AlertTriangle size={16} />
                                         Budget superato di €{Math.abs(progress.remaining).toFixed(2)}
                                     </div>
                                 ) : (
-                                    <div style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                    <div className="text-success flex items-center gap-xs">
                                         <TrendingUp size={16} />
                                         Rimangono €{progress.remaining.toFixed(2)}
                                     </div>
                                 )}
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                <div className="text-muted font-sm">
                                     {progress.percentage.toFixed(0)}%
                                 </div>
                             </div>
@@ -232,7 +237,12 @@ export function BudgetManager() {
                     <div className="modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>{editingBudget ? 'Modifica Budget' : 'Nuovo Budget'}</h2>
-                            <button className="btn btn-ghost btn-icon" onClick={resetForm}>
+                            <button 
+                                className="btn btn-ghost btn-icon" 
+                                onClick={resetForm}
+                                title="Chiudi"
+                                aria-label="Chiudi"
+                            >
                                 <X size={20} />
                             </button>
                         </div>
@@ -245,6 +255,7 @@ export function BudgetManager() {
                                     value={formData.categoryId}
                                     onChange={e => setFormData({ ...formData, categoryId: parseInt(e.target.value) })}
                                     disabled={!!editingBudget}
+                                    title="Seleziona categoria"
                                 >
                                     <option value={0}>Seleziona categoria</option>
                                     {(editingBudget ? categories : categoriesWithoutBudget)

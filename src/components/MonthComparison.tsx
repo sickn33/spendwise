@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getMonthlyComparison } from '../services/comparison';
-import type { MonthlyComparisonData, CategoryComparison, MonthlyInsight, Language } from '../types';
+import type { MonthlyComparisonData, CategoryComparison, Language } from '../types';
 import { Bar } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -37,11 +37,7 @@ export function MonthComparison() {
     const [language, setLanguage] = useState<Language>('it');
     const [generating, setGenerating] = useState(false);
 
-    useEffect(() => {
-        loadComparison();
-    }, [selectedMonth]);
-
-    async function loadComparison() {
+    const loadComparison = useCallback(async () => {
         setLoading(true);
         try {
             const comparison = await getMonthlyComparison(selectedMonth);
@@ -51,7 +47,11 @@ export function MonthComparison() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [selectedMonth]);
+
+    useEffect(() => {
+        loadComparison();
+    }, [loadComparison]);
 
     function goToPreviousMonth() {
         setSelectedMonth(prev => subMonths(prev, 1));
@@ -74,7 +74,16 @@ export function MonthComparison() {
         } else if (trend === 'down') {
             return <TrendingDown size={16} className={isExpense ? 'text-success' : 'text-danger'} />;
         }
-        return <Minus size={16} style={{ color: 'var(--text-muted)' }} />;
+        return <Minus size={16} className="text-muted" />;
+    }
+
+    function getTrendClass(trend: 'up' | 'down' | 'stable', isExpense: boolean = false): string {
+        if (trend === 'up') {
+            return isExpense ? 'negative' : 'positive';
+        } else if (trend === 'down') {
+            return isExpense ? 'positive' : 'negative';
+        }
+        return 'neutral';
     }
 
     function formatCurrency(amount: number): string {
@@ -95,16 +104,6 @@ export function MonthComparison() {
             stable: { label: '→', class: 'badge-neutral' }
         };
         return badges[cat.trend] || badges.stable;
-    }
-
-    function getInsightStyle(type: MonthlyInsight['type']) {
-        const styles: Record<string, { bg: string; border: string; icon: string }> = {
-            positive: { bg: 'rgba(76, 175, 80, 0.1)', border: 'var(--success)', icon: '✅' },
-            warning: { bg: 'rgba(255, 152, 0, 0.1)', border: 'var(--warning)', icon: '⚠️' },
-            achievement: { bg: 'rgba(156, 39, 176, 0.1)', border: '#9C27B0', icon: '🏆' },
-            neutral: { bg: 'rgba(158, 158, 158, 0.1)', border: 'var(--text-muted)', icon: '📊' }
-        };
-        return styles[type] || styles.neutral;
     }
 
     async function generatePDF() {
@@ -259,17 +258,28 @@ export function MonthComparison() {
     const prevMonthName = format(subMonths(selectedMonth, 1), 'MMMM', { locale: itLocale });
     const currentMonthName = format(selectedMonth, 'MMMM yyyy', { locale: itLocale });
 
+    const getBalanceClass = () => {
+        const balance = data.currentMonth.totalIncome - data.currentMonth.totalExpenses;
+        return balance >= 0 ? 'text-success' : 'text-danger';
+    };
+
+    const getVelocityTrendClass = () => {
+        return data.metrics.spendingVelocity.currentPace <= data.metrics.spendingVelocity.previousPace
+            ? 'positive'
+            : 'negative';
+    };
+
     return (
         <div>
             {/* Header */}
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Confronto Mensile</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
+                    <p className="page-subtitle">
                         {prevMonthName} vs {format(selectedMonth, 'MMMM', { locale: itLocale })}
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="header-controls">
                     {/* Language toggle */}
                     <button
                         className="btn btn-ghost"
@@ -280,18 +290,13 @@ export function MonthComparison() {
                     </button>
 
                     {/* Month navigation */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                        <button className="btn btn-ghost" onClick={goToPreviousMonth}>
+                    <div className="month-nav">
+                        <button className="btn btn-ghost" onClick={goToPreviousMonth} aria-label="Mese precedente" title="Mese precedente">
                             <ChevronLeft size={20} />
                         </button>
                         <button
-                            className="btn btn-ghost"
+                            className="btn btn-ghost month-selector-btn"
                             onClick={goToCurrentMonth}
-                            style={{
-                                minWidth: '160px',
-                                textTransform: 'capitalize',
-                                fontWeight: 600
-                            }}
                         >
                             <Calendar size={16} />
                             {currentMonthName}
@@ -300,6 +305,8 @@ export function MonthComparison() {
                             className="btn btn-ghost"
                             onClick={goToNextMonth}
                             disabled={isCurrentMonth}
+                            aria-label="Mese successivo"
+                            title="Mese successivo"
                         >
                             <ChevronRight size={20} />
                         </button>
@@ -324,20 +331,13 @@ export function MonthComparison() {
                         <TrendingUp size={16} />
                         {language === 'it' ? 'Entrate' : 'Income'}
                     </div>
-                    <div className="stat-value" style={{ color: 'var(--success)' }}>
+                    <div className="stat-value text-success">
                         {formatCurrency(data.currentMonth.totalIncome)}
                     </div>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-xs)',
-                        marginTop: 'var(--space-xs)',
-                        fontSize: '0.85rem',
-                        color: data.deltas.income.trend === 'up' ? 'var(--success)' : data.deltas.income.trend === 'down' ? 'var(--danger)' : 'var(--text-muted)'
-                    }}>
+                    <div className={`stat-trend ${getTrendClass(data.deltas.income.trend)}`}>
                         {getTrendIcon(data.deltas.income.trend)}
                         <span>{formatPercent(data.deltas.income.percentage)}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>
+                        <span className="text-muted">
                             ({data.deltas.income.amount >= 0 ? '+' : ''}{formatCurrency(data.deltas.income.amount)})
                         </span>
                     </div>
@@ -349,20 +349,13 @@ export function MonthComparison() {
                         <TrendingDown size={16} />
                         {language === 'it' ? 'Spese' : 'Expenses'}
                     </div>
-                    <div className="stat-value" style={{ color: 'var(--danger)' }}>
+                    <div className="stat-value text-danger">
                         {formatCurrency(data.currentMonth.totalExpenses)}
                     </div>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-xs)',
-                        marginTop: 'var(--space-xs)',
-                        fontSize: '0.85rem',
-                        color: data.deltas.expenses.trend === 'down' ? 'var(--success)' : data.deltas.expenses.trend === 'up' ? 'var(--danger)' : 'var(--text-muted)'
-                    }}>
+                    <div className={`stat-trend ${getTrendClass(data.deltas.expenses.trend, true)}`}>
                         {getTrendIcon(data.deltas.expenses.trend, true)}
                         <span>{formatPercent(data.deltas.expenses.percentage)}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>
+                        <span className="text-muted">
                             ({data.deltas.expenses.amount >= 0 ? '+' : ''}{formatCurrency(data.deltas.expenses.amount)})
                         </span>
                     </div>
@@ -374,22 +367,11 @@ export function MonthComparison() {
                         <Target size={16} />
                         {language === 'it' ? 'Bilancio' : 'Balance'}
                     </div>
-                    <div className="stat-value" style={{
-                        color: (data.currentMonth.totalIncome - data.currentMonth.totalExpenses) >= 0
-                            ? 'var(--success)'
-                            : 'var(--danger)'
-                    }}>
+                    <div className={`stat-value ${getBalanceClass()}`}>
                         {(data.currentMonth.totalIncome - data.currentMonth.totalExpenses) >= 0 ? '+' : ''}
                         {formatCurrency(data.currentMonth.totalIncome - data.currentMonth.totalExpenses)}
                     </div>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-xs)',
-                        marginTop: 'var(--space-xs)',
-                        fontSize: '0.85rem',
-                        color: data.deltas.netChange.trend === 'up' ? 'var(--success)' : data.deltas.netChange.trend === 'down' ? 'var(--danger)' : 'var(--text-muted)'
-                    }}>
+                    <div className={`stat-trend ${getTrendClass(data.deltas.netChange.trend)}`}>
                         {getTrendIcon(data.deltas.netChange.trend)}
                         <span>{formatPercent(data.deltas.netChange.percentage)}</span>
                     </div>
@@ -402,18 +384,9 @@ export function MonthComparison() {
                         {language === 'it' ? 'Velocità' : 'Velocity'}
                     </div>
                     <div className="stat-value">
-                        €{data.metrics.spendingVelocity.currentPace.toFixed(0)}<span style={{ fontSize: '0.6em', color: 'var(--text-muted)' }}>/giorno</span>
+                        €{data.metrics.spendingVelocity.currentPace.toFixed(0)}<span className="stat-unit">/giorno</span>
                     </div>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-xs)',
-                        marginTop: 'var(--space-xs)',
-                        fontSize: '0.85rem',
-                        color: data.metrics.spendingVelocity.currentPace <= data.metrics.spendingVelocity.previousPace
-                            ? 'var(--success)'
-                            : 'var(--danger)'
-                    }}>
+                    <div className={`stat-trend ${getVelocityTrendClass()}`}>
                         {data.metrics.spendingVelocity.currentPace <= data.metrics.spendingVelocity.previousPace
                             ? <ArrowDown size={14} />
                             : <ArrowUp size={14} />
@@ -425,142 +398,106 @@ export function MonthComparison() {
 
             {/* Insights Section */}
             {data.insights.length > 0 && (
-                <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
+                <div className="card mt-lg">
                     <div className="card-header">
-                        <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                        <h3 className="card-title card-title-with-icon">
                             <Sparkles size={18} />
                             {language === 'it' ? 'Insight' : 'Insights'}
                         </h3>
                     </div>
-                    <div style={{ display: 'grid', gap: 'var(--space-md)', padding: 'var(--space-md)' }}>
-                        {data.insights.map((insight, i) => {
-                            const style = getInsightStyle(insight.type);
-                            return (
-                                <div
-                                    key={i}
-                                    style={{
-                                        padding: 'var(--space-md)',
-                                        background: style.bg,
-                                        borderLeft: `4px solid ${style.border}`,
-                                        borderRadius: 'var(--radius-md)',
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        gap: 'var(--space-md)'
-                                    }}
-                                >
-                                    <span style={{ fontSize: '1.5rem' }}>{insight.icon}</span>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 600, marginBottom: 'var(--space-xs)' }}>
-                                            {insight.title[language]}
-                                        </div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                                            {insight.description[language]}
-                                        </div>
+                    <div className="insights-grid">
+                        {data.insights.map((insight, i) => (
+                            <div key={i} className={`insight-card ${insight.type}`}>
+                                <span className="insight-icon">{insight.icon}</span>
+                                <div className="insight-content">
+                                    <div className="insight-title">
+                                        {insight.title[language]}
                                     </div>
-                                    <span style={{
-                                        padding: '2px 8px',
-                                        borderRadius: 'var(--radius-sm)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        background: insight.impact === 'high' ? 'var(--danger)' : insight.impact === 'medium' ? 'var(--warning)' : 'var(--text-muted)',
-                                        color: 'white'
-                                    }}>
-                                        {insight.impact.toUpperCase()}
-                                    </span>
+                                    <div className="insight-description">
+                                        {insight.description[language]}
+                                    </div>
                                 </div>
-                            );
-                        })}
+                                <span className={`impact-badge ${insight.impact}`}>
+                                    {insight.impact.toUpperCase()}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
 
             {/* Charts */}
-            <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
+            <div className="card mt-lg">
                 <div className="card-header">
                     <h3 className="card-title">
                         {language === 'it' ? 'Confronto per Categoria' : 'Category Comparison'}
                     </h3>
                 </div>
-                <div className="chart-container" style={{ height: '350px', padding: 'var(--space-md)' }}>
+                <div className="chart-container chart-container-lg">
                     <Bar data={chartData} options={chartOptions} />
                 </div>
             </div>
 
             {/* Category Comparison Table */}
-            <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
+            <div className="card mt-lg">
                 <div className="card-header">
                     <h3 className="card-title">
                         {language === 'it' ? 'Dettaglio Categorie' : 'Category Details'}
                     </h3>
                 </div>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="overflow-x-auto">
+                    <table className="comparison-table">
                         <thead>
-                            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                <th style={{ textAlign: 'left', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>#</th>
-                                <th style={{ textAlign: 'left', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>
+                            <tr>
+                                <th className="text-left">#</th>
+                                <th className="text-left">
                                     {language === 'it' ? 'Categoria' : 'Category'}
                                 </th>
-                                <th style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>
+                                <th className="text-right">
                                     {format(selectedMonth, 'MMM', { locale: itLocale })}
                                 </th>
-                                <th style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>
+                                <th className="text-right">
                                     {format(subMonths(selectedMonth, 1), 'MMM', { locale: itLocale })}
                                 </th>
-                                <th style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>Δ</th>
-                                <th style={{ textAlign: 'center', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>Trend</th>
+                                <th className="text-right">Δ</th>
+                                <th className="text-center">Trend</th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.categoryComparison.map((cat, i) => {
                                 const badge = getCategoryTrendBadge(cat);
                                 const rankChange = cat.rank.change;
+                                const deltaColorClass = cat.delta.amount > 0 ? 'text-danger' : cat.delta.amount < 0 ? 'text-success' : 'text-muted';
                                 return (
-                                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                                        <td style={{ padding: 'var(--space-md)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                <span style={{ fontWeight: 600 }}>{cat.rank.current}</span>
-                                                {rankChange > 0 && <ArrowUp size={12} style={{ color: 'var(--success)' }} />}
-                                                {rankChange < 0 && <ArrowDown size={12} style={{ color: 'var(--danger)' }} />}
+                                    <tr key={i}>
+                                        <td>
+                                            <div className="rank-display">
+                                                <span className="font-semibold">{cat.rank.current}</span>
+                                                {rankChange > 0 && <ArrowUp size={12} className="text-success" />}
+                                                {rankChange < 0 && <ArrowDown size={12} className="text-danger" />}
                                             </div>
                                         </td>
-                                        <td style={{ padding: 'var(--space-md)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                                <span style={{ fontSize: '1.25rem' }}>{cat.category.icon}</span>
+                                        <td>
+                                            <div className="category-cell">
+                                                <span className="category-icon">{cat.category.icon}</span>
                                                 <span>{cat.category.name}</span>
                                             </div>
                                         </td>
-                                        <td style={{
-                                            textAlign: 'right',
-                                            padding: 'var(--space-md)',
-                                            fontWeight: 600,
-                                            fontFeatureSettings: 'tnum'
-                                        }}>
+                                        <td className="text-right table-cell-numeric font-semibold">
                                             {formatCurrency(cat.current.amount)}
                                         </td>
-                                        <td style={{
-                                            textAlign: 'right',
-                                            padding: 'var(--space-md)',
-                                            color: 'var(--text-muted)',
-                                            fontFeatureSettings: 'tnum'
-                                        }}>
+                                        <td className="text-right table-cell-numeric text-muted">
                                             {formatCurrency(cat.previous.amount)}
                                         </td>
-                                        <td style={{
-                                            textAlign: 'right',
-                                            padding: 'var(--space-md)',
-                                            fontWeight: 500,
-                                            color: cat.delta.amount > 0 ? 'var(--danger)' : cat.delta.amount < 0 ? 'var(--success)' : 'var(--text-muted)',
-                                            fontFeatureSettings: 'tnum'
-                                        }}>
+                                        <td className={`text-right table-cell-numeric font-medium ${deltaColorClass}`}>
                                             {cat.delta.amount >= 0 ? '+' : ''}{formatCurrency(cat.delta.amount)}
                                             <br />
-                                            <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                                            <span className="delta-percentage">
                                                 {formatPercent(cat.delta.percentage)}
                                             </span>
                                         </td>
-                                        <td style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-                                            <span style={{ fontSize: '1.2rem' }}>{badge.label}</span>
+                                        <td className="text-center">
+                                            <span className="trend-badge">{badge.label}</span>
                                         </td>
                                     </tr>
                                 );
@@ -572,60 +509,47 @@ export function MonthComparison() {
 
             {/* ML Prediction Card */}
             {data.prediction && (
-                <div className="card" style={{ marginTop: 'var(--space-lg)', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%)' }}>
+                <div className="card prediction-card">
                     <div className="card-header">
-                        <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                        <h3 className="card-title card-title-with-icon">
                             🔮 {language === 'it' ? 'Previsione Prossimo Mese' : 'Next Month Prediction'}
-                            <span style={{
-                                fontSize: '0.7rem',
-                                padding: '2px 8px',
-                                borderRadius: 'var(--radius-sm)',
-                                background: 'var(--primary)',
-                                color: 'white',
-                                marginLeft: 'var(--space-sm)'
-                            }}>
-                                ML
-                            </span>
+                            <span className="ml-badge">ML</span>
                         </h3>
                     </div>
-                    <div style={{ padding: 'var(--space-md)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-lg)' }}>
+                    <div className="prediction-grid">
                         <div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-xs)' }}>
+                            <div className="prediction-label">
                                 {language === 'it' ? 'Spese Previste' : 'Predicted Expenses'}
                             </div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                            <div className="prediction-value">
                                 {formatCurrency(data.prediction.predictedExpenses)}
                             </div>
                         </div>
                         <div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-xs)' }}>
+                            <div className="prediction-label">
                                 {language === 'it' ? 'Entrate Previste' : 'Predicted Income'}
                             </div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>
+                            <div className="prediction-value text-success">
                                 {formatCurrency(data.prediction.predictedIncome)}
                             </div>
                         </div>
                         <div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-xs)' }}>
+                            <div className="prediction-label">
                                 {language === 'it' ? 'Affidabilità' : 'Confidence'}
                             </div>
-                            <div style={{
-                                fontSize: '1.5rem',
-                                fontWeight: 700,
-                                color: data.prediction.confidence > 0.7 ? 'var(--success)' : data.prediction.confidence > 0.5 ? 'var(--warning)' : 'var(--danger)'
-                            }}>
+                            <div className={`prediction-value ${data.prediction.confidence > 0.7 ? 'text-success' : data.prediction.confidence > 0.5 ? 'text-warning' : 'text-danger'}`}>
                                 {(data.prediction.confidence * 100).toFixed(0)}%
                             </div>
                         </div>
                     </div>
                     {data.prediction.riskFactors.length > 0 && (
-                        <div style={{ padding: '0 var(--space-md) var(--space-md)', borderTop: '1px solid var(--border)', marginTop: 'var(--space-sm)' }}>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 'var(--space-md) 0 var(--space-sm)' }}>
+                        <div className="risk-factors">
+                            <div className="risk-factors-label">
                                 {language === 'it' ? 'Fattori di rischio:' : 'Risk factors:'}
                             </div>
-                            <ul style={{ margin: 0, paddingLeft: 'var(--space-lg)', color: 'var(--warning)' }}>
+                            <ul className="risk-factors-list">
                                 {data.prediction.riskFactors.map((rf, i) => (
-                                    <li key={i} style={{ fontSize: '0.9rem' }}>{rf[language]}</li>
+                                    <li key={i}>{rf[language]}</li>
                                 ))}
                             </ul>
                         </div>
@@ -634,28 +558,28 @@ export function MonthComparison() {
             )}
 
             {/* Peak Day Info */}
-            <div className="grid-2" style={{ marginTop: 'var(--space-lg)' }}>
+            <div className="grid-2 mt-lg">
                 <div className="card">
                     <div className="card-header">
                         <h3 className="card-title">
                             📅 {language === 'it' ? 'Giorno di Picco' : 'Peak Day'} - {format(selectedMonth, 'MMM', { locale: itLocale })}
                         </h3>
                     </div>
-                    <div style={{ padding: 'var(--space-md)' }}>
+                    <div className="peak-day-content">
                         {data.metrics.biggestExpenseDay.current ? (
                             <>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                                <div className="peak-day-date">
                                     {format(new Date(data.metrics.biggestExpenseDay.current.date), 'd MMMM', { locale: itLocale })}
                                 </div>
-                                <div style={{ color: 'var(--danger)', fontSize: '1.5rem', fontWeight: 700, marginTop: 'var(--space-xs)' }}>
+                                <div className="peak-day-amount">
                                     {formatCurrency(data.metrics.biggestExpenseDay.current.amount)}
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
+                                <div className="peak-day-transactions">
                                     {data.metrics.biggestExpenseDay.current.transactions} {language === 'it' ? 'transazioni' : 'transactions'}
                                 </div>
                             </>
                         ) : (
-                            <div style={{ color: 'var(--text-muted)' }}>
+                            <div className="text-muted">
                                 {language === 'it' ? 'Nessun dato' : 'No data'}
                             </div>
                         )}
@@ -668,21 +592,21 @@ export function MonthComparison() {
                             📅 {language === 'it' ? 'Giorno di Picco' : 'Peak Day'} - {format(subMonths(selectedMonth, 1), 'MMM', { locale: itLocale })}
                         </h3>
                     </div>
-                    <div style={{ padding: 'var(--space-md)' }}>
+                    <div className="peak-day-content">
                         {data.metrics.biggestExpenseDay.previous ? (
                             <>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                                <div className="peak-day-date">
                                     {format(new Date(data.metrics.biggestExpenseDay.previous.date), 'd MMMM', { locale: itLocale })}
                                 </div>
-                                <div style={{ color: 'var(--danger)', fontSize: '1.5rem', fontWeight: 700, marginTop: 'var(--space-xs)' }}>
+                                <div className="peak-day-amount">
                                     {formatCurrency(data.metrics.biggestExpenseDay.previous.amount)}
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
+                                <div className="peak-day-transactions">
                                     {data.metrics.biggestExpenseDay.previous.transactions} {language === 'it' ? 'transazioni' : 'transactions'}
                                 </div>
                             </>
                         ) : (
-                            <div style={{ color: 'var(--text-muted)' }}>
+                            <div className="text-muted">
                                 {language === 'it' ? 'Nessun dato' : 'No data'}
                             </div>
                         )}
