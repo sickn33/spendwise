@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import { importIsybankExcel } from '../services/importer';
+import { importIsybankExcel, previewIsybankExcel, type ImportPreviewResult } from '../services/importer';
 import { getTransactions, getCategories, clearAllTransactions } from '../db/database';
 import { exportToExcel, exportToCSV } from '../services/importer';
+import { ImportPreviewModal } from './ImportPreviewModal';
 import { Upload, Download, FileJson, FileSpreadsheet, Trash2, Shield, Database, HardDrive, AlertTriangle } from 'lucide-react';
 
 export function Settings() {
@@ -11,6 +12,8 @@ export function Settings() {
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [clearing, setClearing] = useState(false);
     const [dragOver, setDragOver] = useState(false);
+    const [preview, setPreview] = useState<ImportPreviewResult | null>(null);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     async function handleFileSelect(file: File) {
@@ -23,12 +26,39 @@ export function Settings() {
         setImportResult(null);
 
         try {
-            const result = await importIsybankExcel(file);
+            // Use preview instead of direct import
+            const previewResult = await previewIsybankExcel(file);
+            
+            if (previewResult.success) {
+                setPreview(previewResult);
+                setPendingFile(file);
+            } else {
+                setImportResult({
+                    success: false,
+                    message: `Errore: ${previewResult.errors.join(', ')}`
+                });
+            }
+        } catch (err) {
+            setImportResult({
+                success: false,
+                message: `Errore durante l'analisi: ${err instanceof Error ? err.message : 'Errore sconosciuto'}`
+            });
+        } finally {
+            setImporting(false);
+        }
+    }
 
+    async function handleConfirmImport(updateExisting: boolean) {
+        if (!pendingFile) return;
+        
+        setImporting(true);
+        try {
+            const result = await importIsybankExcel(pendingFile);
+            
             if (result.success) {
                 setImportResult({
                     success: true,
-                    message: `Importate ${result.imported} transazioni. ${result.skipped} duplicate saltate.`
+                    message: `Importate ${result.imported} transazioni. ${result.skipped} duplicate saltate.${updateExisting && result.updated > 0 ? ` ${result.updated} aggiornate.` : ''}`
                 });
             } else {
                 setImportResult({
@@ -36,13 +66,15 @@ export function Settings() {
                     message: `Errore: ${result.errors.join(', ')}`
                 });
             }
-        } catch (error) {
+        } catch (err) {
             setImportResult({
                 success: false,
-                message: `Errore durante l'import: ${error instanceof Error ? error.message : 'Errore sconosciuto'}`
+                message: `Errore durante l'import: ${err instanceof Error ? err.message : 'Errore sconosciuto'}`
             });
         } finally {
             setImporting(false);
+            setPreview(null);
+            setPendingFile(null);
         }
     }
 
@@ -120,7 +152,7 @@ export function Settings() {
     }
 
     return (
-        <div>
+        <>
             <div className="page-header">
                 <h1 className="page-title">Impostazioni</h1>
             </div>
@@ -310,6 +342,16 @@ export function Settings() {
                     </button>
                 )}
             </div>
-        </div>
+
+            {/* Import Preview Modal */}
+            {preview && (
+                <ImportPreviewModal
+                    preview={preview}
+                    onConfirm={handleConfirmImport}
+                    onCancel={() => { setPreview(null); setPendingFile(null); }}
+                    importing={importing}
+                />
+            )}
+        </>
     );
 }

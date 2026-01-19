@@ -8,7 +8,38 @@ interface ImportResult {
     success: boolean;
     imported: number;
     skipped: number;
+    updated: number;
     errors: string[];
+}
+
+// Preview result for showing user what will be imported
+export interface ImportPreviewItem {
+    date: Date;
+    description: string;
+    details: string;
+    amount: number;
+    currency: string;
+    account: string;
+    categoryId: number;
+    status: 'new' | 'duplicate' | 'modified';
+    existingId?: number; // ID of existing transaction if duplicate/modified
+}
+
+export interface ImportPreviewResult {
+    success: boolean;
+    items: ImportPreviewItem[];
+    newCount: number;
+    duplicateCount: number;
+    modifiedCount: number;
+    errors: string[];
+}
+
+// Generate a robust hash for duplicate detection
+function generateTransactionHash(date: Date, amount: number, description: string, details: string): string {
+    const dateStr = date.toISOString().split('T')[0];
+    const normalizedDesc = description.toLowerCase().trim();
+    const normalizedDetails = (details || '').toLowerCase().trim();
+    return `${dateStr}|${amount}|${normalizedDesc}|${normalizedDetails}`;
 }
 
 // Parse Isybank Excel file
@@ -17,6 +48,7 @@ export async function importIsybankExcel(file: File): Promise<ImportResult> {
         success: false,
         imported: 0,
         skipped: 0,
+        updated: 0,
         errors: []
     };
 
@@ -62,11 +94,11 @@ export async function importIsybankExcel(file: File): Promise<ImportResult> {
 
         // Get existing transactions to check for duplicates
         const existingTransactions = await db.transactions.toArray();
-        const existingHashes = new Set(
-            existingTransactions.map(t =>
-                `${t.date.toISOString().split('T')[0]}-${t.amount}-${t.description.substring(0, 20)}`
-            )
-        );
+        const existingHashMap = new Map<string, number>();
+        for (const t of existingTransactions) {
+            const hash = generateTransactionHash(t.date, t.amount, t.description, t.details);
+            existingHashMap.set(hash, t.id!);
+        }
 
         const transactionsToAdd: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>[] = [];
 
@@ -106,13 +138,13 @@ export async function importIsybankExcel(file: File): Promise<ImportResult> {
                 continue;
             }
 
-            // Check for duplicates
-            const hash = `${date.toISOString().split('T')[0]}-${importo}-${String(operazione).substring(0, 20)}`;
-            if (existingHashes.has(hash)) {
+            // Check for duplicates using improved hash
+            const hash = generateTransactionHash(date, importo, operazione || '', dettagli || '');
+            if (existingHashMap.has(hash)) {
                 result.skipped++;
                 continue;
             }
-            existingHashes.add(hash);
+            existingHashMap.set(hash, -1); // Mark as pending
 
             // Classify transaction
             const classification = await classifyTransaction(
@@ -145,6 +177,132 @@ export async function importIsybankExcel(file: File): Promise<ImportResult> {
         return result;
     } catch (error) {
         result.errors.push(`Import error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        return result;
+    }
+}
+
+// Preview import without actually importing - returns what would be imported
+export async function previewIsybankExcel(file: File): Promise<ImportPreviewResult> {
+    const result: ImportPreviewResult = {
+        success: false,
+        items: [],
+        newCount: 0,
+        duplicateCount: 0,
+        modifiedCount: 0,
+        errors: []
+    };
+
+    try {
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][];
+
+        // Find header row
+        let headerRowIndex = -1;
+        for (let i = 0; i < Math.min(rawData.length, 20); i++) {
+            const row = rawData[i] as string[];
+            if (row && row.some(cell => cell === 'Data' || cell === 'Operazione')) {
+                headerRowIndex = i;
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) {
+            result.errors.push('Could not find header row in Excel file');
+            return result;
+        }
+
+        const headers = rawData[headerRowIndex] as string[];
+        const dataRows = rawData.slice(headerRowIndex + 1);
+
+        const columnMap: Record<string, number> = {};
+        headers.forEach((header, index) => {
+            if (header) columnMap[header.trim()] = index;
+        });
+
+        await getCategories();
+
+        // Build hash map of existing transactions
+        const existingTransactions = await db.transactions.toArray();
+        const existingHashMap = new Map<string, { id: number; amount: number }>();
+        for (const t of existingTransactions) {
+            // Use date + description + details (without amount) for detecting modifications
+            const partialHash = `${t.date.toISOString().split('T')[0]}|${t.description.toLowerCase().trim()}|${(t.details || '').toLowerCase().trim()}`;
+            existingHashMap.set(partialHash, { id: t.id!, amount: t.amount });
+        }
+
+        for (const row of dataRows) {
+            if (!row || !row.length) continue;
+
+            const dateVal = row[columnMap['Data']];
+            const operazione = row[columnMap['Operazione']] as string;
+            const dettagli = row[columnMap['Dettagli']] as string;
+            const conto = row[columnMap['Conto o carta']] as string;
+            const categoria = row[columnMap['Categoria']] as string;
+            const valuta = row[columnMap['Valuta']] as string;
+            const importo = row[columnMap['Importo']] as number;
+
+            if (!dateVal || !operazione || importo === undefined || importo === null) {
+                continue;
+            }
+
+            let date: Date;
+            if (dateVal instanceof Date) {
+                date = dateVal;
+            } else if (typeof dateVal === 'string') {
+                date = new Date(dateVal);
+            } else if (typeof dateVal === 'number') {
+                date = new Date((dateVal - 25569) * 86400 * 1000);
+            } else {
+                result.errors.push(`Invalid date format for: ${operazione}`);
+                continue;
+            }
+
+            if (isNaN(date.getTime())) {
+                result.errors.push(`Could not parse date for: ${operazione}`);
+                continue;
+            }
+
+            const classification = await classifyTransaction(operazione || '', dettagli || '', importo, categoria);
+
+            const partialHash = `${date.toISOString().split('T')[0]}|${(operazione || '').toLowerCase().trim()}|${(dettagli || '').toLowerCase().trim()}`;
+            const existing = existingHashMap.get(partialHash);
+
+            let status: 'new' | 'duplicate' | 'modified' = 'new';
+            let existingId: number | undefined = undefined;
+
+            if (existing) {
+                if (existing.amount === importo) {
+                    status = 'duplicate';
+                    result.duplicateCount++;
+                } else {
+                    status = 'modified';
+                    result.modifiedCount++;
+                    existingId = existing.id;
+                }
+            } else {
+                result.newCount++;
+            }
+
+            result.items.push({
+                date,
+                description: operazione || '',
+                details: dettagli || '',
+                amount: importo,
+                currency: valuta || 'EUR',
+                account: conto || '',
+                categoryId: classification.categoryId,
+                status,
+                existingId
+            });
+        }
+
+        result.success = true;
+        return result;
+    } catch (error) {
+        result.errors.push(`Preview error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         return result;
     }
 }
