@@ -269,7 +269,7 @@ export function MonthComparison() {
                         {prevMonthName} vs {format(selectedMonth, 'MMMM', { locale: itLocale })}
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
                     {/* Language toggle */}
                     <button
                         className="btn btn-ghost"
@@ -317,7 +317,7 @@ export function MonthComparison() {
             </div>
 
             {/* Summary Cards */}
-            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className="stats-grid">
                 {/* Income Delta */}
                 <div className="card stat-card">
                     <div className="stat-label">
