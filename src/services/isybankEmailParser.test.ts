@@ -47,4 +47,24 @@ describe('parseIsybankEmailText', () => {
 
     expect(parsed).toBeNull();
   });
+
+  it('parses merchant when template uses a colon', () => {
+    const text = 'Spesa carta di EUR 2,50. Esercente: Careggi Firenze Parche Vial in data 07/02/2026.';
+    const fallbackDate = new Date('2026-02-12T09:00:00.000Z');
+
+    const parsed = parseIsybankEmailText(text, fallbackDate);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.merchant).toBe('CAREGGI FIRENZE PARCHE VIAL');
+  });
+
+  it('extracts merchant from short subject-like payment format', () => {
+    const text = 'Pagamento carta PAYPAL *FLIXBUS 30300137300 di EUR 7,28 il 03/02/2026.';
+    const fallbackDate = new Date('2026-02-12T09:00:00.000Z');
+
+    const parsed = parseIsybankEmailText(text, fallbackDate);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.merchant).toBe('PAYPAL *FLIXBUS 30300137300');
+  });
 });

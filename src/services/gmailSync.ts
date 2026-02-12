@@ -70,6 +70,12 @@ interface GmailMessagePayload {
   mimeType?: string;
   body?: GmailMessageBody;
   parts?: GmailMessagePayload[];
+  headers?: GmailMessageHeader[];
+}
+
+interface GmailMessageHeader {
+  name?: string;
+  value?: string;
 }
 
 interface GmailMessageDetail {
@@ -78,6 +84,18 @@ interface GmailMessageDetail {
   internalDate?: string;
   payload?: GmailMessagePayload;
 }
+
+interface DuplicateCandidate {
+  description: string;
+  details: string;
+}
+
+const GENERIC_MERCHANT_NAMES = new Set([
+  'transazione carta',
+  'pagamento carta',
+  'operazione carta',
+  'spesa carta'
+]);
 
 export const DEFAULT_GMAIL_SYNC_SETTINGS: GmailSyncSettings = {
   googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '',
@@ -151,6 +169,52 @@ export function generateTransactionHash(
   return `${dateStr}|${amount}|${normalizedDescription}|${normalizedDetails}`;
 }
 
+export function buildDateAmountKey(date: Date, amount: number): string {
+  const dateStr = date.toISOString().split('T')[0];
+  return `${dateStr}|${amount.toFixed(2)}`;
+}
+
+function normalizeForDuplicateCheck(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function isGenericMerchantName(merchant: string): boolean {
+  const normalized = normalizeForDuplicateCheck(merchant);
+  if (!normalized) return true;
+  return GENERIC_MERCHANT_NAMES.has(normalized);
+}
+
+export function isLikelyDuplicateByDateAmount(
+  date: Date,
+  amount: number,
+  merchant: string,
+  existingByDateAmount: Map<string, DuplicateCandidate[]>
+): boolean {
+  const key = buildDateAmountKey(date, amount);
+  const candidates = existingByDateAmount.get(key);
+  if (!candidates?.length) return false;
+
+  if (isGenericMerchantName(merchant)) {
+    return true;
+  }
+
+  const normalizedMerchant = normalizeForDuplicateCheck(merchant);
+
+  return candidates.some(candidate => {
+    const description = normalizeForDuplicateCheck(candidate.description);
+    const details = normalizeForDuplicateCheck(candidate.details);
+
+    if (isGenericMerchantName(candidate.description)) return true;
+    if (description === normalizedMerchant) return true;
+    if (details.includes(normalizedMerchant)) return true;
+    if (normalizedMerchant.includes(description) && description.length >= 4) return true;
+    return false;
+  });
+}
+
 function decodeBase64Url(data: string): string {
   const normalized = data.replace(/-/g, '+').replace(/_/g, '/');
   const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
@@ -194,6 +258,22 @@ export function extractMessageBody(payload: GmailMessagePayload | undefined): st
   }
 
   return '';
+}
+
+function getHeaderValue(payload: GmailMessagePayload | undefined, headerName: string): string {
+  const headers = payload?.headers;
+  if (!headers?.length) return '';
+
+  const found = headers.find(header => header.name?.toLowerCase() === headerName.toLowerCase());
+  return found?.value?.trim() ?? '';
+}
+
+function extractMessageIdTags(tags: string[] | undefined): string[] {
+  if (!tags?.length) return [];
+  return tags
+    .filter(tag => tag.startsWith('gmail-msg:'))
+    .map(tag => tag.replace('gmail-msg:', '').trim())
+    .filter(Boolean);
 }
 
 async function gmailGet<T>(
@@ -317,6 +397,22 @@ export async function syncIsybankTransactionsFromGmail(options: {
       generateTransactionHash(transaction.date, transaction.amount, transaction.description, transaction.details)
     )
   );
+  const existingByDateAmount = new Map<string, DuplicateCandidate[]>();
+  const existingMessageIds = new Set<string>();
+
+  for (const transaction of existingTransactions) {
+    const dateAmountKey = buildDateAmountKey(transaction.date, transaction.amount);
+    const bucket = existingByDateAmount.get(dateAmountKey) ?? [];
+    bucket.push({
+      description: transaction.description,
+      details: transaction.details
+    });
+    existingByDateAmount.set(dateAmountKey, bucket);
+
+    for (const messageId of extractMessageIdTags(transaction.tags)) {
+      existingMessageIds.add(messageId);
+    }
+  }
 
   const toAdd: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>[] = [];
   const errors: string[] = [];
@@ -328,9 +424,16 @@ export async function syncIsybankTransactionsFromGmail(options: {
         format: 'full'
       });
 
+      if (existingMessageIds.has(detail.id)) {
+        skipped++;
+        continue;
+      }
+
       const fallbackDate = detail.internalDate ? new Date(Number.parseInt(detail.internalDate, 10)) : new Date();
+      const subject = getHeaderValue(detail.payload, 'Subject');
       const bodyText = extractMessageBody(detail.payload);
-      const parsed = parseIsybankEmailText(bodyText || detail.snippet || '', fallbackDate);
+      const sourceText = [subject, bodyText, detail.snippet].filter(Boolean).join(' | ');
+      const parsed = parseIsybankEmailText(sourceText, fallbackDate);
 
       if (!parsed) {
         skipped++;
@@ -345,9 +448,22 @@ export async function syncIsybankTransactionsFromGmail(options: {
         continue;
       }
 
+      if (isLikelyDuplicateByDateAmount(parsed.date, parsed.amount, parsed.merchant, existingByDateAmount)) {
+        skipped++;
+        continue;
+      }
+
       const classification = await classifyTransaction(parsed.merchant, details, parsed.amount);
+      const dateAmountKey = buildDateAmountKey(parsed.date, parsed.amount);
+      const bucket = existingByDateAmount.get(dateAmountKey) ?? [];
+      bucket.push({
+        description: parsed.merchant,
+        details
+      });
+      existingByDateAmount.set(dateAmountKey, bucket);
 
       existingHashes.add(hash);
+      existingMessageIds.add(detail.id);
       toAdd.push({
         date: parsed.date,
         description: parsed.merchant,
@@ -357,7 +473,7 @@ export async function syncIsybankTransactionsFromGmail(options: {
         categoryId: classification.categoryId,
         subcategoryId: undefined,
         isRecurring: false,
-        tags: ['gmail', 'isybank'],
+        tags: ['gmail', 'isybank', `gmail-msg:${detail.id}`],
         account: 'Carta Isybank (email)',
         isContabilized: false
       });

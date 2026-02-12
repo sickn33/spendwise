@@ -268,6 +268,48 @@ Tests       21 passed (21)
 
 ---
 
+## 5. Fix Merchant Parsing + Anti-Duplicate Gmail ✅
+
+### Problema risolto
+
+- Alcune email Gmail venivano parse con merchant fallback `Transazione carta`.
+- Questo causava duplicati rispetto a operazioni già importate da Excel/manuale.
+
+### Interventi
+
+- `src/services/isybankEmailParser.ts`
+  - Pattern merchant ampliati:
+    - supporto `Esercente: ...`
+    - supporto formato subject breve `Pagamento carta ...`
+  - Sanitizzazione candidato merchant per scartare stringhe generiche.
+
+- `src/services/gmailSync.ts`
+  - Parsing basato su `Subject + Body + Snippet` (non solo body).
+  - Deduplica hard tramite tag `gmail-msg:<id>`.
+  - Deduplica soft tramite chiave `data+importo` quando merchant è generico o già equivalente.
+
+### Test aggiunti/aggiornati
+
+- `src/services/isybankEmailParser.test.ts`
+  - test `Esercente:` e `Pagamento carta ...`
+- `src/services/gmailSync.test.ts`
+  - test deduplica su merchant generico/specifico.
+
+### Evidenza
+
+```
+npx vitest run
+Test Files  3 passed (3)
+Tests       26 passed (26)
+```
+
+```
+npm run build
+✓ build produzione completata
+```
+
+---
+
 ## Riepilogo File Modificati
 
 | File                                 | Tipo     | Righe                |

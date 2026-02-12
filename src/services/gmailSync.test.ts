@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   buildGmailSearchQuery,
   extractMessageBody,
-  generateTransactionHash
+  generateTransactionHash,
+  buildDateAmountKey,
+  isLikelyDuplicateByDateAmount
 } from './gmailSync';
 
 function toBase64Url(value: string): string {
@@ -42,5 +44,35 @@ describe('gmailSync utilities', () => {
     const hashB = generateTransactionHash(date, -12.34, 'amazon', 'pagamento carta');
 
     expect(hashA).toBe(hashB);
+  });
+
+  it('treats generic merchant as duplicate when same day/amount already exists', () => {
+    const date = new Date('2026-02-07T10:00:00.000Z');
+    const key = buildDateAmountKey(date, -2.5);
+    const existing = new Map([
+      [key, [{ description: 'Careggi Firenze Parche Vial', details: 'Pagamento POS parcheggio' }]]
+    ]);
+
+    expect(isLikelyDuplicateByDateAmount(date, -2.5, 'Transazione carta', existing)).toBe(true);
+  });
+
+  it('does not mark as duplicate when merchant is specific and different', () => {
+    const date = new Date('2026-02-07T10:00:00.000Z');
+    const key = buildDateAmountKey(date, -2.5);
+    const existing = new Map([
+      [key, [{ description: 'CAFFE ROMA', details: 'Pagamento POS' }]]
+    ]);
+
+    expect(isLikelyDuplicateByDateAmount(date, -2.5, 'PIZZERIA NAPOLI', existing)).toBe(false);
+  });
+
+  it('marks as duplicate when same merchant exists on same day and amount', () => {
+    const date = new Date('2026-02-03T10:00:00.000Z');
+    const key = buildDateAmountKey(date, -7.28);
+    const existing = new Map([
+      [key, [{ description: 'PAYPAL *FLIXBUS 30300137300', details: 'Pagamento carta' }]]
+    ]);
+
+    expect(isLikelyDuplicateByDateAmount(date, -7.28, 'PAYPAL *FLIXBUS 30300137300', existing)).toBe(true);
   });
 });

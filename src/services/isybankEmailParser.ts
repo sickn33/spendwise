@@ -21,11 +21,24 @@ const AMOUNT_PATTERNS = [
 ];
 
 const MERCHANT_PATTERNS = [
-  /presso\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /esercente\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /da\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /a favore di\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i
+  /presso\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /esercente\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /a favore di\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /da\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /(?:pagamento|spesa|acquisto)\s+carta\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:di|da|il|in data|alle|ore|,|\.|$))/i
 ];
+
+const GENERIC_MERCHANT_WORDS = new Set([
+  'TRANSAZIONE',
+  'CARTA',
+  'PAGAMENTO',
+  'OPERAZIONE',
+  'SPESA',
+  'ACQUISTO',
+  'ISYBANK',
+  'EUR',
+  'EURO'
+]);
 
 function normalizeText(text: string): string {
   return text
@@ -67,10 +80,33 @@ function extractMerchant(text: string): string {
     const match = text.match(pattern);
     if (!match?.[1]) continue;
 
-    return match[1].trim().replace(/\s+/g, ' ').toUpperCase();
+    const cleaned = sanitizeMerchantCandidate(match[1]);
+    if (cleaned) return cleaned;
   }
 
   return 'Transazione carta';
+}
+
+function sanitizeMerchantCandidate(candidate: string): string | null {
+  let normalized = candidate
+    .replace(/^[\s:;,-]+/, '')
+    .replace(/[\s:;,-]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!normalized) return null;
+
+  normalized = normalized.replace(/^l['’]\s*/i, '');
+  normalized = normalized.replace(/^(?:esercente|merchant)\s*:?\s*/i, '');
+
+  const upper = normalized.toUpperCase();
+  const words = upper.split(' ').filter(Boolean);
+  if (words.length === 0) return null;
+
+  const hasMeaningfulWord = words.some(word => !GENERIC_MERCHANT_WORDS.has(word));
+  if (!hasMeaningfulWord) return null;
+
+  return upper;
 }
 
 function extractDate(text: string, fallbackDate: Date): Date {
