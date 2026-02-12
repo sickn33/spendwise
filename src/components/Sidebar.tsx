@@ -1,4 +1,4 @@
-import { LayoutDashboard, List, Tag, FileText, Settings as SettingsIcon, Wallet, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, List, Tag, FileText, Settings as SettingsIcon, Sun, Moon } from 'lucide-react';
 
 export type Page = 'dashboard' | 'transactions' | 'categories' | 'budgets' | 'savings' | 'reports' | 'comparison' | 'settings';
 

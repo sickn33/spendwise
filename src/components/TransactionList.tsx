@@ -3,7 +3,7 @@ import { getTransactions, getCategories, deleteTransaction } from '../db/databas
 import type { Transaction, Category } from '../types';
 import { format, startOfMonth, subMonths, parseISO } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Search, Filter, Trash2, Edit2, X, TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign } from 'lucide-react';
+import { Search, Filter, Trash2, Edit2, X, TrendingDown, ArrowUpDown, Calendar, DollarSign } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
 
 interface TransactionListProps {
