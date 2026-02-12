@@ -291,6 +291,8 @@ Tests       21 passed (21)
   - Cleanup esteso:
     - elimina generic duplicate anche senza tag Gmail
     - tolleranza drift data fino a 24h (timezone/serializzazione)
+  - Lettura contenuto reale email anche da MIME part con `attachmentId`
+    (`messages/{id}/attachments/{attachmentId}`), non solo da `body.data`.
 
 - `src/components/Settings.tsx`
   - Nuovo bottone **Pulisci duplicati Gmail** nella sezione sync Gmail.
@@ -305,13 +307,14 @@ Tests       21 passed (21)
   - test deduplica su merchant generico/specifico.
   - test finder duplicati storici (`findLikelyDuplicateTransactionIds`).
   - test casi estesi: senza tag Gmail + drift data.
+  - test estrazione body da `attachmentId`.
 
 ### Evidenza
 
 ```
 npx vitest run
 Test Files  3 passed (3)
-Tests       31 passed (31)
+Tests       32 passed (32)
 ```
 
 ```

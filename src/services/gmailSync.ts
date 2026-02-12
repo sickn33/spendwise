@@ -70,6 +70,7 @@ interface GmailMessageListResponse {
 
 interface GmailMessageBody {
   data?: string;
+  attachmentId?: string;
 }
 
 interface GmailMessagePayload {
@@ -89,6 +90,10 @@ interface GmailMessageDetail {
   snippet?: string;
   internalDate?: string;
   payload?: GmailMessagePayload;
+}
+
+interface GmailAttachmentResponse {
+  data?: string;
 }
 
 interface DuplicateCandidate {
@@ -272,6 +277,68 @@ export function extractMessageBody(payload: GmailMessagePayload | undefined): st
   }
 
   return '';
+}
+
+function findBodyPart(payload: GmailMessagePayload | undefined, mimeType: string): GmailMessagePayload | null {
+  if (!payload) return null;
+
+  if (payload.mimeType === mimeType) {
+    return payload;
+  }
+
+  if (!payload.parts?.length) {
+    return null;
+  }
+
+  for (const part of payload.parts) {
+    const found = findBodyPart(part, mimeType);
+    if (found) return found;
+  }
+
+  return null;
+}
+
+async function resolveBodyPartText(
+  accessToken: string,
+  messageId: string,
+  part: GmailMessagePayload | null
+): Promise<string> {
+  if (!part?.body) return '';
+
+  if (part.body.data) {
+    return decodeBase64Url(part.body.data);
+  }
+
+  const attachmentId = part.body.attachmentId;
+  if (!attachmentId) return '';
+
+  const attachment = await gmailGet<GmailAttachmentResponse>(
+    accessToken,
+    `messages/${messageId}/attachments/${attachmentId}`
+  );
+
+  if (!attachment.data) return '';
+  return decodeBase64Url(attachment.data);
+}
+
+export async function extractMessageBodyFromMessage(
+  accessToken: string,
+  messageId: string,
+  payload: GmailMessagePayload | undefined
+): Promise<string> {
+  const plainPart = findBodyPart(payload, 'text/plain');
+  const plainText = await resolveBodyPartText(accessToken, messageId, plainPart);
+  if (plainText.trim()) {
+    return plainText;
+  }
+
+  const htmlPart = findBodyPart(payload, 'text/html');
+  const htmlText = await resolveBodyPartText(accessToken, messageId, htmlPart);
+  if (htmlText.trim()) {
+    return stripHtml(htmlText);
+  }
+
+  return extractMessageBody(payload);
 }
 
 function getHeaderValue(payload: GmailMessagePayload | undefined, headerName: string): string {
@@ -525,7 +592,7 @@ export async function syncIsybankTransactionsFromGmail(options: {
 
       const fallbackDate = detail.internalDate ? new Date(Number.parseInt(detail.internalDate, 10)) : new Date();
       const subject = getHeaderValue(detail.payload, 'Subject');
-      const bodyText = extractMessageBody(detail.payload);
+      const bodyText = await extractMessageBodyFromMessage(options.accessToken, detail.id, detail.payload);
       const sourceText = [subject, bodyText, detail.snippet].filter(Boolean).join(' | ');
       const parsed = parseIsybankEmailText(sourceText, fallbackDate);
 

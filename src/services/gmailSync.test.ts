@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   buildGmailSearchQuery,
   extractMessageBody,
+  extractMessageBodyFromMessage,
   generateTransactionHash,
   buildDateAmountKey,
   isLikelyDuplicateByDateAmount,
@@ -37,6 +38,33 @@ describe('gmailSync utilities', () => {
     };
 
     expect(extractMessageBody(payload)).toContain('spesa di € 12,34');
+  });
+
+  it('loads text body from attachmentId when inline data is missing', async () => {
+    const payload = {
+      mimeType: 'multipart/alternative',
+      parts: [
+        {
+          mimeType: 'text/plain',
+          body: { attachmentId: 'att-1' }
+        }
+      ]
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: toBase64Url('Esercente: Careggi Firenze Parche Vial') })
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await extractMessageBodyFromMessage('token-abc', 'msg-123', payload);
+
+    expect(result).toContain('Esercente: Careggi Firenze Parche Vial');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0]?.[0]).toContain('/messages/msg-123/attachments/att-1?');
+
+    vi.unstubAllGlobals();
   });
 
   it('creates stable hash regardless of case and spaces', () => {
