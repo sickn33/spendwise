@@ -228,8 +228,8 @@ export function Settings({ onTransactionsImported }: SettingsProps) {
             localStorage.setItem(LAST_GMAIL_SYNC_KEY, syncedAt);
 
             const message = result.errors.length > 0
-                ? `Sync completata: ${result.imported} importate, ${result.skipped} saltate, ${result.errors.length} errori.`
-                : `Sync completata: ${result.imported} importate, ${result.skipped} duplicate/saltate.`;
+                ? `Sync completata: ${result.imported} importate, ${result.updated} aggiornate, ${result.removed} rimosse, ${result.skipped} saltate, ${result.errors.length} errori.`
+                : `Sync completata: ${result.imported} importate, ${result.updated} aggiornate, ${result.removed} rimosse, ${result.skipped} duplicate/saltate.`;
 
             setGmailResult({ success: result.errors.length === 0, message });
         } catch (error) {

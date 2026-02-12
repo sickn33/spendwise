@@ -25,6 +25,8 @@ export interface GmailSyncResult {
   success: boolean;
   scanned: number;
   imported: number;
+  updated: number;
+  removed: number;
   skipped: number;
   errors: string[];
 }
@@ -547,6 +549,8 @@ export async function syncIsybankTransactionsFromGmail(options: {
       success: true,
       scanned: 0,
       imported: 0,
+      updated: 0,
+      removed: 0,
       skipped: 0,
       errors: []
     };
@@ -559,7 +563,8 @@ export async function syncIsybankTransactionsFromGmail(options: {
     )
   );
   const existingByDateAmount = new Map<string, DuplicateCandidate[]>();
-  const existingMessageIds = new Set<string>();
+  const existingByMessageId = new Map<string, Transaction[]>();
+  const oneDayMs = 24 * 60 * 60 * 1000;
 
   for (const transaction of existingTransactions) {
     const dateAmountKey = buildDateAmountKey(transaction.date, transaction.amount);
@@ -571,13 +576,17 @@ export async function syncIsybankTransactionsFromGmail(options: {
     existingByDateAmount.set(dateAmountKey, bucket);
 
     for (const messageId of extractMessageIdTags(transaction.tags)) {
-      existingMessageIds.add(messageId);
+      const list = existingByMessageId.get(messageId) ?? [];
+      list.push(transaction);
+      existingByMessageId.set(messageId, list);
     }
   }
 
   const toAdd: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>[] = [];
   const errors: string[] = [];
   let skipped = 0;
+  let updated = 0;
+  let removed = 0;
 
   for (const messageRef of messageRefs) {
     try {
@@ -585,16 +594,48 @@ export async function syncIsybankTransactionsFromGmail(options: {
         format: 'full'
       });
 
-      if (existingMessageIds.has(detail.id)) {
-        skipped++;
-        continue;
-      }
-
       const fallbackDate = detail.internalDate ? new Date(Number.parseInt(detail.internalDate, 10)) : new Date();
       const subject = getHeaderValue(detail.payload, 'Subject');
       const bodyText = await extractMessageBodyFromMessage(options.accessToken, detail.id, detail.payload);
       const sourceText = [subject, bodyText, detail.snippet].filter(Boolean).join(' | ');
       const parsed = parseIsybankEmailText(sourceText, fallbackDate);
+
+      const existingForMessage = existingByMessageId.get(detail.id) ?? [];
+      if (existingForMessage.length > 0) {
+        const genericExisting = existingForMessage.find(
+          transaction => transaction.id && isGenericMerchantName(transaction.description)
+        );
+
+        if (!genericExisting?.id || !parsed || isGenericMerchantName(parsed.merchant)) {
+          skipped++;
+          continue;
+        }
+
+        const details = parsed.details.slice(0, 400);
+        const specificCounterpart = existingTransactions.find(transaction => {
+          if (!transaction.id || transaction.id === genericExisting.id) return false;
+          if (transaction.amount.toFixed(2) !== parsed.amount.toFixed(2)) return false;
+          if (isGenericMerchantName(transaction.description)) return false;
+          return Math.abs(transaction.date.getTime() - parsed.date.getTime()) <= oneDayMs;
+        });
+
+        if (specificCounterpart) {
+          await db.transactions.delete(genericExisting.id);
+          removed++;
+        } else {
+          const classification = await classifyTransaction(parsed.merchant, details, parsed.amount);
+          await db.transactions.update(genericExisting.id, {
+            description: parsed.merchant,
+            details,
+            categoryId: classification.categoryId,
+            updatedAt: new Date()
+          });
+          updated++;
+        }
+
+        skipped++;
+        continue;
+      }
 
       if (!parsed) {
         skipped++;
@@ -624,7 +665,7 @@ export async function syncIsybankTransactionsFromGmail(options: {
       existingByDateAmount.set(dateAmountKey, bucket);
 
       existingHashes.add(hash);
-      existingMessageIds.add(detail.id);
+      existingByMessageId.set(detail.id, []);
       toAdd.push({
         date: parsed.date,
         description: parsed.merchant,
@@ -653,6 +694,8 @@ export async function syncIsybankTransactionsFromGmail(options: {
     success: errors.length === 0,
     scanned: messageRefs.length,
     imported: toAdd.length,
+    updated,
+    removed,
     skipped,
     errors
   };

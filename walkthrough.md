@@ -293,6 +293,10 @@ Tests       21 passed (21)
     - tolleranza drift data fino a 24h (timezone/serializzazione)
   - Lettura contenuto reale email anche da MIME part con `attachmentId`
     (`messages/{id}/attachments/{attachmentId}`), non solo da `body.data`.
+  - Durante la sync, se il messaggio Gmail era già stato importato con merchant generico,
+    ora viene tentato il re-parse e la riga viene:
+    - aggiornata con merchant corretto, oppure
+    - rimossa se esiste già controparte specifica.
 
 - `src/components/Settings.tsx`
   - Nuovo bottone **Pulisci duplicati Gmail** nella sezione sync Gmail.
