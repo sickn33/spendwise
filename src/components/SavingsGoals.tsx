@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addToSavingsGoal, withdrawFromSavingsGoal } from '../db/database';
 import type { SavingsGoal } from '../types';
 import { format, differenceInDays } from 'date-fns';
 import { Plus, Edit2, Trash2, X, Save, Target, TrendingUp, Calendar, PlusCircle, MinusCircle } from 'lucide-react';
 
-export function SavingsGoals() {
+export const SavingsGoals = memo(function SavingsGoals() {
     const [goals, setGoals] = useState<SavingsGoal[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -404,4 +404,4 @@ export function SavingsGoals() {
             )}
         </div>
     );
-}
+});

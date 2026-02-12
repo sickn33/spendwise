@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { getCategories, getTransactions } from '../db/database';
 import { getMonthlyStats, getCategoryBreakdown, getDailyAverageSpending } from '../services/analytics';
 import type { Transaction, Category, MonthlyStats, ChartDataPoint } from '../types';
@@ -14,7 +14,7 @@ interface DashboardProps {
     onAddTransaction: () => void;
 }
 
-export function Dashboard({ onAddTransaction }: DashboardProps) {
+export const Dashboard = memo(function Dashboard({ onAddTransaction }: DashboardProps) {
     const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
     const [monthlyStats, setMonthlyStats] = useState<MonthlyStats | null>(null);
     const [lastMonthStats, setLastMonthStats] = useState<MonthlyStats | null>(null);
@@ -79,21 +79,23 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
         loadDashboardData();
     }, [loadDashboardData]);
 
-    const goToPreviousMonth = () => {
+    const goToPreviousMonth = useCallback(() => {
         setSelectedMonth(prev => subMonths(prev, 1));
-    };
+    }, []);
 
-    const goToNextMonth = () => {
-        const nextMonth = addMonths(selectedMonth, 1);
-        // Don't allow going beyond current month
-        if (!isAfter(startOfMonth(nextMonth), startOfMonth(new Date()))) {
-            setSelectedMonth(nextMonth);
-        }
-    };
+    const goToNextMonth = useCallback(() => {
+        setSelectedMonth(prev => {
+            const next = addMonths(prev, 1);
+            if (!isAfter(startOfMonth(next), startOfMonth(new Date()))) {
+                return next;
+            }
+            return prev;
+        });
+    }, []);
 
-    const goToCurrentMonth = () => {
+    const goToCurrentMonth = useCallback(() => {
         setSelectedMonth(new Date());
-    };
+    }, []);
 
     const isCurrentMonth = format(selectedMonth, 'yyyy-MM') === format(new Date(), 'yyyy-MM');
 
@@ -389,4 +391,4 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
             </div>
         </div>
     );
-}
+});

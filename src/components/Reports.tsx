@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { generateReportData } from '../services/analytics';
 import { getCategories } from '../db/database';
 import type { ReportData, Category } from '../types';
@@ -7,11 +7,11 @@ import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Lege
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import jsPDF from 'jspdf';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.defaults.animation = false;
 
-export function Reports() {
+export const Reports = memo(function Reports() {
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,11 +54,12 @@ export function Reports() {
         loadReport();
     }, [loadReport]);
 
-    async function generatePDF() {
+    const generatePDF = useCallback(async () => {
         if (!reportData) return;
 
         setGenerating(true);
         try {
+            const jsPDF = (await import('jspdf')).default;
             const pdf = new jsPDF();
             const margin = 20;
             let y = margin;
@@ -150,7 +151,7 @@ export function Reports() {
         } finally {
             setGenerating(false);
         }
-    }
+    }, [reportData]);
 
     const categoryMap = useMemo(
         () => new Map(categories.map(c => [c.id!, c])),
@@ -199,6 +200,17 @@ export function Reports() {
         }
     }), []);
 
+    const doughnutOptions = useMemo(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: { legend: { display: false } }
+    }), []);
+
+    const handleDateRangeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+        setDateRange(e.target.value as typeof dateRange);
+    }, []);
+
     if (loading) {
         return (
             <div className="loading">
@@ -230,7 +242,7 @@ export function Reports() {
                     <select
                         className="input"
                         value={dateRange}
-                        onChange={e => setDateRange(e.target.value as typeof dateRange)}
+                        onChange={handleDateRangeChange}
                         style={{ width: 'auto' }}
                     >
                         <option value="month">Questo mese</option>
@@ -292,11 +304,7 @@ export function Reports() {
                     <div className="chart-container" style={{ height: '280px' }}>
                         <Doughnut
                             data={doughnutData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { legend: { display: false } }
-                            }}
+                            options={doughnutOptions as never}
                         />
                     </div>
                 </div>
@@ -397,4 +405,4 @@ export function Reports() {
             </div>
         </div>
     );
-}
+});

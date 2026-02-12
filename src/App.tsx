@@ -1,18 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { initializeDatabase } from './db/database';
 import { buildMerchantCacheFromHistory } from './services/classifier';
-import { Dashboard } from './components/Dashboard';
-import { TransactionList } from './components/TransactionList';
 import { TransactionForm } from './components/TransactionForm';
-import { CategoryManager } from './components/CategoryManager';
-import { BudgetManager } from './components/BudgetManager';
-import { SavingsGoals } from './components/SavingsGoals';
-import { Reports } from './components/Reports';
-import { MonthComparison } from './components/MonthComparison';
-import { Settings } from './components/Settings';
 import { QuickAddWidget } from './components/QuickAddWidget';
 import { LayoutDashboard, List, Tag, FileText, Settings as SettingsIcon, Plus, Wallet, PiggyBank, Target, Sun, Moon, GitCompare, Keyboard } from 'lucide-react';
 import './index.css';
+
+const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
+const TransactionList = lazy(() => import('./components/TransactionList').then(m => ({ default: m.TransactionList })));
+const CategoryManager = lazy(() => import('./components/CategoryManager').then(m => ({ default: m.CategoryManager })));
+const BudgetManager = lazy(() => import('./components/BudgetManager').then(m => ({ default: m.BudgetManager })));
+const SavingsGoals = lazy(() => import('./components/SavingsGoals').then(m => ({ default: m.SavingsGoals })));
+const Reports = lazy(() => import('./components/Reports').then(m => ({ default: m.Reports })));
+const MonthComparison = lazy(() => import('./components/MonthComparison').then(m => ({ default: m.MonthComparison })));
+const Settings = lazy(() => import('./components/Settings').then(m => ({ default: m.Settings })));
 
 type Page = 'dashboard' | 'transactions' | 'categories' | 'budgets' | 'savings' | 'reports' | 'comparison' | 'settings';
 
@@ -144,27 +145,36 @@ function App() {
         );
     }
 
+    const pageFallback = (
+        <div className="loading">
+            <div className="spinner"></div>
+        </div>
+    );
+
     const renderPage = () => {
-        switch (currentPage) {
-            case 'dashboard':
-                return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} />;
-            case 'transactions':
-                return <TransactionList refreshTrigger={refreshTrigger} />;
-            case 'categories':
-                return <CategoryManager />;
-            case 'budgets':
-                return <BudgetManager />;
-            case 'savings':
-                return <SavingsGoals />;
-            case 'reports':
-                return <Reports />;
-            case 'comparison':
-                return <MonthComparison />;
-            case 'settings':
-                return <Settings onTransactionsImported={() => setRefreshTrigger(prev => prev + 1)} />;
-            default:
-                return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} />;
-        }
+        const page = (() => {
+            switch (currentPage) {
+                case 'dashboard':
+                    return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} />;
+                case 'transactions':
+                    return <TransactionList refreshTrigger={refreshTrigger} />;
+                case 'categories':
+                    return <CategoryManager />;
+                case 'budgets':
+                    return <BudgetManager />;
+                case 'savings':
+                    return <SavingsGoals />;
+                case 'reports':
+                    return <Reports />;
+                case 'comparison':
+                    return <MonthComparison />;
+                case 'settings':
+                    return <Settings onTransactionsImported={() => setRefreshTrigger(prev => prev + 1)} />;
+                default:
+                    return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} />;
+            }
+        })();
+        return <Suspense fallback={pageFallback}>{page}</Suspense>;
     };
 
     return (

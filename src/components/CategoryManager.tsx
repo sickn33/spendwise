@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { getCategories, addCategory, updateCategory, deleteCategory } from '../db/database';
 import type { Category } from '../types';
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react';
@@ -11,7 +11,7 @@ const COLOR_OPTIONS = [
     '#00BCD4', '#009688', '#795548', '#607D8B', '#9E9E9E', '#757575'
 ];
 
-export function CategoryManager() {
+export const CategoryManager = memo(function CategoryManager() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -449,4 +449,4 @@ export function CategoryManager() {
             )}
         </div>
     );
-}
+});

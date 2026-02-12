@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useDeferredValue, memo } from 'react';
 import { getTransactions, getCategories, deleteTransaction } from '../db/database';
 import type { Transaction, Category } from '../types';
 import { format, startOfMonth, subMonths, parseISO } from 'date-fns';
@@ -16,7 +16,7 @@ interface IndexedTransaction extends Transaction {
     searchableText: string;
 }
 
-export function TransactionList({ refreshTrigger }: TransactionListProps) {
+export const TransactionList = memo(function TransactionList({ refreshTrigger }: TransactionListProps) {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
@@ -530,4 +530,4 @@ export function TransactionList({ refreshTrigger }: TransactionListProps) {
             )}
         </div>
     );
-}
+});

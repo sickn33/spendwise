@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { getBudgets, addBudget, updateBudget, deleteBudget, getCategories, getTransactions } from '../db/database';
 import type { Budget, Category, BudgetProgress } from '../types';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { Plus, Edit2, Trash2, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
 
-export function BudgetManager() {
+export const BudgetManager = memo(function BudgetManager() {
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [budgetProgress, setBudgetProgress] = useState<BudgetProgress[]>([]);
@@ -27,10 +27,10 @@ export function BudgetManager() {
             const now = new Date();
             const start = startOfMonth(now);
             const end = endOfMonth(now);
-            const allTransactions = await getTransactions();
-            const monthTransactions = allTransactions.filter(t => {
-                const txDate = new Date(t.date);
-                return txDate >= start && txDate <= end;
+            // Optimized: Fetch only current month's transactions
+            const monthTransactions = await getTransactions({
+                dateFrom: start,
+                dateTo: end
             });
 
             const progressList: BudgetProgress[] = b.map(budget => {
@@ -63,7 +63,13 @@ export function BudgetManager() {
         loadData();
     }, [loadData]);
 
-    async function handleSubmit(e: React.FormEvent) {
+    const resetForm = useCallback(() => {
+        setEditingBudget(null);
+        setFormData({ categoryId: 0, amount: '' });
+        setShowForm(false);
+    }, []);
+
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.categoryId || !formData.amount) return;
 
@@ -81,33 +87,33 @@ export function BudgetManager() {
 
         resetForm();
         loadData();
-    }
+    }, [formData, editingBudget, resetForm, loadData]);
 
-    async function handleDelete(id: number) {
+    const handleDelete = useCallback(async (id: number) => {
         if (confirm('Sei sicuro di voler eliminare questo budget?')) {
             await deleteBudget(id);
             loadData();
         }
-    }
+    }, [loadData]);
 
-    function handleEdit(budget: Budget) {
+    const handleEdit = useCallback((budget: Budget) => {
         setEditingBudget(budget);
         setFormData({
             categoryId: budget.categoryId,
             amount: budget.amount.toString()
         });
         setShowForm(true);
-    }
-
-    function resetForm() {
-        setEditingBudget(null);
-        setFormData({ categoryId: 0, amount: '' });
-        setShowForm(false);
-    }
+    }, []);
 
     const categoriesWithoutBudget = categories.filter(
         c => !c.isIncome && !budgets.some(b => b.categoryId === c.id)
     );
+
+    const getProgressColor = useCallback((progress: BudgetProgress) => {
+        if (progress.isOverBudget) return 'bg-danger';
+        if (progress.percentage > 80) return 'bg-warning';
+        return 'bg-success';
+    }, []);
 
     if (loading) {
         return (
@@ -116,12 +122,6 @@ export function BudgetManager() {
             </div>
         );
     }
-
-    const getProgressColor = (progress: BudgetProgress) => {
-        if (progress.isOverBudget) return 'bg-danger';
-        if (progress.percentage > 80) return 'bg-warning';
-        return 'bg-success';
-    };
 
     return (
         <div>
@@ -299,4 +299,4 @@ export function BudgetManager() {
             )}
         </div>
     );
-}
+});

@@ -1,69 +1,64 @@
-# SpendWise Improvements - Scratchpad
+# SpendWise UI Performance Optimization
 
 ## Background and Motivation
 
-L'utente ha richiesto tre miglioramenti per SpendWise:
-
-1. **Testing** - Infrastruttura di test completa
-2. **Comparazione Mese vs Mese** - Ultra-dettagliata con ML e i18n
-3. **Accessibilità** - WCAG 2.1 AA compliance
-
-## Key Challenges and Analysis
-
-- **Testing**: Scelto Vitest per integrazione nativa con Vite
-- **Comparazione**: Implementate previsioni ML con regressione lineare semplice
-- **Accessibilità**: Supporto IT/EN per screen reader, keyboard shortcuts globali
-
-## High-level Task Breakdown
-
-1. ✅ Testing Infrastructure
-2. ✅ Month-vs-Month Comparison
-3. ✅ Accessibility Enhancements
+The user reports that the SpendWise app UI is slow and buggy, and wants to improve its fluidity. After thorough analysis of the entire codebase (11 components, App.tsx, database.ts, CSS, services, tests), I identified 7 concrete performance bottlenecks.
 
 ## Project Status Board
 
-- [x] Installazione dipendenze Vitest
-- [x] Configurazione Vitest
-- [x] 14 test unitari per analytics.ts
-- [x] Tipi TypeScript per comparison
-- [x] Servizio comparison.ts (~550 righe)
-- [x] Componente MonthComparison.tsx (~630 righe)
-- [x] Route e navigazione
-- [x] Stili CSS accessibilità (~180 righe)
-- [x] Skip link e ARIA live region
-- [x] Keyboard shortcuts (N, D, T, B, C, R, S, ?, ESC)
-- [x] Modal scorciatoie tastiera
-- [x] Build verificata
-- [x] Test verificati (14/14 pass)
-- [x] Walkthrough creato
+- ID: T01
+  Goal: Wrap page components in React.memo to prevent re-render cascades from App-level state changes
+  Success Criteria: Components don't re-render when unrelated App state changes (e.g., theme toggle doesn't re-render Dashboard)
+  Test Case: `npm run build` succeeds + Playwright E2E tests pass
+  Status: todo
 
-## Executor's Feedback or Assistance Requests
+- ID: T02
+  Goal: Memoize callbacks and inline options objects passed as props
+  Success Criteria: Stable references for event handlers and chart options prevent unnecessary child re-renders
+  Test Case: `npm run build` succeeds
+  Status: todo
 
-Nessuna richiesta pendente. Implementazione completata con successo.
+- ID: T03
+  Goal: Lazy-load jsPDF in Reports.tsx and MonthComparison.tsx using dynamic import()
+  Success Criteria: Initial bundle size reduced; jsPDF only loaded when user clicks "Download PDF"
+  Test Case: `npm run build` shows smaller initial chunk; PDF generation still works
+  Status: todo
+
+- ID: T04
+  Goal: Fix CSS `transition: all` anti-pattern (5 selectors) to use specific properties
+  Success Criteria: Transitions only animate intended properties, reducing compositor work
+  Test Case: Visual inspection + `npm run build` succeeds
+  Status: todo
+
+- ID: T05
+  Goal: Optimize BudgetManager data fetching — use date-filtered query instead of fetching all transactions
+  Success Criteria: BudgetManager only fetches current month's transactions from IndexedDB
+  Test Case: `npm run build` succeeds + budget page loads correctly
+  Status: todo
+
+- ID: T06
+  Goal: Add React.lazy + Suspense for page-level code splitting in App.tsx
+  Success Criteria: Each page component is loaded on demand, reducing initial bundle
+  Test Case: `npm run build` shows multiple chunks
+  Status: todo
+
+- ID: T07
+  Goal: Disable Chart.js animations for faster chart rendering
+  Success Criteria: Charts render without animation delay
+  Test Case: Visual inspection — charts appear instantly
+  Status: todo
+
+## Current Status
+
+State: PLANNER — awaiting user approval of implementation plan.
 
 ## Lessons
 
-- Escludere file `.test.ts` dalla build TypeScript con `exclude` in tsconfig.app.json
-- Usare `happy-dom` invece di `jsdom` per test più veloci
-- Chart.js richiede mock del canvas in ambiente test
-- Tipo callback di Chart.js per ticks richiede `string | number`
-- `getSettings()` è il nome corretto della funzione nel database, non `getUserSettings()`
+- Project has good existing memoization in Dashboard.tsx, TransactionList.tsx via useMemo/useCallback
+- Reports.tsx already disables bar chart animation but not doughnut chart
+- Existing E2E tests are in Python/Playwright (`tests/test_spendwise.py`), vitest setup exists but no unit tests yet
+- The `getTransactions()` function in database.ts supports date filters but BudgetManager doesn't use them
 
-## Completion Status
+## Executor's Feedback
 
-✅ **PROGETTO COMPLETATO**
-
-### Riepilogo Deliverable
-
-| Area          | File Principali                         | Stato           |
-| ------------- | --------------------------------------- | --------------- |
-| Testing       | `vitest.config.ts`, `analytics.test.ts` | ✅ 14 test pass |
-| Comparison    | `comparison.ts`, `MonthComparison.tsx`  | ✅ Funzionale   |
-| Accessibility | `index.css`, `App.tsx`                  | ✅ Implementato |
-
-### Prossimi Passi Consigliati
-
-1. Aumentare copertura test (target 80%)
-2. Aggiungere test E2E con Playwright
-3. Audit Lighthouse per accessibilità
-4. Test manuale con VoiceOver
+(none yet)

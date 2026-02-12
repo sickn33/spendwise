@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { getMonthlyComparison } from '../services/comparison';
 import type { MonthlyComparisonData, CategoryComparison, Language } from '../types';
 import { Bar } from 'react-chartjs-2';
@@ -26,11 +26,11 @@ import {
     Sparkles,
     Calendar
 } from 'lucide-react';
-import jsPDF from 'jspdf';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.defaults.animation = false;
 
-export function MonthComparison() {
+export const MonthComparison = memo(function MonthComparison() {
     const [data, setData] = useState<MonthlyComparisonData | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -53,20 +53,24 @@ export function MonthComparison() {
         loadComparison();
     }, [loadComparison]);
 
-    function goToPreviousMonth() {
+    const toggleLanguage = useCallback(() => {
+        setLanguage(l => l === 'it' ? 'en' : 'it');
+    }, []);
+
+    const goToPreviousMonth = useCallback(() => {
         setSelectedMonth(prev => subMonths(prev, 1));
-    }
+    }, []);
 
-    function goToNextMonth() {
-        const next = addMonths(selectedMonth, 1);
-        if (next <= new Date()) {
-            setSelectedMonth(next);
-        }
-    }
+    const goToNextMonth = useCallback(() => {
+        setSelectedMonth(prev => {
+            const next = addMonths(prev, 1);
+            return next <= new Date() ? next : prev;
+        });
+    }, []);
 
-    function goToCurrentMonth() {
+    const goToCurrentMonth = useCallback(() => {
         setSelectedMonth(new Date());
-    }
+    }, []);
 
     function getTrendIcon(trend: 'up' | 'down' | 'stable', isExpense: boolean = false) {
         if (trend === 'up') {
@@ -106,11 +110,12 @@ export function MonthComparison() {
         return badges[cat.trend] || badges.stable;
     }
 
-    async function generatePDF() {
+    const generatePDF = useCallback(async () => {
         if (!data) return;
         setGenerating(true);
 
         try {
+            const jsPDF = (await import('jspdf')).default;
             const pdf = new jsPDF();
             const margin = 20;
             let y = margin;
@@ -186,7 +191,7 @@ export function MonthComparison() {
         } finally {
             setGenerating(false);
         }
-    }
+    }, [data, selectedMonth]);
 
     // Prepare chart data for dual bar comparison
     const chartData = useMemo(() => ({
@@ -284,7 +289,7 @@ export function MonthComparison() {
                     {/* Language toggle */}
                     <button
                         className="btn btn-ghost"
-                        onClick={() => setLanguage(l => l === 'it' ? 'en' : 'it')}
+                        onClick={toggleLanguage}
                         title={language === 'it' ? 'Switch to English' : 'Passa all\'italiano'}
                     >
                         {language === 'it' ? '🇮🇹' : '🇬🇧'}
@@ -616,4 +621,4 @@ export function MonthComparison() {
             </div>
         </div>
     );
-}
+});

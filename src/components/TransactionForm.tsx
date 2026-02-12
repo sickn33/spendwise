@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { getCategories, addTransaction, updateTransaction } from '../db/database';
 import { classifyTransaction, learnFromCorrection } from '../services/classifier';
 import type { Category, Transaction } from '../types';
@@ -11,7 +11,7 @@ interface TransactionFormProps {
     onSave: () => void;
 }
 
-export function TransactionForm({ transaction, onClose, onSave }: TransactionFormProps) {
+export const TransactionForm = memo(function TransactionForm({ transaction, onClose, onSave }: TransactionFormProps) {
     const [categories, setCategories] = useState<Category[]>([]);
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
@@ -281,4 +281,4 @@ export function TransactionForm({ transaction, onClose, onSave }: TransactionFor
             </div>
         </div>
     );
-}
+});

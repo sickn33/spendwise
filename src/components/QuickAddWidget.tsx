@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { getQuickAddPresets, addTransaction, getCategories, addQuickAddPreset, deleteQuickAddPreset, initializeQuickAddPresets } from '../db/database';
 import type { QuickAddPreset, Category } from '../types';
 import { Plus, X, Settings, Check } from 'lucide-react';
@@ -7,7 +7,7 @@ interface QuickAddWidgetProps {
     onTransactionAdded: () => void;
 }
 
-export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
+export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
     const [presets, setPresets] = useState<QuickAddPreset[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -251,4 +251,4 @@ export function QuickAddWidget({ onTransactionAdded }: QuickAddWidgetProps) {
             )}
         </>
     );
-}
+});

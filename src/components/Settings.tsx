@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { importIsybankExcel, previewIsybankExcel, type ImportPreviewResult } from '../services/importer';
 import { getTransactions, getCategories, clearAllTransactions } from '../db/database';
 import { exportToExcel, exportToCSV } from '../services/importer';
@@ -37,7 +37,7 @@ interface SettingsProps {
     onTransactionsImported?: () => void;
 }
 
-export function Settings({ onTransactionsImported }: SettingsProps) {
+export const Settings = memo(function Settings({ onTransactionsImported }: SettingsProps) {
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
     const [exporting, setExporting] = useState(false);
@@ -632,4 +632,4 @@ export function Settings({ onTransactionsImported }: SettingsProps) {
             )}
         </>
     );
-}
+});
