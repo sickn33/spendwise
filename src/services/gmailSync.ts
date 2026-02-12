@@ -198,8 +198,63 @@ export function buildDateAmountKey(date: Date, amount: number): string {
 function normalizeForDuplicateCheck(value: string): string {
   return value
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9*]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function hasGmailTag(tags: string[] | undefined): boolean {
+  if (!tags?.length) return false;
+  if (tags.includes('gmail')) return true;
+  return tags.some(tag => tag.startsWith('gmail-msg:'));
+}
+
+function merchantTokens(value: string): string[] {
+  return normalizeForDuplicateCheck(value)
+    .split(' ')
+    .filter(Boolean)
+    .filter(token => token.length > 1)
+    .filter(token => !/^\d+$/.test(token));
+}
+
+function areLikelySameMerchant(a: string, b: string): boolean {
+  const normalizedA = normalizeForDuplicateCheck(a);
+  const normalizedB = normalizeForDuplicateCheck(b);
+  if (!normalizedA || !normalizedB) return false;
+
+  if (normalizedA === normalizedB) return true;
+  if (normalizedA.includes(normalizedB) && normalizedB.length >= 8) return true;
+  if (normalizedB.includes(normalizedA) && normalizedA.length >= 8) return true;
+
+  const tokensA = merchantTokens(a);
+  const tokensB = merchantTokens(b);
+  if (tokensA.length === 0 || tokensB.length === 0) return false;
+
+  const setA = new Set(tokensA);
+  const setB = new Set(tokensB);
+  const intersection = [...setA].filter(token => setB.has(token)).length;
+  const minSize = Math.min(setA.size, setB.size);
+
+  if (minSize === 0) return false;
+  if (intersection / minSize >= 0.8) return true;
+  return false;
+}
+
+function merchantQualityScore(transaction: DuplicateScanTransaction): number {
+  const normalized = normalizeForDuplicateCheck(transaction.description);
+  const tokens = merchantTokens(transaction.description);
+  const hasDigits = /\d{4,}/.test(transaction.description);
+
+  let score = 0;
+  score += normalized.length * 0.05;
+  score += tokens.length * 2;
+  if (hasDigits) score += 1;
+  if (hasGmailTag(transaction.tags)) score -= 3;
+  if (isGenericMerchantName(transaction.description)) score -= 100;
+
+  return score;
 }
 
 export function isGenericMerchantName(merchant: string): boolean {
@@ -409,6 +464,48 @@ export function findLikelyDuplicateTransactionIds(
 
       if (hasSpecificCounterpart) {
         toDelete.add(transaction.id);
+      }
+    }
+  }
+
+  // Rule 3: specific-vs-specific duplicates from different sources (CSV vs Gmail)
+  // Same amount and close date, merchant names equivalent after normalization/token matching.
+  for (const group of byAmount.values()) {
+    for (let i = 0; i < group.length; i++) {
+      const left = group[i];
+      if (!left.id || toDelete.has(left.id)) continue;
+      if (isGenericMerchantName(left.description)) continue;
+
+      for (let j = i + 1; j < group.length; j++) {
+        const right = group[j];
+        if (!right.id || toDelete.has(right.id)) continue;
+        if (isGenericMerchantName(right.description)) continue;
+
+        if (Math.abs(left.date.getTime() - right.date.getTime()) > oneDayMs) {
+          continue;
+        }
+
+        const leftIsGmail = hasGmailTag(left.tags);
+        const rightIsGmail = hasGmailTag(right.tags);
+        if (leftIsGmail === rightIsGmail) {
+          continue;
+        }
+
+        if (!areLikelySameMerchant(left.description, right.description)) {
+          continue;
+        }
+
+        const leftScore = merchantQualityScore(left);
+        const rightScore = merchantQualityScore(right);
+
+        if (leftScore > rightScore) {
+          toDelete.add(right.id);
+        } else if (rightScore > leftScore) {
+          toDelete.add(left.id);
+        } else {
+          // tie-breaker: keep the oldest row (typically original CSV import)
+          toDelete.add(left.id > right.id ? left.id : right.id);
+        }
       }
     }
   }

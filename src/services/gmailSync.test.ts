@@ -150,4 +150,22 @@ describe('gmailSync utilities', () => {
 
     expect(findLikelyDuplicateTransactionIds(txs)).toEqual([]);
   });
+
+  it('removes shorter gmail merchant when csv has richer but equivalent merchant name', () => {
+    const txs = [
+      { id: 50, date: new Date('2026-02-07'), amount: -2.5, description: 'CAREGGI FIRENZE PARCHE', tags: ['gmail', 'gmail-msg:msg-50'] },
+      { id: 51, date: new Date('2026-02-07'), amount: -2.5, description: 'Careggi Firenze Parche Vial', tags: [] }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([50]);
+  });
+
+  it('removes gmail merchant with missing reference suffix when csv has same base merchant', () => {
+    const txs = [
+      { id: 60, date: new Date('2026-02-03'), amount: -7.28, description: 'PAYPAL *FLIXBUS', tags: ['gmail', 'gmail-msg:msg-60'] },
+      { id: 61, date: new Date('2026-02-03'), amount: -7.28, description: 'Paypal *flixbus 30300137300', tags: [] }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([60]);
+  });
 });

@@ -297,6 +297,11 @@ Tests       21 passed (21)
     ora viene tentato il re-parse e la riga viene:
     - aggiornata con merchant corretto, oppure
     - rimossa se esiste già controparte specifica.
+  - Cleanup duplicati esteso a nomi merchant "simili" tra fonti diverse (CSV vs Gmail):
+    - stessa cifra
+    - data entro 24h
+    - confronto token/normalizzazione (es. `PAYPAL *FLIXBUS` vs `Paypal *flixbus 30300137300`)
+    - viene tenuta la riga più affidabile (tipicamente CSV) e rimossa la copia Gmail.
 
 - `src/components/Settings.tsx`
   - Nuovo bottone **Pulisci duplicati Gmail** nella sezione sync Gmail.
@@ -318,7 +323,7 @@ Tests       21 passed (21)
 ```
 npx vitest run
 Test Files  3 passed (3)
-Tests       32 passed (32)
+Tests       35 passed (35)
 ```
 
 ```
