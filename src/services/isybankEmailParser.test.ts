@@ -67,4 +67,20 @@ describe('parseIsybankEmailText', () => {
     expect(parsed).not.toBeNull();
     expect(parsed?.merchant).toBe('PAYPAL *FLIXBUS 30300137300');
   });
+
+  it('parses real isybank template with no year in date', () => {
+    const text = 'Ciao, hai pagato 7,28 EUR con la carta virtuale *9283 rif. carta *1741 il 03/02 alle ore 21:11 da PAYPAL *FLIXBUS, .';
+    const fallbackDate = new Date('2026-02-12T09:00:00.000Z');
+
+    const parsed = parseIsybankEmailText(text, fallbackDate);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.amount).toBe(-7.28);
+    expect(parsed?.merchant).toBe('PAYPAL *FLIXBUS');
+    expect(parsed?.date.getFullYear()).toBe(2026);
+    expect(parsed?.date.getMonth()).toBe(1);
+    expect(parsed?.date.getDate()).toBe(3);
+    expect(parsed?.date.getHours()).toBe(21);
+    expect(parsed?.date.getMinutes()).toBe(11);
+  });
 });

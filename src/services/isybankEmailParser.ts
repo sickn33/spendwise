@@ -21,10 +21,10 @@ const AMOUNT_PATTERNS = [
 ];
 
 const MERCHANT_PATTERNS = [
-  /presso\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /esercente\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /a favore di\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /da\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /presso\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /esercente\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /a favore di\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /da\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
   /(?:pagamento|spesa|acquisto)\s+carta\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:di|da|il|in data|alle|ore|,|\.|$))/i
 ];
 
@@ -111,15 +111,19 @@ function sanitizeMerchantCandidate(candidate: string): string | null {
 
 function extractDate(text: string, fallbackDate: Date): Date {
   const dateMatch = text.match(
-    /(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s*(?:alle|ore)?\s*(\d{1,2}):(\d{2}))?/i
+    /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?:\s*(?:alle(?:\s+ore)?|ore)?\s*(\d{1,2}):(\d{2}))?/i
   );
 
   if (!dateMatch) return fallbackDate;
 
   const day = Number.parseInt(dateMatch[1], 10);
   const month = Number.parseInt(dateMatch[2], 10);
-  const rawYear = Number.parseInt(dateMatch[3], 10);
-  const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+  const yearPart = dateMatch[3];
+  const year = yearPart
+    ? (Number.parseInt(yearPart, 10) < 100
+      ? 2000 + Number.parseInt(yearPart, 10)
+      : Number.parseInt(yearPart, 10))
+    : fallbackDate.getFullYear();
   const hours = Number.parseInt(dateMatch[4] ?? '0', 10);
   const minutes = Number.parseInt(dateMatch[5] ?? '0', 10);
 

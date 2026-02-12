@@ -236,7 +236,7 @@ Automatizzare l'import delle transazioni dalle email Gmail inviate da `comunicaz
 - `src/services/isybankEmailParser.ts` (NEW)  
   Parser testo email Isybank: estrazione importo/esercente/data, gestione spese/rimborsi.
 - `src/services/isybankEmailParser.test.ts` (NEW)  
-  Test unitari parser (4 test).
+  Test unitari parser (incluso template reale Isybank: `hai pagato ... il 03/02 alle ore ... da ...`).
 - `src/services/gmailSync.ts` (NEW)  
   OAuth Google Identity, fetch Gmail API, decode body email, dedup hash, import Dexie.
 - `src/services/gmailSync.test.ts` (NEW)  
