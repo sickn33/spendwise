@@ -1,11 +1,42 @@
-import { useState, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { importIsybankExcel, previewIsybankExcel, type ImportPreviewResult } from '../services/importer';
 import { getTransactions, getCategories, clearAllTransactions } from '../db/database';
 import { exportToExcel, exportToCSV } from '../services/importer';
 import { ImportPreviewModal } from './ImportPreviewModal';
-import { Upload, Download, FileJson, FileSpreadsheet, Trash2, Shield, Database, HardDrive, AlertTriangle } from 'lucide-react';
+import {
+    loadGmailSyncSettings,
+    saveGmailSyncSettings,
+    loadGmailToken,
+    saveGmailToken,
+    clearGmailToken,
+    isGmailTokenValid,
+    requestGmailAccessToken,
+    syncIsybankTransactionsFromGmail,
+    type GmailAccessToken,
+    type GmailSyncSettings
+} from '../services/gmailSync';
+import {
+    Upload,
+    Download,
+    FileJson,
+    FileSpreadsheet,
+    Trash2,
+    Shield,
+    Database,
+    HardDrive,
+    AlertTriangle,
+    Mail,
+    RefreshCcw,
+    Link2Off
+} from 'lucide-react';
 
-export function Settings() {
+const LAST_GMAIL_SYNC_KEY = 'spendwise-gmail-last-sync';
+
+interface SettingsProps {
+    onTransactionsImported?: () => void;
+}
+
+export function Settings({ onTransactionsImported }: SettingsProps) {
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
     const [exporting, setExporting] = useState(false);
@@ -14,6 +45,13 @@ export function Settings() {
     const [dragOver, setDragOver] = useState(false);
     const [preview, setPreview] = useState<ImportPreviewResult | null>(null);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [gmailSettings, setGmailSettings] = useState<GmailSyncSettings>(() => loadGmailSyncSettings());
+    const [gmailToken, setGmailToken] = useState<GmailAccessToken | null>(() => loadGmailToken());
+    const [gmailSyncing, setGmailSyncing] = useState(false);
+    const [gmailResult, setGmailResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [lastGmailSyncAt, setLastGmailSyncAt] = useState<string | null>(
+        () => localStorage.getItem(LAST_GMAIL_SYNC_KEY)
+    );
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     async function handleFileSelect(file: File) {
@@ -60,6 +98,9 @@ export function Settings() {
                     success: true,
                     message: `Importate ${result.imported} transazioni. ${result.skipped} duplicate saltate.${updateExisting && result.updated > 0 ? ` ${result.updated} aggiornate.` : ''}`
                 });
+                if (result.imported > 0) {
+                    onTransactionsImported?.();
+                }
             } else {
                 setImportResult({
                     success: false,
@@ -137,7 +178,8 @@ export function Settings() {
             await clearAllTransactions();
             setShowClearConfirm(false);
             setImportResult({ success: true, message: 'Tutte le transazioni sono state eliminate.' });
-        } catch (error) {
+            onTransactionsImported?.();
+        } catch {
             setImportResult({ success: false, message: 'Errore durante l\'eliminazione.' });
         } finally {
             setClearing(false);
@@ -150,6 +192,93 @@ export function Settings() {
         const file = e.dataTransfer.files[0];
         if (file) handleFileSelect(file);
     }
+
+    function updateGmailSettings(updates: Partial<GmailSyncSettings>) {
+        const next = { ...gmailSettings, ...updates };
+        setGmailSettings(next);
+        saveGmailSyncSettings(next);
+    }
+
+    const runGmailSync = useCallback(async (silent: boolean = false) => {
+        if (!gmailToken || !isGmailTokenValid(gmailToken)) {
+            clearGmailToken();
+            setGmailToken(null);
+            if (!silent) {
+                setGmailResult({ success: false, message: "Sessione Gmail scaduta. Riconnetti l'account." });
+            }
+            return;
+        }
+
+        setGmailSyncing(true);
+        try {
+            const result = await syncIsybankTransactionsFromGmail({
+                accessToken: gmailToken.accessToken,
+                senderEmail: gmailSettings.senderEmail,
+                maxResults: gmailSettings.maxResults
+            });
+
+            if (result.imported > 0) {
+                onTransactionsImported?.();
+            }
+
+            const syncedAt = new Date().toISOString();
+            setLastGmailSyncAt(syncedAt);
+            localStorage.setItem(LAST_GMAIL_SYNC_KEY, syncedAt);
+
+            const message = result.errors.length > 0
+                ? `Sync completata: ${result.imported} importate, ${result.skipped} saltate, ${result.errors.length} errori.`
+                : `Sync completata: ${result.imported} importate, ${result.skipped} duplicate/saltate.`;
+
+            setGmailResult({ success: result.errors.length === 0, message });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Errore durante la sincronizzazione Gmail';
+            setGmailResult({ success: false, message });
+        } finally {
+            setGmailSyncing(false);
+        }
+    }, [gmailSettings.maxResults, gmailSettings.senderEmail, gmailToken, onTransactionsImported]);
+
+    async function handleConnectGmail() {
+        setGmailSyncing(true);
+        try {
+            const token = await requestGmailAccessToken(gmailSettings.googleClientId);
+            setGmailToken(token);
+            saveGmailToken(token);
+            setGmailResult({ success: true, message: 'Gmail collegato con successo.' });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Connessione Gmail fallita';
+            setGmailResult({ success: false, message });
+        } finally {
+            setGmailSyncing(false);
+        }
+    }
+
+    function handleDisconnectGmail() {
+        clearGmailToken();
+        setGmailToken(null);
+        setGmailResult({ success: true, message: 'Account Gmail scollegato.' });
+    }
+
+    useEffect(() => {
+        if (!gmailToken) return;
+        if (isGmailTokenValid(gmailToken)) return;
+
+        clearGmailToken();
+        setGmailToken(null);
+        setGmailResult({ success: false, message: "Sessione Gmail scaduta. Riconnetti l'account." });
+    }, [gmailToken]);
+
+    useEffect(() => {
+        if (!gmailSettings.autoSync) return;
+        if (!gmailToken || !isGmailTokenValid(gmailToken)) return;
+
+        const intervalMs = Math.max(1, gmailSettings.pollingMinutes) * 60_000;
+        const intervalId = window.setInterval(() => {
+            void runGmailSync(true);
+        }, intervalMs);
+
+        return () => window.clearInterval(intervalId);
+    }, [gmailSettings.autoSync, gmailSettings.pollingMinutes, gmailToken, runGmailSync]);
 
     return (
         <>
@@ -202,6 +331,125 @@ export function Settings() {
                         color: importResult.success ? 'var(--success)' : 'var(--danger)'
                     }}>
                         {importResult.message}
+                    </div>
+                )}
+            </div>
+
+            {/* Gmail Auto Sync Section */}
+            <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
+                <div className="card-header">
+                    <h3 className="card-title">
+                        <Mail size={18} style={{ verticalAlign: 'middle', marginRight: 'var(--space-sm)' }} />
+                        Sync automatico da Gmail
+                    </h3>
+                </div>
+
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
+                    Importa automaticamente le email Isybank da <strong>{gmailSettings.senderEmail}</strong> e crea
+                    transazioni in SpendWise (con deduplica automatica).
+                </p>
+
+                <div style={{ display: 'grid', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                    <label style={{ display: 'grid', gap: '0.35rem' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Google OAuth Client ID</span>
+                        <input
+                            type="text"
+                            className="input"
+                            placeholder="xxxxxxxx.apps.googleusercontent.com"
+                            value={gmailSettings.googleClientId}
+                            onChange={e => updateGmailSettings({ googleClientId: e.target.value })}
+                        />
+                    </label>
+
+                    <label style={{ display: 'grid', gap: '0.35rem' }}>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Mittente banca</span>
+                        <input
+                            type="email"
+                            className="input"
+                            value={gmailSettings.senderEmail}
+                            onChange={e => updateGmailSettings({ senderEmail: e.target.value })}
+                        />
+                    </label>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-md)' }}>
+                        <label style={{ display: 'grid', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Email da leggere</span>
+                            <input
+                                type="number"
+                                className="input"
+                                min={5}
+                                max={100}
+                                value={gmailSettings.maxResults}
+                                onChange={e => updateGmailSettings({ maxResults: Number.parseInt(e.target.value || '25', 10) })}
+                            />
+                        </label>
+
+                        <label style={{ display: 'grid', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Intervallo auto-sync (min)</span>
+                            <input
+                                type="number"
+                                className="input"
+                                min={1}
+                                max={120}
+                                value={gmailSettings.pollingMinutes}
+                                onChange={e => updateGmailSettings({ pollingMinutes: Number.parseInt(e.target.value || '10', 10) })}
+                            />
+                        </label>
+                    </div>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                        <input
+                            type="checkbox"
+                            checked={gmailSettings.autoSync}
+                            onChange={e => updateGmailSettings({ autoSync: e.target.checked })}
+                        />
+                        <span>Abilita sincronizzazione automatica periodica</span>
+                    </label>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={handleConnectGmail}
+                        disabled={gmailSyncing}
+                    >
+                        <Mail size={16} />
+                        {gmailToken && isGmailTokenValid(gmailToken) ? 'Ricollega Gmail' : 'Collega Gmail'}
+                    </button>
+
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => void runGmailSync(false)}
+                        disabled={gmailSyncing || !gmailToken || !isGmailTokenValid(gmailToken)}
+                    >
+                        <RefreshCcw size={16} />
+                        {gmailSyncing ? 'Sincronizzazione...' : 'Sincronizza ora'}
+                    </button>
+
+                    <button
+                        className="btn btn-secondary"
+                        onClick={handleDisconnectGmail}
+                        disabled={gmailSyncing || !gmailToken}
+                    >
+                        <Link2Off size={16} />
+                        Scollega
+                    </button>
+                </div>
+
+                <div style={{ marginTop: 'var(--space-md)', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                    Stato connessione: {gmailToken && isGmailTokenValid(gmailToken) ? 'attiva' : 'non attiva'}
+                    {lastGmailSyncAt ? ` • Ultima sync: ${new Date(lastGmailSyncAt).toLocaleString('it-IT')}` : ''}
+                </div>
+
+                {gmailResult && (
+                    <div style={{
+                        marginTop: 'var(--space-md)',
+                        padding: 'var(--space-md)',
+                        background: gmailResult.success ? 'var(--success-bg)' : 'var(--danger-bg)',
+                        borderRadius: 'var(--radius-md)',
+                        color: gmailResult.success ? 'var(--success)' : 'var(--danger)'
+                    }}>
+                        {gmailResult.message}
                     </div>
                 )}
             </div>

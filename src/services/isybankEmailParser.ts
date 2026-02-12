@@ -1,0 +1,117 @@
+export interface ParsedIsybankEmailText {
+  amount: number;
+  merchant: string;
+  date: Date;
+  currency: string;
+  details: string;
+}
+
+const INCOME_KEYWORDS = [
+  'rimborso',
+  'storno',
+  'riaccredito',
+  'accredito',
+  'bonifico ricevuto'
+];
+
+const AMOUNT_PATTERNS = [
+  /(?:spesa|pagamento|acquisto|addebito|rimborso|storno|accredito)[^0-9€]{0,30}(?:€|eur)?\s*(-?[0-9]{1,3}(?:[.\s][0-9]{3})*(?:[.,][0-9]{2})?)/i,
+  /(?:€|eur)\s*(-?[0-9]{1,3}(?:[.\s][0-9]{3})*(?:[.,][0-9]{2})?)/i,
+  /(-?[0-9]{1,3}(?:[.\s][0-9]{3})*(?:[.,][0-9]{2})?)\s*(?:€|eur)/i
+];
+
+const MERCHANT_PATTERNS = [
+  /presso\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /esercente\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /da\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
+  /a favore di\s+([a-z0-9&' .-]{2,80}?)(?=\s+(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i
+];
+
+function normalizeText(text: string): string {
+  return text
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseLocalizedAmount(rawAmount: string): number {
+  const compact = rawAmount.replace(/\s/g, '');
+  if (compact.includes(',') && compact.includes('.')) {
+    return Number.parseFloat(compact.replace(/\./g, '').replace(',', '.'));
+  }
+
+  if (compact.includes(',')) {
+    return Number.parseFloat(compact.replace(',', '.'));
+  }
+
+  return Number.parseFloat(compact);
+}
+
+function extractAmount(text: string): number | null {
+  for (const pattern of AMOUNT_PATTERNS) {
+    const match = text.match(pattern);
+    if (!match?.[1]) continue;
+
+    const parsed = parseLocalizedAmount(match[1]);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function extractMerchant(text: string): string {
+  for (const pattern of MERCHANT_PATTERNS) {
+    const match = text.match(pattern);
+    if (!match?.[1]) continue;
+
+    return match[1].trim().replace(/\s+/g, ' ').toUpperCase();
+  }
+
+  return 'Transazione carta';
+}
+
+function extractDate(text: string, fallbackDate: Date): Date {
+  const dateMatch = text.match(
+    /(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s*(?:alle|ore)?\s*(\d{1,2}):(\d{2}))?/i
+  );
+
+  if (!dateMatch) return fallbackDate;
+
+  const day = Number.parseInt(dateMatch[1], 10);
+  const month = Number.parseInt(dateMatch[2], 10);
+  const rawYear = Number.parseInt(dateMatch[3], 10);
+  const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+  const hours = Number.parseInt(dateMatch[4] ?? '0', 10);
+  const minutes = Number.parseInt(dateMatch[5] ?? '0', 10);
+
+  const parsed = new Date(year, month - 1, day, hours, minutes, 0, 0);
+  if (Number.isNaN(parsed.getTime())) return fallbackDate;
+  return parsed;
+}
+
+function isIncomeNotification(text: string): boolean {
+  const lower = text.toLowerCase();
+  return INCOME_KEYWORDS.some(keyword => lower.includes(keyword));
+}
+
+export function parseIsybankEmailText(text: string, fallbackDate: Date): ParsedIsybankEmailText | null {
+  const normalizedText = normalizeText(text);
+  const amount = extractAmount(normalizedText);
+
+  if (amount === null) return null;
+
+  const signedAmount = isIncomeNotification(normalizedText)
+    ? Math.abs(amount)
+    : -Math.abs(amount);
+
+  return {
+    amount: signedAmount,
+    merchant: extractMerchant(normalizedText),
+    date: extractDate(normalizedText, fallbackDate),
+    currency: 'EUR',
+    details: normalizedText
+  };
+}

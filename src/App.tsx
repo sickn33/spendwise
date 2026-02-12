@@ -161,7 +161,7 @@ function App() {
             case 'comparison':
                 return <MonthComparison />;
             case 'settings':
-                return <Settings />;
+                return <Settings onTransactionsImported={() => setRefreshTrigger(prev => prev + 1)} />;
             default:
                 return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} />;
         }

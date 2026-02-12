@@ -1,0 +1,50 @@
+import { describe, expect, it } from 'vitest';
+import { parseIsybankEmailText } from './isybankEmailParser';
+
+describe('parseIsybankEmailText', () => {
+  it('parses an expense email with amount, merchant and date', () => {
+    const text = 'Hai effettuato una spesa di € 12,34 presso AMAZON MARKETPLACE il 10/02/2026 alle 14:21.';
+    const fallbackDate = new Date('2026-02-12T09:00:00.000Z');
+
+    const parsed = parseIsybankEmailText(text, fallbackDate);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.amount).toBe(-12.34);
+    expect(parsed?.merchant).toBe('AMAZON MARKETPLACE');
+    expect(parsed?.date.getFullYear()).toBe(2026);
+    expect(parsed?.date.getMonth()).toBe(1);
+    expect(parsed?.date.getDate()).toBe(10);
+    expect(parsed?.date.getHours()).toBe(14);
+    expect(parsed?.date.getMinutes()).toBe(21);
+  });
+
+  it('parses a refund as positive amount', () => {
+    const text = 'Rimborso di EUR 5,00 da PAYPAL in data 11/02/2026 ore 09:10.';
+    const fallbackDate = new Date('2026-02-12T09:00:00.000Z');
+
+    const parsed = parseIsybankEmailText(text, fallbackDate);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.amount).toBe(5);
+    expect(parsed?.merchant).toBe('PAYPAL');
+  });
+
+  it('uses fallback date when date is not in the email text', () => {
+    const text = 'Pagamento carta di 42,90 EUR presso SUPERMERCATO COOP.';
+    const fallbackDate = new Date('2026-02-01T19:45:00.000Z');
+
+    const parsed = parseIsybankEmailText(text, fallbackDate);
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.date.toISOString()).toBe(fallbackDate.toISOString());
+  });
+
+  it('returns null when no amount is found', () => {
+    const text = 'Notifica di sicurezza Isybank senza dettagli di spesa.';
+    const fallbackDate = new Date('2026-02-12T09:00:00.000Z');
+
+    const parsed = parseIsybankEmailText(text, fallbackDate);
+
+    expect(parsed).toBeNull();
+  });
+});

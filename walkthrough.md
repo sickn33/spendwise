@@ -225,6 +225,49 @@ Tests       14 passed (14)
 
 ---
 
+## 4. Gmail Auto-Sync Isybank ✅
+
+### Obiettivo
+
+Automatizzare l'import delle transazioni dalle email Gmail inviate da `comunicazioni@isybank.com`, con deduplica e aggiornamento automatico delle viste.
+
+### File Creati/Modificati
+
+- `src/services/isybankEmailParser.ts` (NEW)  
+  Parser testo email Isybank: estrazione importo/esercente/data, gestione spese/rimborsi.
+- `src/services/isybankEmailParser.test.ts` (NEW)  
+  Test unitari parser (4 test).
+- `src/services/gmailSync.ts` (NEW)  
+  OAuth Google Identity, fetch Gmail API, decode body email, dedup hash, import Dexie.
+- `src/services/gmailSync.test.ts` (NEW)  
+  Test unitari utility sync (3 test).
+- `src/components/Settings.tsx` (MODIFIED)  
+  Nuova sezione "Sync automatico da Gmail" con:
+  - Client ID Google
+  - Mittente email configurabile
+  - Connect/Disconnect Gmail
+  - Sync manuale
+  - Auto-sync a intervallo
+  - Stato connessione + ultimo sync
+- `src/App.tsx` (MODIFIED)  
+  Refresh transazioni dopo import Gmail/manuale.
+- `.codex/scratchpad.md` (NEW)  
+  Tracciamento task e evidenza RED/GREEN/REFACTOR.
+
+### Evidenza Test
+
+```
+npx vitest run
+Test Files  3 passed (3)
+Tests       21 passed (21)
+```
+
+### Nota lint
+
+`npm run lint` fallisce su molte violazioni preesistenti (inclusa `.venv`), non legate alla feature Gmail.
+
+---
+
 ## Riepilogo File Modificati
 
 | File                                 | Tipo     | Righe                |
