@@ -17,7 +17,7 @@ describe('Sidebar Component', () => {
         expect(screen.getByText('REGISTRO')).toBeInTheDocument();
         expect(screen.getByText('REPORT')).toBeInTheDocument();
         expect(screen.getByText('CATEGORIE')).toBeInTheDocument();
-        expect(screen.getByText('CONFIG')).toBeInTheDocument();
+        expect(screen.getByText('CONFIGURAZIONE')).toBeInTheDocument();
     });
 
     it('highlights the active page', () => {
@@ -31,10 +31,11 @@ describe('Sidebar Component', () => {
         );
 
         const activeItem = screen.getByText('REGISTRO').closest('button');
-        expect(activeItem?.classList.contains('active')).toBe(true);
+        // Check for specific background class
+        expect(activeItem?.className).toContain(' bg-concrete');
         
         const inactiveItem = screen.getByText('RIEPILOGO').closest('button');
-        expect(inactiveItem?.classList.contains('active')).toBe(false);
+        expect(inactiveItem?.className).toContain('bg-transparent');
     });
 
     it('displays the logo and version', () => {
@@ -47,7 +48,8 @@ describe('Sidebar Component', () => {
             />
         );
         expect(screen.getByText('SPENDWISE')).toBeInTheDocument();
-        expect(screen.getByText('v1.0.0_STABLE')).toBeInTheDocument();
+        expect(screen.getByText('v1.0.0')).toBeInTheDocument();
+        expect(screen.getByText('STABLE')).toBeInTheDocument();
     });
 
     it('calls onNavigate when an item is clicked', () => {
@@ -76,7 +78,7 @@ describe('Sidebar Component', () => {
             />
         );
 
-        fireEvent.click(screen.getByText('Tema Scuro'));
+        fireEvent.click(screen.getByText('MODO SCURO'));
         expect(handleThemeToggle).toHaveBeenCalled();
     });
 });

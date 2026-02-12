@@ -82,82 +82,114 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded 
 
     return (
         <>
-            <div className={`fixed bottom-md left-1/2 -translate-x-1/2 flex items-center gap-px bg-border structural-border z-50 shadow-none transition-all duration-300 ${isExpanded ? 'w-auto' : 'w-auto'}`}>
-                {/* Main Toggle */}
-                <button
-                    className="p-sm bg-paper hover:bg-concrete text-ink flex items-center gap-xs min-w-[140px] justify-center"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                    title={isExpanded ? "Chiudi" : "Espandi"}
-                >
-                    <span className="font-mono text-xs uppercase tracking-wider">
-                        {isExpanded ? 'CHIUDI_PANNELLO' : '⚡ AGGIUNTA_RAPIDA'}
-                    </span>
-                </button>
-
-                {/* Expanded Actions */}
-                {isExpanded && (
-                    <>
-                        <button
-                            className={`p-sm bg-paper hover:bg-concrete text-ink flex items-center justify-center w-10 ${isEditing ? 'bg-concrete' : ''}`}
-                            onClick={() => setIsEditing(!isEditing)}
-                            title={isEditing ? "Fine modifica" : "Modifica preset"}
-                        >
-                            <Settings size={14} />
-                        </button>
+            <div className={`
+                fixed bottom-md right-md z-50 flex flex-col items-end gap-sm transition-all duration-300
+                ${isExpanded ? 'translate-y-0' : 'translate-y-0'}
+            `}>
+                {/* Expanded Actions Panel */}
+                <div className={`
+                    bg-paper structural-border shadow-2xl overflow-hidden transition-all duration-300 origin-bottom-right
+                    ${isExpanded ? 'opacity-100 scale-100 mb-2' : 'opacity-0 scale-95 h-0 mb-0 pointer-events-none'}
+                `}>
+                    <div className="w-64">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-sm border-b border-border bg-paper">
+                            <span className="font-mono text-[10px] uppercase tracking-wider text-ink/50">AGGIUNTA RAPIDA</span>
+                            <button
+                                className={`p-1 hover:bg-concrete transition-colors ${isEditing ? 'text-ink bg-concrete' : 'text-ink/40'}`}
+                                onClick={() => setIsEditing(!isEditing)}
+                                title={isEditing ? "Fine modifica" : "Modifica preset"}
+                            >
+                                <Settings size={12} />
+                            </button>
+                        </div>
                         
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-sm w-72 bg-paper structural-border shadow-none overflow-hidden">
-                            <div className="grid grid-cols-2 gap-px bg-border p-px">
-                                {presets.map(preset => {
-                                    const category = getCategoryById(preset.categoryId);
-                                    const isSuccess = addingSuccess === preset.id;
+                        {/* Grid */}
+                        <div className="grid grid-cols-2 gap-px bg-border border-b border-border">
+                            {presets.map(preset => {
+                                const category = getCategoryById(preset.categoryId);
+                                const isSuccess = addingSuccess === preset.id;
 
-                                    return (
+                                return (
+                                    <div key={preset.id} className="relative bg-paper group">
                                         <button
-                                            key={preset.id}
-                                            className={`relative p-sm bg-paper hover:bg-concrete text-left transition-colors group ${isSuccess ? 'bg-concrete' : ''}`}
+                                            className={`
+                                                w-full p-sm text-left transition-all hover:bg-concrete h-20 flex flex-col justify-between
+                                                ${isSuccess ? 'bg-concrete' : ''}
+                                            `}
                                             onClick={() => handleQuickAdd(preset)}
                                         >
-                                            <div className="flex items-center justify-between mb-xs">
-                                                <span className="text-lg">{isSuccess ? <Check size={18} /> : preset.icon}</span>
-                                                <span className="font-mono text-xs opacity-60">€{preset.amount.toFixed(2)}</span>
+                                            <div className="flex justify-between items-start w-full">
+                                                <span className="text-lg filter grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">{isSuccess ? <Check size={18} /> : preset.icon}</span>
+                                                <span className="font-mono text-[10px] opacity-50">€{preset.amount.toFixed(2)}</span>
                                             </div>
-                                            <div className="font-mono text-xs uppercase truncate pr-4">
+                                            <div className="font-mono text-[10px] uppercase truncate w-full pt-2 border-t border-transparent group-hover:border-ink/10 mt-auto">
                                                 {preset.name}
                                             </div>
-                                            
-                                            {/* Category Indicator */}
-                                            <div 
-                                                className="absolute top-0 right-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                                style={{ backgroundColor: category?.color }}
-                                            />
-
-                                            {isEditing && (
-                                                <div
-                                                    className="absolute top-0 right-0 p-1 bg-paper/80 hover:bg-paper text-ink z-10"
-                                                    onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id!); }}
-                                                >
-                                                    <X size={12} />
-                                                </div>
-                                            )}
                                         </button>
-                                    );
-                                })}
 
-                                {isEditing && (
-                                    <button
-                                        className="p-sm bg-paper hover:bg-concrete flex flex-col items-center justify-center gap-xs min-h-[60px]"
-                                        onClick={() => setShowAddNew(true)}
-                                    >
-                                        <Plus size={20} className="opacity-40" />
-                                        <span className="font-mono text-[10px] uppercase opacity-40">NUOVO</span>
-                                    </button>
-                                )}
-                            </div>
+                                        {/* Category Stripe */}
+                                        <div 
+                                            className="absolute bottom-0 left-0 h-[2px] w-0 group-hover:w-full transition-all duration-300"
+                                            style={{ backgroundColor: category?.color || '#000' }}
+                                        />
+
+                                        {isEditing && (
+                                            <button
+                                                className="absolute top-1 right-1 p-1 bg-paper border border-border hover:bg-red-50 hover:border-red-500 hover:text-red-500 transition-colors z-10"
+                                                onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id!); }}
+                                            >
+                                                <X size={10} />
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {isEditing && (
+                                <button
+                                    className="h-20 bg-paper hover:bg-concrete flex flex-col items-center justify-center gap-1 group"
+                                    onClick={() => setShowAddNew(true)}
+                                >
+                                    <div className="w-6 h-6 border border-dashed border-ink/30 flex items-center justify-center rounded-none group-hover:border-ink/60 transition-colors">
+                                        <Plus size={12} className="opacity-40 group-hover:opacity-100" />
+                                    </div>
+                                    <span className="font-mono text-[9px] uppercase opacity-40 group-hover:opacity-100">NUOVO</span>
+                                </button>
+                            )}
                         </div>
-                    </>
-                )}
+                        
+                        {/* Status Bar */}
+                        <div className="p-xs bg-concrete/30 text-center">
+                            <span className="font-mono text-[9px] text-ink/30 uppercase">
+                                {presets.length} PRESET ATTIVI
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Toggle Button (Floating Action Style) */}
+                <button
+                    className={`
+                        h-12 flex items-center gap-3 px-4 bg-paper structural-border shadow-xl hover:shadow-2xl transition-all duration-300 group
+                        ${isExpanded ? 'bg-ink text-paper border-ink' : 'hover:bg-concrete'}
+                    `}
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    title={isExpanded ? "Chiudi pannello" : "Apertura rapida"}
+                >
+                    <span className={`font-mono text-xs uppercase tracking-wider ${isExpanded ? 'text-paper' : 'text-ink'}`}>
+                        {isExpanded ? 'CHIUDI' : 'AGGIUNTA RAPIDA'}
+                    </span>
+                    <div className={`
+                        w-6 h-6 flex items-center justify-center border transition-colors
+                        ${isExpanded ? 'border-paper/30 bg-paper/10' : 'border-ink/20 bg-concrete group-hover:border-ink/40'}
+                    `}>
+                        {isExpanded ? <X size={14} /> : <Plus size={14} />}
+                    </div>
+                </button>
             </div>
 
+            {/* KEEP EXISTING ADD NEW MODAL */}
             {/* Add New Preset Modal (Reused structural modal style) */}
             {showAddNew && (
                 <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-[60] flex items-center justify-center p-md" onClick={() => setShowAddNew(false)}>
