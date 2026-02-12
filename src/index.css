@@ -200,7 +200,11 @@ h4 {
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
   cursor: pointer;
   border: none;
   background: transparent;
@@ -233,7 +237,10 @@ h4 {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  transition: all var(--transition-base);
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base);
 }
 
 .card:hover {
@@ -308,7 +315,12 @@ h4 {
   font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
   border: none;
   text-decoration: none;
 }
@@ -381,7 +393,10 @@ h4 {
   padding: var(--space-md);
   font-size: 1rem;
   color: var(--text-primary);
-  transition: all var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
   width: 100%;
 }
 
@@ -423,7 +438,7 @@ select.input {
   gap: var(--space-md);
   padding: var(--space-md);
   border-bottom: 1px solid var(--border);
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast);
   cursor: pointer;
 }
 

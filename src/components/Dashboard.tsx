@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getCategories, getTransactions } from '../db/database';
 import { getMonthlyStats, getCategoryBreakdown, getDailyAverageSpending } from '../services/analytics';
 import type { Transaction, Category, MonthlyStats, ChartDataPoint } from '../types';
@@ -31,6 +31,10 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
             const startOfSelectedMonth = startOfMonth(selectedMonth);
             const endOfSelectedMonth = endOfMonth(selectedMonth);
             const previousMonth = subMonths(selectedMonth, 1);
+            const months = eachMonthOfInterval({
+                start: subMonths(selectedMonth, 5),
+                end: selectedMonth
+            });
 
             // Load all data in parallel
             const [
@@ -38,23 +42,21 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
                 prevStats,
                 breakdown,
                 cats,
-                avgDaily
+                avgDaily,
+                monthTransactions,
+                trendStats
             ] = await Promise.all([
                 getMonthlyStats(selectedMonth),
                 getMonthlyStats(previousMonth),
                 getCategoryBreakdown(startOfSelectedMonth, endOfSelectedMonth),
                 getCategories(),
-                getDailyAverageSpending()
+                getDailyAverageSpending(),
+                getTransactions({
+                    dateFrom: startOfSelectedMonth,
+                    dateTo: endOfSelectedMonth
+                }),
+                Promise.all(months.map(month => getMonthlyStats(month)))
             ]);
-
-            // Get transactions for the selected month
-            const allTransactions = await getTransactions();
-            const monthTransactions = allTransactions
-                .filter(t => {
-                    const txDate = new Date(t.date);
-                    return txDate >= startOfSelectedMonth && txDate <= endOfSelectedMonth;
-                })
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
             setMonthlyStats(currentStats);
             setLastMonthStats(prevStats);
@@ -62,23 +64,10 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
             setRecentTransactions(monthTransactions);
             setCategories(cats);
             setDailyAverage(avgDaily);
-
-            // Load trend data (always show 6 months ending at selected month)
-            const months = eachMonthOfInterval({
-                start: subMonths(selectedMonth, 5),
-                end: selectedMonth
+            setTrendData({
+                labels: months.map(month => format(month, 'MMM', { locale: it })),
+                values: trendStats.map(stats => stats.totalExpenses)
             });
-
-            const trendLabels: string[] = [];
-            const trendValues: number[] = [];
-
-            for (const month of months) {
-                const stats = await getMonthlyStats(month);
-                trendLabels.push(format(month, 'MMM', { locale: it }));
-                trendValues.push(stats.totalExpenses);
-            }
-
-            setTrendData({ labels: trendLabels, values: trendValues });
         } catch (error) {
             console.error('Error loading dashboard:', error);
         } finally {
@@ -108,7 +97,10 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
 
     const isCurrentMonth = format(selectedMonth, 'yyyy-MM') === format(new Date(), 'yyyy-MM');
 
-    const getCategoryById = (id: number) => categories.find(c => c.id === id);
+    const categoryMap = useMemo(
+        () => new Map(categories.map(c => [c.id!, c])),
+        [categories]
+    );
 
     const expenseChange = monthlyStats && lastMonthStats && lastMonthStats.totalExpenses > 0
         ? ((monthlyStats.totalExpenses - lastMonthStats.totalExpenses) / lastMonthStats.totalExpenses * 100)
@@ -118,15 +110,7 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
         ? ((monthlyStats.totalIncome - lastMonthStats.totalIncome) / lastMonthStats.totalIncome * 100)
         : 0;
 
-    if (loading) {
-        return (
-            <div className="loading">
-                <div className="spinner"></div>
-            </div>
-        );
-    }
-
-    const doughnutData = {
+    const doughnutData = useMemo(() => ({
         labels: categoryBreakdown.slice(0, 6).map(c => c.label),
         datasets: [{
             data: categoryBreakdown.slice(0, 6).map(c => c.value),
@@ -135,9 +119,9 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
             borderWidth: 0,
             hoverOffset: 10
         }]
-    };
+    }), [categoryBreakdown]);
 
-    const lineData = {
+    const lineData = useMemo(() => ({
         labels: trendData.labels,
         datasets: [{
             label: 'Spese',
@@ -149,19 +133,20 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
             pointRadius: 4,
             pointBackgroundColor: '#6366f1'
         }]
-    };
+    }), [trendData]);
 
-    const chartOptions = {
+    const chartOptions = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
         plugins: {
             legend: {
                 display: false
             }
         }
-    };
+    }), []);
 
-    const lineOptions = {
+    const lineOptions = useMemo(() => ({
         ...chartOptions,
         scales: {
             x: {
@@ -176,7 +161,15 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
                 }
             }
         }
-    };
+    }), [chartOptions]);
+
+    if (loading) {
+        return (
+            <div className="loading">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -364,7 +357,7 @@ export function Dashboard({ onAddTransaction }: DashboardProps) {
                 <div className="transaction-list" style={{ maxHeight: '500px', overflowY: 'auto' }}>
                     {recentTransactions.length > 0 ? (
                         recentTransactions.map(t => {
-                            const category = getCategoryById(t.categoryId);
+                            const category = categoryMap.get(t.categoryId);
                             return (
                                 <div key={t.id} className="transaction-item">
                                     <div

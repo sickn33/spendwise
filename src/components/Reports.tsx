@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { generateReportData } from '../services/analytics';
 import { getCategories } from '../db/database';
 import type { ReportData, Category } from '../types';
@@ -18,11 +18,7 @@ export function Reports() {
     const [dateRange, setDateRange] = useState<'month' | '3months' | 'year'>('month');
     const [generating, setGenerating] = useState(false);
 
-    useEffect(() => {
-        loadReport();
-    }, [dateRange]);
-
-    async function loadReport() {
+    const loadReport = useCallback(async () => {
         setLoading(true);
         try {
             const now = new Date();
@@ -52,7 +48,11 @@ export function Reports() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [dateRange]);
+
+    useEffect(() => {
+        loadReport();
+    }, [loadReport]);
 
     async function generatePDF() {
         if (!reportData) return;
@@ -152,6 +152,53 @@ export function Reports() {
         }
     }
 
+    const categoryMap = useMemo(
+        () => new Map(categories.map(c => [c.id!, c])),
+        [categories]
+    );
+
+    const doughnutData = useMemo(() => ({
+        labels: reportData?.categoryBreakdown.slice(0, 6).map(c => c.category.name) ?? [],
+        datasets: [{
+            data: reportData?.categoryBreakdown.slice(0, 6).map(c => c.amount) ?? [],
+            backgroundColor: reportData?.categoryBreakdown.slice(0, 6).map(c => c.category.color) ?? [],
+            borderColor: 'transparent',
+            borderWidth: 0
+        }]
+    }), [reportData]);
+
+    const barData = useMemo(() => ({
+        labels: reportData?.monthlyTrend.map(d => d.date) ?? [],
+        datasets: [{
+            label: 'Spese',
+            data: reportData?.monthlyTrend.map(d => d.value) ?? [],
+            backgroundColor: 'rgba(99, 102, 241, 0.8)',
+            borderRadius: 8
+        }]
+    }), [reportData]);
+
+    const barOptions = useMemo(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: {
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                ticks: { color: '#a0a0b0' }
+            },
+            y: {
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                ticks: {
+                    color: '#a0a0b0',
+                    callback: (value: number) => `€${value}`
+                }
+            }
+        }
+    }), []);
+
     if (loading) {
         return (
             <div className="loading">
@@ -169,47 +216,6 @@ export function Reports() {
             </div>
         );
     }
-
-    const doughnutData = {
-        labels: reportData.categoryBreakdown.slice(0, 6).map(c => c.category.name),
-        datasets: [{
-            data: reportData.categoryBreakdown.slice(0, 6).map(c => c.amount),
-            backgroundColor: reportData.categoryBreakdown.slice(0, 6).map(c => c.category.color),
-            borderColor: 'transparent',
-            borderWidth: 0
-        }]
-    };
-
-    const barData = {
-        labels: reportData.monthlyTrend.map(d => d.date),
-        datasets: [{
-            label: 'Spese',
-            data: reportData.monthlyTrend.map(d => d.value),
-            backgroundColor: 'rgba(99, 102, 241, 0.8)',
-            borderRadius: 8
-        }]
-    };
-
-    const barOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            x: {
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: { color: '#a0a0b0' }
-            },
-            y: {
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: {
-                    color: '#a0a0b0',
-                    callback: (value: number) => `€${value}`
-                }
-            }
-        }
-    };
 
     return (
         <div>
@@ -300,7 +306,7 @@ export function Reports() {
                         <h3 className="card-title">Trend mensile</h3>
                     </div>
                     <div className="chart-container" style={{ height: '280px' }}>
-                        <Bar data={barData} options={barOptions as any} />
+                        <Bar data={barData} options={barOptions as never} />
                     </div>
                 </div>
             </div>
@@ -352,7 +358,7 @@ export function Reports() {
                 </div>
                 <div className="transaction-list">
                     {reportData.topExpenses.map((t, i) => {
-                        const category = categories.find(c => c.id === t.categoryId);
+                        const category = categoryMap.get(t.categoryId);
                         return (
                             <div key={i} className="transaction-item">
                                 <div style={{

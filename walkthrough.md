@@ -356,3 +356,58 @@ npm run build
 2. **Test E2E con Playwright** - Verificare flussi utente completi
 3. **Lighthouse Audit** - Verificare score accessibilità (target 90+)
 4. **Verifica VoiceOver** - Test manuale con screen reader
+
+---
+
+## 2026-02-12 - Ottimizzazione performance UI (scatti/lentezza)
+
+### Problema
+Interfaccia percepita lenta e a scatti durante ricerca/filtri transazioni e navigazione pagine con grafici.
+
+### Interventi applicati
+
+- `src/components/TransactionList.tsx`
+  - Aggiunto `useDeferredValue` per rendere la ricerca meno bloccante in digitazione.
+  - Indicizzazione memoizzata delle transazioni (`timestamp`, `dateKey`, testo normalizzato) per ridurre parsing/ricalcoli ripetuti.
+  - Ridotti passaggi multipli su array (totali ora in singolo `reduce`).
+
+- `src/components/Dashboard.tsx`
+  - Query mese selezionato fatta direttamente su range DB (`getTransactions({dateFrom, dateTo})`) invece di caricare tutto e filtrare lato UI.
+  - Trend 6 mesi calcolato in parallelo (`Promise.all`) invece che in serie.
+  - Dati/opzioni grafici memoizzati e animazioni disattivate per ridurre micro-jank.
+
+- `src/components/Reports.tsx`
+  - `loadReport` stabilizzato con `useCallback`.
+  - Dati/opzioni grafici memoizzati e animazioni disattivate.
+  - Lookup categorie ottimizzato con `Map`.
+
+- `src/components/MonthComparison.tsx`
+  - Dati/opzioni grafico memoizzati.
+  - Animazioni grafico disattivate.
+
+- `src/services/analytics.ts`
+  - `getSpendingTrend` ora parallelo (`Promise.all`) invece di loop asincrono seriale.
+  - `generateReportData` riusa le transazioni già caricate per `topExpenses` (evitata query duplicata).
+
+- `src/services/comparison.ts`
+  - Parallelizzazione delle chiamate principali (`getMonthlyComparison`, `getCategoryComparison`, `getSpendingVelocity`, `generatePrediction`) per ridurre tempo di attesa percepito.
+
+- `src/index.css`
+  - Sostituite varie `transition: all` con transition mirate (background/color/border/shadow/transform) per evitare ricalcoli/layout inutili.
+
+### Verifica
+
+```bash
+npx eslint src/components/TransactionList.tsx src/components/Dashboard.tsx src/components/Reports.tsx src/components/MonthComparison.tsx src/services/analytics.ts src/services/comparison.ts
+# OK
+```
+
+```bash
+npm run test -- --run
+# Test Files 3 passed, Tests 37 passed
+```
+
+```bash
+npm run build
+# Build produzione completata (Vite)
+```

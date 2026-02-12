@@ -43,17 +43,12 @@ export async function getSpendingTrend(months: number = 6): Promise<TimeSeriesDa
     const startDate = subMonths(now, months - 1);
 
     const monthDates = eachMonthOfInterval({ start: startDate, end: now });
-    const trend: TimeSeriesDataPoint[] = [];
+    const monthlyStats = await Promise.all(monthDates.map(monthDate => getMonthlyStats(monthDate)));
 
-    for (const monthDate of monthDates) {
-        const stats = await getMonthlyStats(monthDate);
-        trend.push({
-            date: stats.month,
-            value: stats.totalExpenses
-        });
-    }
-
-    return trend;
+    return monthlyStats.map(stats => ({
+        date: stats.month,
+        value: stats.totalExpenses
+    }));
 }
 
 // Get category breakdown for a date range
@@ -196,7 +191,10 @@ export async function generateReportData(startDate: Date, endDate: Date): Promis
         })
         .sort((a, b) => b.amount - a.amount);
 
-    const topExpenses = await getTopExpenses(startDate, endDate, 10);
+    const topExpenses = transactions
+        .filter(t => t.amount < 0)
+        .sort((a, b) => a.amount - b.amount)
+        .slice(0, 10);
     const monthlyTrend = await getSpendingTrend(6);
 
     return {

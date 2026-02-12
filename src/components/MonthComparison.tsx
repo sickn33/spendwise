@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getMonthlyComparison } from '../services/comparison';
 import type { MonthlyComparisonData, CategoryComparison, Language } from '../types';
 import { Bar } from 'react-chartjs-2';
@@ -188,31 +188,13 @@ export function MonthComparison() {
         }
     }
 
-    if (loading) {
-        return (
-            <div className="loading">
-                <div className="spinner"></div>
-            </div>
-        );
-    }
-
-    if (!data) {
-        return (
-            <div className="empty-state">
-                <div className="empty-state-icon">📊</div>
-                <div className="empty-state-title">Nessun dato disponibile</div>
-                <p>Aggiungi delle transazioni per vedere il confronto</p>
-            </div>
-        );
-    }
-
     // Prepare chart data for dual bar comparison
-    const chartData = {
-        labels: data.categoryComparison.slice(0, 8).map(c => c.category.name),
+    const chartData = useMemo(() => ({
+        labels: data?.categoryComparison.slice(0, 8).map(c => c.category.name) ?? [],
         datasets: [
             {
                 label: format(subMonths(selectedMonth, 1), 'MMM', { locale: itLocale }),
-                data: data.categoryComparison.slice(0, 8).map(c => c.previous.amount),
+                data: data?.categoryComparison.slice(0, 8).map(c => c.previous.amount) ?? [],
                 backgroundColor: 'rgba(158, 158, 158, 0.5)',
                 borderColor: 'rgba(158, 158, 158, 1)',
                 borderWidth: 1,
@@ -220,18 +202,19 @@ export function MonthComparison() {
             },
             {
                 label: format(selectedMonth, 'MMM', { locale: itLocale }),
-                data: data.categoryComparison.slice(0, 8).map(c => c.current.amount),
+                data: data?.categoryComparison.slice(0, 8).map(c => c.current.amount) ?? [],
                 backgroundColor: 'rgba(99, 102, 241, 0.7)',
                 borderColor: 'rgba(99, 102, 241, 1)',
                 borderWidth: 1,
                 borderRadius: 4
             }
         ]
-    };
+    }), [data, selectedMonth]);
 
-    const chartOptions = {
+    const chartOptions = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
+        animation: false as const,
         indexAxis: 'y' as const,
         plugins: {
             legend: {
@@ -252,7 +235,25 @@ export function MonthComparison() {
                 ticks: { color: '#a0a0b0' }
             }
         }
-    };
+    }), []);
+
+    if (loading) {
+        return (
+            <div className="loading">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
+    if (!data) {
+        return (
+            <div className="empty-state">
+                <div className="empty-state-icon">📊</div>
+                <div className="empty-state-title">Nessun dato disponibile</div>
+                <p>Aggiungi delle transazioni per vedere il confronto</p>
+            </div>
+        );
+    }
 
     const isCurrentMonth = isSameMonth(selectedMonth, new Date());
     const prevMonthName = format(subMonths(selectedMonth, 1), 'MMMM', { locale: itLocale });

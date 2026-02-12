@@ -137,9 +137,12 @@ export async function getSpendingVelocity(month: Date): Promise<SpendingVelocity
         .filter(t => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    // Get previous month stats
+    // Get previous month stats and settings in parallel
     const prevMonth = subMonths(month, 1);
-    const prevStats = await getMonthlyStats(prevMonth);
+    const [prevStats, settings] = await Promise.all([
+        getMonthlyStats(prevMonth),
+        getSettings()
+    ]);
     const prevDaysInMonth = getDaysInMonth(prevMonth);
 
     // Calculate paces
@@ -151,7 +154,6 @@ export async function getSpendingVelocity(month: Date): Promise<SpendingVelocity
     const comparedToPrevious = getPercentageChange(projectedTotal, prevStats.totalExpenses);
 
     // Check budget
-    const settings = await getSettings();
     const budgetRemaining = settings?.monthlyBudget
         ? settings.monthlyBudget - currentExpenses
         : undefined;
@@ -174,8 +176,10 @@ export async function getSpendingVelocity(month: Date): Promise<SpendingVelocity
 
 // Get category comparison between two months
 export async function getCategoryComparison(targetMonth: Date): Promise<CategoryComparison[]> {
-    const currentStats = await getMonthlyStats(targetMonth);
-    const previousStats = await getMonthlyStats(subMonths(targetMonth, 1));
+    const [currentStats, previousStats] = await Promise.all([
+        getMonthlyStats(targetMonth),
+        getMonthlyStats(subMonths(targetMonth, 1))
+    ]);
     const categories = await getCategories();
 
     // Get all unique category IDs
@@ -190,15 +194,16 @@ export async function getCategoryComparison(targetMonth: Date): Promise<Category
     const prevStart = startOfMonth(subMonths(targetMonth, 1));
     const prevEnd = endOfMonth(subMonths(targetMonth, 1));
 
-    const currentTransactions = await db.transactions
-        .where('date')
-        .between(start, end, true, true)
-        .toArray();
-
-    const prevTransactions = await db.transactions
-        .where('date')
-        .between(prevStart, prevEnd, true, true)
-        .toArray();
+    const [currentTransactions, prevTransactions] = await Promise.all([
+        db.transactions
+            .where('date')
+            .between(start, end, true, true)
+            .toArray(),
+        db.transactions
+            .where('date')
+            .between(prevStart, prevEnd, true, true)
+            .toArray()
+    ]);
 
     const currentCounts: Record<number, number> = {};
     const prevCounts: Record<number, number> = {};
@@ -474,14 +479,8 @@ export async function generateMonthlyInsights(
 // Generate ML-based predictions
 export async function generatePrediction(monthsBack: number = 6): Promise<MonthlyPrediction> {
     const now = new Date();
-    const monthlyData: MonthlyStats[] = [];
-
-    // Collect historical data
-    for (let i = 1; i <= monthsBack; i++) {
-        const month = subMonths(now, i);
-        const stats = await getMonthlyStats(month);
-        monthlyData.push(stats);
-    }
+    const historyMonths = Array.from({ length: monthsBack }, (_, index) => subMonths(now, index + 1));
+    const monthlyData: MonthlyStats[] = await Promise.all(historyMonths.map(month => getMonthlyStats(month)));
 
     // Simple linear regression for prediction
     const expenses = monthlyData.map(m => m.totalExpenses).reverse();
@@ -549,8 +548,10 @@ export async function generatePrediction(monthsBack: number = 6): Promise<Monthl
 
 // Main comparison function
 export async function getMonthlyComparison(targetMonth: Date = new Date()): Promise<MonthlyComparisonData> {
-    const currentMonth = await getMonthlyStats(targetMonth);
-    const previousMonth = await getMonthlyStats(subMonths(targetMonth, 1));
+    const [currentMonth, previousMonth] = await Promise.all([
+        getMonthlyStats(targetMonth),
+        getMonthlyStats(subMonths(targetMonth, 1))
+    ]);
 
     // Calculate deltas
     const deltas = {
@@ -566,11 +567,23 @@ export async function getMonthlyComparison(targetMonth: Date = new Date()): Prom
         }
     };
 
-    // Get category comparison
-    const categoryComparison = await getCategoryComparison(targetMonth);
-
-    // Get velocity
-    const spendingVelocity = await getSpendingVelocity(targetMonth);
+    const [
+        categoryComparison,
+        spendingVelocity,
+        currentPeakDay,
+        previousPeakDay,
+        currentMostExpensiveWeekday,
+        previousMostExpensiveWeekday,
+        prediction
+    ] = await Promise.all([
+        getCategoryComparison(targetMonth),
+        getSpendingVelocity(targetMonth),
+        getPeakSpendingDay(targetMonth),
+        getPeakSpendingDay(subMonths(targetMonth, 1)),
+        getMostExpensiveWeekday(targetMonth),
+        getMostExpensiveWeekday(subMonths(targetMonth, 1)),
+        generatePrediction(6)
+    ]);
 
     // Generate insights
     const insights = await generateMonthlyInsights(currentMonth, previousMonth, categoryComparison, spendingVelocity);
@@ -582,15 +595,6 @@ export async function getMonthlyComparison(targetMonth: Date = new Date()): Prom
     const previousDailyAvg = previousMonth.transactionCount > 0
         ? previousMonth.totalExpenses / getDaysInMonth(subMonths(targetMonth, 1))
         : 0;
-
-    const currentPeakDay = await getPeakSpendingDay(targetMonth);
-    const previousPeakDay = await getPeakSpendingDay(subMonths(targetMonth, 1));
-
-    const currentMostExpensiveWeekday = await getMostExpensiveWeekday(targetMonth);
-    const previousMostExpensiveWeekday = await getMostExpensiveWeekday(subMonths(targetMonth, 1));
-
-    // Get prediction
-    const prediction = await generatePrediction(6);
 
     return {
         currentMonth,

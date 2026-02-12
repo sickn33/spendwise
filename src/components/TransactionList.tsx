@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { getTransactions, getCategories, deleteTransaction } from '../db/database';
 import type { Transaction, Category } from '../types';
 import { format, startOfMonth, subMonths, parseISO } from 'date-fns';
@@ -8,6 +8,12 @@ import { TransactionForm } from './TransactionForm';
 
 interface TransactionListProps {
     refreshTrigger?: number;
+}
+
+interface IndexedTransaction extends Transaction {
+    timestamp: number;
+    dateKey: string;
+    searchableText: string;
 }
 
 export function TransactionList({ refreshTrigger }: TransactionListProps) {
@@ -27,6 +33,7 @@ export function TransactionList({ refreshTrigger }: TransactionListProps) {
     const [showFilters, setShowFilters] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+    const deferredSearchQuery = useDeferredValue(searchQuery);
 
     useEffect(() => {
         loadData();
@@ -62,26 +69,42 @@ export function TransactionList({ refreshTrigger }: TransactionListProps) {
         return count;
     }, [selectedCategoryId, dateRange, transactionType, minAmount, maxAmount]);
 
+    const indexedTransactions = useMemo<IndexedTransaction[]>(() => {
+        return transactions.map(t => {
+            const dateObj = new Date(t.date);
+            const categoryName = categoryMap.get(t.categoryId)?.name ?? '';
+            return {
+                ...t,
+                timestamp: dateObj.getTime(),
+                dateKey: format(dateObj, 'yyyy-MM-dd'),
+                searchableText: `${t.description} ${t.details ?? ''} ${categoryName}`.toLowerCase()
+            };
+        });
+    }, [transactions, categoryMap]);
+
     const filteredTransactions = useMemo(() => {
-        let filtered = [...transactions];
+        let filtered = [...indexedTransactions];
+        const now = new Date();
+        const query = deferredSearchQuery.trim().toLowerCase();
+        const customDateFromTs = customDateFrom ? parseISO(customDateFrom).getTime() : null;
+        const customDateToTs = customDateTo ? parseISO(customDateTo).getTime() : null;
 
         // Date range filter
-        const now = new Date();
         if (dateRange === 'month') {
-            const start = startOfMonth(now);
-            filtered = filtered.filter(t => new Date(t.date) >= start);
+            const start = startOfMonth(now).getTime();
+            filtered = filtered.filter(t => t.timestamp >= start);
         } else if (dateRange === '3months') {
-            const start = subMonths(now, 3);
-            filtered = filtered.filter(t => new Date(t.date) >= start);
+            const start = subMonths(now, 3).getTime();
+            filtered = filtered.filter(t => t.timestamp >= start);
         } else if (dateRange === 'year') {
-            const start = new Date(now.getFullYear(), 0, 1);
-            filtered = filtered.filter(t => new Date(t.date) >= start);
+            const start = new Date(now.getFullYear(), 0, 1).getTime();
+            filtered = filtered.filter(t => t.timestamp >= start);
         } else if (dateRange === 'custom') {
-            if (customDateFrom) {
-                filtered = filtered.filter(t => new Date(t.date) >= parseISO(customDateFrom));
+            if (customDateFromTs !== null) {
+                filtered = filtered.filter(t => t.timestamp >= customDateFromTs);
             }
-            if (customDateTo) {
-                filtered = filtered.filter(t => new Date(t.date) <= parseISO(customDateTo));
+            if (customDateToTs !== null) {
+                filtered = filtered.filter(t => t.timestamp <= customDateToTs);
             }
         }
 
@@ -108,20 +131,15 @@ export function TransactionList({ refreshTrigger }: TransactionListProps) {
         }
 
         // Search filter
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(t =>
-                t.description.toLowerCase().includes(query) ||
-                t.details?.toLowerCase().includes(query) ||
-                categoryMap.get(t.categoryId)?.name.toLowerCase().includes(query)
-            );
+        if (query) {
+            filtered = filtered.filter(t => t.searchableText.includes(query));
         }
 
         // Sorting
         filtered.sort((a, b) => {
             let comparison = 0;
             if (sortBy === 'date') {
-                comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+                comparison = a.timestamp - b.timestamp;
             } else if (sortBy === 'amount') {
                 comparison = Math.abs(a.amount) - Math.abs(b.amount);
             }
@@ -129,14 +147,14 @@ export function TransactionList({ refreshTrigger }: TransactionListProps) {
         });
 
         return filtered;
-    }, [transactions, dateRange, customDateFrom, customDateTo, transactionType, minAmount, maxAmount, selectedCategoryId, searchQuery, sortBy, sortOrder, categoryMap]);
+    }, [indexedTransactions, dateRange, customDateFrom, customDateTo, transactionType, minAmount, maxAmount, selectedCategoryId, deferredSearchQuery, sortBy, sortOrder]);
 
     // Group transactions by date
     const groupedTransactions = useMemo(() => {
-        const groups: Record<string, Transaction[]> = {};
+        const groups: Record<string, IndexedTransaction[]> = {};
 
         for (const t of filteredTransactions) {
-            const dateKey = format(new Date(t.date), 'yyyy-MM-dd');
+            const dateKey = t.dateKey;
             if (!groups[dateKey]) {
                 groups[dateKey] = [];
             }
@@ -147,6 +165,15 @@ export function TransactionList({ refreshTrigger }: TransactionListProps) {
             sortOrder === 'desc' ? b[0].localeCompare(a[0]) : a[0].localeCompare(b[0])
         );
     }, [filteredTransactions, sortOrder]);
+
+    const { totalFiltered, totalExpenses, totalIncome } = useMemo(() => {
+        return filteredTransactions.reduce((acc, t) => {
+            acc.totalFiltered += t.amount;
+            if (t.amount < 0) acc.totalExpenses += t.amount;
+            if (t.amount > 0) acc.totalIncome += t.amount;
+            return acc;
+        }, { totalFiltered: 0, totalExpenses: 0, totalIncome: 0 });
+    }, [filteredTransactions]);
 
     async function handleDelete(id: number) {
         try {
@@ -168,10 +195,6 @@ export function TransactionList({ refreshTrigger }: TransactionListProps) {
         setMaxAmount('');
         setSearchQuery('');
     }
-
-    const totalFiltered = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = filteredTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0);
-    const totalIncome = filteredTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
 
     if (loading) {
         return (
