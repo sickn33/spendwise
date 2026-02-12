@@ -8,6 +8,10 @@ afterEach(() => {
   cleanup();
 });
 
+// Polyfill TextEncoder for React 19
+import { TextEncoder, TextDecoder } from 'util';
+Object.assign(global, { TextEncoder, TextDecoder });
+
 // Mock IndexedDB for Dexie
 const indexedDB = {
   open: vi.fn(),

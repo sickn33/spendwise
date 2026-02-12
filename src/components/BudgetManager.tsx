@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { getBudgets, addBudget, updateBudget, deleteBudget, getCategories, getTransactions } from '../db/database';
 import type { Budget, Category, BudgetProgress } from '../types';
 import { startOfMonth, endOfMonth } from 'date-fns';
-import { Plus, Edit2, Trash2, X, Save, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, TrendingUp, AlertTriangle } from 'lucide-react';
 
 export const BudgetManager = memo(function BudgetManager() {
     const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -109,155 +109,154 @@ export const BudgetManager = memo(function BudgetManager() {
         c => !c.isIncome && !budgets.some(b => b.categoryId === c.id)
     );
 
-    const getProgressColor = useCallback((progress: BudgetProgress) => {
-        if (progress.isOverBudget) return 'bg-danger';
-        if (progress.percentage > 80) return 'bg-warning';
-        return 'bg-success';
-    }, []);
-
     if (loading) {
         return (
-            <div className="loading">
-                <div className="spinner"></div>
+            <div className="flex justify-center p-xl">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ink"></div>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="page-header">
+        <div className="space-y-md">
+            {/* Header */}
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="page-title">Budget</h1>
-                    <p className="text-muted mt-xs">
-                        Imposta limiti di spesa per categoria
+                    <h1 className="text-xl font-bold tracking-tight">BUDGET_MANAGER</h1>
+                    <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
+                        CONTROLLO_LIMITI_SPESA
                     </p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                    <Plus size={18} />
-                    Nuovo Budget
+                <button 
+                    className="btn btn-primary flex items-center gap-xs text-xs uppercase tracking-wider" 
+                    onClick={() => setShowForm(true)}
+                >
+                    <Plus size={16} />
+                    NUOVO_BUDGET
                 </button>
             </div>
 
-            {/* Budget Progress Cards */}
+            {/* Budget Grid */}
             {budgetProgress.length > 0 ? (
-                <div className="budget-grid">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
                     {budgetProgress.map(progress => (
                         <div
                             key={progress.budget.id}
-                            className={`card budget-card ${progress.isOverBudget ? 'over-budget' : ''}`}
+                            className={`bg-paper structural-border p-md relative group hover:border-ink transition-colors ${progress.isOverBudget ? 'border-danger' : ''}`}
                         >
-                            <div className="budget-header">
+                            {/* Card Header */}
+                            <div className="flex items-start justify-between mb-md">
                                 <div className="flex items-center gap-sm">
-                                    <span className="font-xl">{progress.category?.icon}</span>
+                                    <span className="text-xl">{progress.category?.icon}</span>
                                     <div>
-                                        <div className="font-semibold">{progress.category?.name}</div>
-                                        <div className="font-sm text-muted">
-                                            Budget mensile
-                                        </div>
+                                        <div className="font-bold tracking-tight">{progress.category?.name}</div>
+                                        <div className="text-tiny font-mono uppercase text-muted">MENSILE</div>
                                     </div>
                                 </div>
-                                <div className="flex gap-xs">
+                                <div className="flex gap-px opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
-                                        className="btn btn-ghost btn-icon btn-xs-icon"
+                                        className="p-xs hover:bg-concrete text-ink"
                                         onClick={() => handleEdit(progress.budget)}
-                                        title="Modifica budget"
-                                        aria-label="Modifica budget"
+                                        title="Modifica"
                                     >
                                         <Edit2 size={14} />
                                     </button>
                                     <button
-                                        className="btn btn-ghost btn-icon btn-xs-icon"
+                                        className="p-xs hover:bg-concrete text-ink hover:text-danger"
                                         onClick={() => handleDelete(progress.budget.id!)}
-                                        title="Elimina budget"
-                                        aria-label="Elimina budget"
+                                        title="Elimina"
                                     >
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="budget-amounts">
+                            {/* Data Grid */}
+                            <div className="grid grid-cols-2 gap-sm mb-md border-t border-b border-border py-sm border-dashed">
                                 <div>
-                                    <span className="text-muted font-sm">Speso</span>
-                                    <div className={`font-xl font-bold ${progress.isOverBudget ? 'text-danger' : ''}`}>
+                                    <span className="text-tiny font-mono uppercase text-muted block mb-1">SPESO</span>
+                                    <div className={`text-lg font-mono font-bold ${progress.isOverBudget ? 'text-danger' : ''}`}>
                                         €{progress.spent.toFixed(2)}
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-muted font-sm">Budget</span>
-                                    <div className="font-xl font-bold">
+                                    <span className="text-tiny font-mono uppercase text-muted block mb-1">BUDGET</span>
+                                    <div className="text-lg font-mono font-bold">
                                         €{progress.budget.amount.toFixed(2)}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="budget-progress-bar">
-                                <div
-                                    className={`budget-progress-fill ${getProgressColor(progress)}`}
-                                    ref={el => {
-                                        if (el) el.style.setProperty('--progress-width', `${Math.min(progress.percentage, 100)}%`);
-                                    }}
-                                />
+                            {/* Progress Bar */}
+                            <div className="mb-sm">
+                                <div className="h-1 w-full bg-border">
+                                    <div
+                                        className={`h-full transition-all duration-500 ${progress.isOverBudget ? 'bg-danger' : 'bg-ink'}`}
+                                        style={{ width: `${Math.min(progress.percentage, 100)}%` }}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="budget-footer">
+                            {/* Footer Status */}
+                            <div className="flex items-center justify-between text-xs font-mono">
                                 {progress.isOverBudget ? (
                                     <div className="text-danger flex items-center gap-xs">
-                                        <AlertTriangle size={16} />
-                                        Budget superato di €{Math.abs(progress.remaining).toFixed(2)}
+                                        <AlertTriangle size={14} />
+                                        <span>OVER_LIMIT +€{Math.abs(progress.remaining).toFixed(0)}</span>
                                     </div>
                                 ) : (
-                                    <div className="text-success flex items-center gap-xs">
-                                        <TrendingUp size={16} />
-                                        Rimangono €{progress.remaining.toFixed(2)}
+                                    <div className="text-muted flex items-center gap-xs">
+                                        <TrendingUp size={14} />
+                                        <span>RIMANENTE: €{progress.remaining.toFixed(0)}</span>
                                     </div>
                                 )}
-                                <div className="text-muted font-sm">
-                                    {progress.percentage.toFixed(0)}%
-                                </div>
+                                <div className="text-ink">{progress.percentage.toFixed(0)}%</div>
                             </div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="empty-state">
-                    <div className="empty-state-icon">💰</div>
-                    <div className="empty-state-title">Nessun budget impostato</div>
-                    <p>Crea budget per tenere sotto controllo le tue spese per categoria</p>
-                    <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                        <Plus size={18} />
-                        Crea il tuo primo budget
+                <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
+                    <AlertTriangle size={32} className="text-muted mb-md opacity-50" />
+                    <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_BUDGET_ATTIVO</h3>
+                    <p className="text-muted text-sm max-w-xs mb-md">
+                        Definisci i limiti di spesa per le categorie per monitorare i tuoi obiettivi finanziari.
+                    </p>
+                    <button 
+                        className="btn btn-primary text-xs uppercase tracking-wider" 
+                        onClick={() => setShowForm(true)}
+                    >
+                        INIZIA_CONFIGURAZIONE
                     </button>
                 </div>
             )}
 
-            {/* Add/Edit Budget Modal */}
+            {/* Modal */}
             {showForm && (
-                <div className="modal-overlay" onClick={resetForm}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>{editingBudget ? 'Modifica Budget' : 'Nuovo Budget'}</h2>
+                <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={resetForm}>
+                    <div className="w-full max-w-sm bg-paper structural-border shadow-none" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-md border-b border-border">
+                            <h2 className="text-sm font-mono uppercase tracking-wider">
+                                {editingBudget ? 'MODIFICA_BUDGET' : 'NUOVO_BUDGET'}
+                            </h2>
                             <button 
-                                className="btn btn-ghost btn-icon" 
+                                className="btn btn-ghost btn-icon structural-border border-0" 
                                 onClick={resetForm}
-                                title="Chiudi"
-                                aria-label="Chiudi"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit}>
-                            <div className="form-group">
-                                <label className="form-label">Categoria</label>
+                        <form onSubmit={handleSubmit} className="p-md space-y-md">
+                            <div>
+                                <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">CATEGORIA</label>
                                 <select
-                                    className="input"
+                                    className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink appearance-none rounded-none"
                                     value={formData.categoryId}
                                     onChange={e => setFormData({ ...formData, categoryId: parseInt(e.target.value) })}
                                     disabled={!!editingBudget}
-                                    title="Seleziona categoria"
                                 >
-                                    <option value={0}>Seleziona categoria</option>
+                                    <option value={0}>SELEZIONA...</option>
                                     {(editingBudget ? categories : categoriesWithoutBudget)
                                         .filter(c => !c.isIncome)
                                         .map(c => (
@@ -267,12 +266,12 @@ export const BudgetManager = memo(function BudgetManager() {
                                 </select>
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Budget mensile (€)</label>
+                            <div>
+                                <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">IMPORTO_MENSILE (€)</label>
                                 <input
                                     type="number"
-                                    className="input"
-                                    placeholder="es. 200"
+                                    className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink"
+                                    placeholder="0.00"
                                     step="1"
                                     min="0"
                                     value={formData.amount}
@@ -280,17 +279,16 @@ export const BudgetManager = memo(function BudgetManager() {
                                 />
                             </div>
 
-                            <div className="modal-actions">
-                                <button type="button" className="btn btn-secondary" onClick={resetForm}>
-                                    Annulla
+                            <div className="pt-md border-t border-border flex justify-end gap-sm">
+                                <button type="button" className="btn btn-secondary text-xs uppercase tracking-wider" onClick={resetForm}>
+                                    ANNULLA
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn btn-primary"
+                                    className="btn btn-primary text-xs uppercase tracking-wider"
                                     disabled={!formData.categoryId || !formData.amount}
                                 >
-                                    <Save size={16} />
-                                    {editingBudget ? 'Salva' : 'Crea Budget'}
+                                    {editingBudget ? 'SALVA_MODIFICHE' : 'CREA_BUDGET'}
                                 </button>
                             </div>
                         </form>

@@ -208,14 +208,15 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
         <div>
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Transazioni</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
-                        {filteredTransactions.length} transazioni
+                    <h1 className="page-title">REGISTRO_TRANSAZIONI_v1</h1>
+                    <p className="text-tiny font-mono opacity-60">
+                        {filteredTransactions.length}_ENTRIES_LOADED
                     </p>
                 </div>
                 <button
                     className={`btn ${showFilters ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() => setShowFilters(!showFilters)}
+                    aria-label="Mostra filtri"
                 >
                     <Filter size={16} />
                     Filtri
@@ -227,23 +228,23 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                 </button>
             </div>
 
-            {/* Summary Cards */}
-            <div className="stats-grid" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div className="card stat-card" style={{ padding: 'var(--space-md)' }}>
-                    <div className="stat-label"><TrendingDown size={14} /> Spese</div>
-                    <div className="stat-value" style={{ fontSize: '1.25rem', color: 'var(--danger)' }}>
+            {/* Summary Grid */}
+            <div className="grid-3 gap-md mb-lg">
+                <div className="structural-border p-md">
+                    <div className="text-tiny font-mono uppercase opacity-60 mb-xs">USCITE_TOTALI</div>
+                    <div className="font-mono text-lg text-danger">
                         €{Math.abs(totalExpenses).toFixed(2)}
                     </div>
                 </div>
-                <div className="card stat-card" style={{ padding: 'var(--space-md)' }}>
-                    <div className="stat-label"><TrendingUp size={14} /> Entrate</div>
-                    <div className="stat-value" style={{ fontSize: '1.25rem', color: 'var(--success)' }}>
+                <div className="structural-border p-md">
+                    <div className="text-tiny font-mono uppercase opacity-60 mb-xs">ENTRATE_TOTALI</div>
+                    <div className="font-mono text-lg text-success">
                         €{totalIncome.toFixed(2)}
                     </div>
                 </div>
-                <div className="card stat-card" style={{ padding: 'var(--space-md)' }}>
-                    <div className="stat-label"><ArrowUpDown size={14} /> Bilancio</div>
-                    <div className="stat-value" style={{ fontSize: '1.25rem', color: totalFiltered >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                <div className="structural-border p-md">
+                    <div className="text-tiny font-mono uppercase opacity-60 mb-xs">NET_FLOW</div>
+                    <div className={`font-mono text-lg ${totalFiltered >= 0 ? 'text-success' : 'text-danger'}`}>
                         {totalFiltered >= 0 ? '+' : ''}€{totalFiltered.toFixed(2)}
                     </div>
                 </div>
@@ -275,6 +276,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                             className="btn btn-ghost btn-icon"
                             style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: 28, height: 28 }}
                             onClick={() => setSearchQuery('')}
+                            aria-label="Pulisci ricerca"
                         >
                             <X size={16} />
                         </button>
@@ -454,46 +456,49 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                 {txs.map(t => {
                                     const category = categoryMap.get(t.categoryId);
                                     return (
-                                        <div key={t.id} className="transaction-item">
+                                        <div key={t.id} className="ledger-row" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', gap: 'var(--space-md)', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--border-color)', alignItems: 'center' }}>
                                             <div
                                                 className="transaction-icon"
-                                                style={{ background: category?.color ? `${category.color}20` : 'var(--bg-tertiary)' }}
+                                                style={{ background: 'transparent', border: '1px solid var(--border-color)', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                             >
                                                 {category?.icon || '📦'}
                                             </div>
                                             <div className="transaction-info">
-                                                <div className="transaction-description">{t.description}</div>
-                                                <div className="transaction-meta">
+                                                <div className="font-mono text-sm">{t.description}</div>
+                                                <div className="text-tiny font-mono opacity-60 uppercase">
                                                     {category?.name}
-                                                    {t.isRecurring && ' • 🔄 Ricorrente'}
+                                                    {t.isRecurring && ' [R]'}
                                                 </div>
                                             </div>
-                                            <div className={`transaction-amount ${t.amount < 0 ? 'expense' : 'income'}`}>
-                                                {t.amount < 0 ? '-' : '+'}€{Math.abs(t.amount).toFixed(2)}
+                                            <div className={`font-mono ${t.amount < 0 ? 'text-danger' : 'text-success'}`}>
+                                                {t.amount < 0 ? '' : '+'}€{Math.abs(t.amount).toFixed(2)}
                                             </div>
                                             <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
                                                 <button
-                                                    className="btn btn-ghost btn-icon"
-                                                    style={{ width: 32, height: 32 }}
+                                                    className="btn btn-ghost btn-icon structural-border"
+                                                    style={{ width: 28, height: 28, borderRadius: 0 }}
                                                     onClick={() => setEditingTransaction(t)}
+                                                    aria-label="Modifica"
                                                 >
-                                                    <Edit2 size={14} />
+                                                    <Edit2 size={12} />
                                                 </button>
                                                 {deleteConfirm === t.id ? (
                                                     <button
-                                                        className="btn btn-danger btn-icon"
-                                                        style={{ width: 32, height: 32 }}
+                                                        className="btn btn-danger btn-icon structural-border"
+                                                        style={{ width: 28, height: 28, borderRadius: 0 }}
                                                         onClick={() => handleDelete(t.id!)}
+                                                        aria-label="Conferma eliminazione"
                                                     >
-                                                        <Trash2 size={14} />
+                                                        <Trash2 size={12} />
                                                     </button>
                                                 ) : (
                                                     <button
-                                                        className="btn btn-ghost btn-icon"
-                                                        style={{ width: 32, height: 32 }}
+                                                        className="btn btn-ghost btn-icon structural-border"
+                                                        style={{ width: 28, height: 28, borderRadius: 0 }}
                                                         onClick={() => setDeleteConfirm(t.id!)}
+                                                        aria-label="Elimina"
                                                     >
-                                                        <Trash2 size={14} />
+                                                        <Trash2 size={12} />
                                                     </button>
                                                 )}
                                             </div>

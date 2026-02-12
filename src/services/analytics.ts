@@ -1,5 +1,5 @@
 // Analytics service for SpendWise
-import { db, getCategories } from '../db/database';
+import { getTransactions, getCategories } from '../db/database';
 import type { Transaction, MonthlyStats, ReportData, ChartDataPoint, TimeSeriesDataPoint } from '../types';
 import { startOfMonth, endOfMonth, format, subMonths, eachMonthOfInterval } from 'date-fns';
 
@@ -9,10 +9,10 @@ export async function getMonthlyStats(month: Date): Promise<MonthlyStats> {
     const end = endOfMonth(month);
     const monthKey = format(month, 'yyyy-MM');
 
-    const transactions = await db.transactions
-        .where('date')
-        .between(start, end, true, true)
-        .toArray();
+    const transactions = await getTransactions({
+        dateFrom: start,
+        dateTo: end
+    });
 
     const categoryBreakdown: Record<number, number> = {};
     let totalIncome = 0;
@@ -57,10 +57,10 @@ export async function getCategoryBreakdown(
     endDate: Date,
     onlyExpenses: boolean = true
 ): Promise<ChartDataPoint[]> {
-    const transactions = await db.transactions
-        .where('date')
-        .between(startDate, endDate, true, true)
-        .toArray();
+    const transactions = await getTransactions({
+        dateFrom: startDate,
+        dateTo: endDate
+    });
 
     const categories = await getCategories();
     const categoryMap = new Map(categories.map(c => [c.id!, c]));
@@ -90,10 +90,10 @@ export async function getTopExpenses(
     endDate: Date,
     limit: number = 10
 ): Promise<Transaction[]> {
-    const transactions = await db.transactions
-        .where('date')
-        .between(startDate, endDate, true, true)
-        .toArray();
+    const transactions = await getTransactions({
+        dateFrom: startDate,
+        dateTo: endDate
+    });
 
     return transactions
         .filter(t => t.amount < 0)
@@ -153,10 +153,10 @@ export async function generateInsights(): Promise<string[]> {
 
 // Generate full report data
 export async function generateReportData(startDate: Date, endDate: Date): Promise<ReportData> {
-    const transactions = await db.transactions
-        .where('date')
-        .between(startDate, endDate, true, true)
-        .toArray();
+    const transactions = await getTransactions({
+        dateFrom: startDate,
+        dateTo: endDate
+    });
 
     const categories = await getCategories();
     const categoryMap = new Map(categories.map(c => [c.id!, c]));
@@ -214,10 +214,10 @@ export async function getDailyAverageSpending(days: number = 30): Promise<number
     const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - days);
 
-    const transactions = await db.transactions
-        .where('date')
-        .between(startDate, endDate, true, true)
-        .toArray();
+    const transactions = await getTransactions({
+        dateFrom: startDate,
+        dateTo: endDate
+    });
 
     const totalExpenses = transactions
         .filter(t => t.amount < 0)

@@ -213,95 +213,95 @@ export const Reports = memo(function Reports() {
 
     if (loading) {
         return (
-            <div className="loading">
-                <div className="spinner"></div>
+            <div className="flex justify-center p-xl">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ink"></div>
             </div>
         );
     }
 
     if (!reportData) {
         return (
-            <div className="empty-state">
-                <div className="empty-state-icon">📊</div>
-                <div className="empty-state-title">Nessun dato disponibile</div>
-                <p>Aggiungi delle transazioni per vedere i report</p>
+            <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
+                <TrendingUp size={32} className="text-muted mb-md opacity-50" />
+                <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_DATO_ANALITICO</h3>
+                <p className="text-muted text-sm max-w-xs mb-md">
+                    Registra le tue prime transazioni per generare i report.
+                </p>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="page-header">
+        <div className="space-y-lg">
+            {/* Header */}
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="page-title">Report</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
-                        {format(reportData.dateRange.from, 'd MMM', { locale: it })} - {format(reportData.dateRange.to, 'd MMM yyyy', { locale: it })}
+                    <h1 className="text-xl font-bold tracking-tight">REPORT_MENSILE</h1>
+                    <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
+                        ANALISI_FINANZIARIA
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                <div className="flex items-center gap-sm">
                     <select
-                        className="input"
+                        className="bg-paper border border-border p-xs font-mono text-xs uppercase focus:outline-none focus:border-ink appearance-none pl-2 pr-8"
+                        style={{ backgroundImage: 'none' }}
                         value={dateRange}
                         onChange={handleDateRangeChange}
-                        style={{ width: 'auto' }}
+                        aria-label="SELEZIONA_PERIODO"
                     >
-                        <option value="month">Questo mese</option>
-                        <option value="3months">Ultimi 3 mesi</option>
-                        <option value="year">Quest'anno</option>
+                        <option value="month">MESE_CORRENTE</option>
+                        <option value="3months">TRIMESTRE</option>
+                        <option value="year">ANNO_CORRENTE</option>
                     </select>
                     <button
-                        className="btn btn-primary"
+                        className="btn btn-primary flex items-center gap-xs text-xs uppercase tracking-wider"
                         onClick={generatePDF}
                         disabled={generating}
                     >
-                        <Download size={16} />
-                        {generating ? 'Generazione...' : 'Scarica PDF'}
+                        <Download size={14} />
+                        {generating ? 'GENERAZIONE...' : 'EXPORT_PDF'}
                     </button>
                 </div>
             </div>
 
-            {/* Summary Cards */}
-            <div className="stats-grid">
-                <div className="card stat-card">
-                    <div className="stat-label">
-                        <TrendingUp size={16} />
-                        Totale Entrate
+            {/* Financial Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
+                <div className="bg-paper structural-border p-md">
+                    <div className="flex items-center gap-xs text-tiny font-mono uppercase text-muted mb-xs">
+                        <TrendingUp size={14} />
+                        ENTRATE
                     </div>
-                    <div className="stat-value" style={{ color: 'var(--success)' }}>
+                    <div className="text-2xl font-mono font-bold tracking-tight text-success">
                         €{reportData.totalIncome.toFixed(2)}
                     </div>
                 </div>
 
-                <div className="card stat-card">
-                    <div className="stat-label">
-                        <TrendingDown size={16} />
-                        Totale Spese
+                <div className="bg-paper structural-border p-md">
+                    <div className="flex items-center gap-xs text-tiny font-mono uppercase text-muted mb-xs">
+                        <TrendingDown size={14} />
+                        USCITE
                     </div>
-                    <div className="stat-value" style={{ color: 'var(--danger)' }}>
+                    <div className="text-2xl font-mono font-bold tracking-tight text-danger">
                         €{reportData.totalExpenses.toFixed(2)}
                     </div>
                 </div>
 
-                <div className="card stat-card">
-                    <div className="stat-label">
-                        <DollarSign size={16} />
-                        Bilancio Netto
+                <div className="bg-paper structural-border p-md">
+                    <div className="flex items-center gap-xs text-tiny font-mono uppercase text-muted mb-xs">
+                        <DollarSign size={14} />
+                        NETTO
                     </div>
-                    <div className="stat-value" style={{
-                        color: reportData.netChange >= 0 ? 'var(--success)' : 'var(--danger)'
-                    }}>
+                    <div className={`text-2xl font-mono font-bold tracking-tight ${reportData.netChange >= 0 ? 'text-success' : 'text-danger'}`}>
                         {reportData.netChange >= 0 ? '+' : ''}€{reportData.netChange.toFixed(2)}
                     </div>
                 </div>
             </div>
 
-            {/* Charts */}
-            <div className="grid-2">
-                <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Spese per categoria</h3>
-                    </div>
-                    <div className="chart-container" style={{ height: '280px' }}>
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
+                <div className="bg-paper structural-border p-md">
+                    <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">SPESE_PER_CATEGORIA</h3>
+                    <div className="h-[280px] w-full">
                         <Doughnut
                             data={doughnutData}
                             options={doughnutOptions as never}
@@ -309,47 +309,45 @@ export const Reports = memo(function Reports() {
                     </div>
                 </div>
 
-                <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Trend mensile</h3>
-                    </div>
-                    <div className="chart-container" style={{ height: '280px' }}>
+                <div className="bg-paper structural-border p-md">
+                    <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">TREND_TEMPORALE</h3>
+                    <div className="h-[280px] w-full">
                         <Bar data={barData} options={barOptions as never} />
                     </div>
                 </div>
             </div>
 
             {/* Category Breakdown Table */}
-            <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">Dettaglio categorie</h3>
+            <div className="bg-paper structural-border overflow-hidden">
+                <div className="p-md border-b border-border">
+                    <h3 className="text-xs font-mono uppercase text-muted tracking-wider">DETTAGLIO_CATEGORIE</h3>
                 </div>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                <th style={{ textAlign: 'left', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>Categoria</th>
-                                <th style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>Importo</th>
-                                <th style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>%</th>
-                                <th style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)', fontWeight: 500 }}>Transazioni</th>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-concrete/20">
+                            <tr>
+                                <th className="text-left p-sm text-tiny font-mono uppercase text-muted font-normal">CATEGORIA</th>
+                                <th className="text-right p-sm text-tiny font-mono uppercase text-muted font-normal">IMPORTO</th>
+                                <th className="text-right p-sm text-tiny font-mono uppercase text-muted font-normal">%</th>
+                                <th className="text-right p-sm text-tiny font-mono uppercase text-muted font-normal">TX</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-border">
                             {reportData.categoryBreakdown.map((item, i) => (
-                                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                                    <td style={{ padding: 'var(--space-md)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                            <span style={{ fontSize: '1.25rem' }}>{item.category.icon}</span>
-                                            <span>{item.category.name}</span>
+                                <tr key={i} className="hover:bg-concrete/10 transition-colors">
+                                    <td className="p-sm">
+                                        <div className="flex items-center gap-sm">
+                                            <span>{item.category.icon}</span>
+                                            <span className="font-medium text-sm">{item.category.name}</span>
                                         </div>
                                     </td>
-                                    <td style={{ textAlign: 'right', padding: 'var(--space-md)', fontWeight: 600, fontFeatureSettings: 'tnum' }}>
+                                    <td className="text-right p-sm font-mono text-sm font-bold">
                                         €{item.amount.toFixed(2)}
                                     </td>
-                                    <td style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)' }}>
+                                    <td className="text-right p-sm font-mono text-sm text-muted">
                                         {item.percentage.toFixed(1)}%
                                     </td>
-                                    <td style={{ textAlign: 'right', padding: 'var(--space-md)', color: 'var(--text-muted)' }}>
+                                    <td className="text-right p-sm font-mono text-sm text-muted">
                                         {item.transactionCount}
                                     </td>
                                 </tr>
@@ -360,42 +358,25 @@ export const Reports = memo(function Reports() {
             </div>
 
             {/* Top Expenses */}
-            <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">Top 10 spese</h3>
+            <div className="bg-paper structural-border overflow-hidden">
+                <div className="p-md border-b border-border">
+                    <h3 className="text-xs font-mono uppercase text-muted tracking-wider">TOP_10_USCITE</h3>
                 </div>
-                <div className="transaction-list">
+                <div className="divide-y divide-border">
                     {reportData.topExpenses.map((t, i) => {
                         const category = categoryMap.get(t.categoryId);
                         return (
-                            <div key={i} className="transaction-item">
-                                <div style={{
-                                    width: 32,
-                                    height: 32,
-                                    borderRadius: 'var(--radius-full)',
-                                    background: 'var(--bg-glass)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontWeight: 600,
-                                    color: 'var(--text-muted)',
-                                    fontSize: '0.85rem'
-                                }}>
-                                    #{i + 1}
-                                </div>
-                                <div
-                                    className="transaction-icon"
-                                    style={{ background: category?.color ? `${category.color}20` : 'var(--bg-tertiary)' }}
-                                >
-                                    {category?.icon || '📦'}
-                                </div>
-                                <div className="transaction-info">
-                                    <div className="transaction-description">{t.description}</div>
-                                    <div className="transaction-meta">
-                                        {format(new Date(t.date), 'd MMM yyyy', { locale: it })} • {category?.name}
+                            <div key={i} className="flex items-center justify-between p-sm hover:bg-concrete/10 transition-colors">
+                                <div className="flex items-center gap-md">
+                                    <span className="font-mono text-xs text-muted w-6">#{i + 1}</span>
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-sm">{t.description}</span>
+                                        <span className="text-xs text-muted">
+                                            {format(new Date(t.date), 'd MMM', { locale: it })} • {category?.name}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="transaction-amount expense">
+                                <div className="font-mono text-sm font-bold text-danger">
                                     -€{Math.abs(t.amount).toFixed(2)}
                                 </div>
                             </div>

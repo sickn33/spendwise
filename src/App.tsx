@@ -3,8 +3,9 @@ import { initializeDatabase } from './db/database';
 import { buildMerchantCacheFromHistory } from './services/classifier';
 import { TransactionForm } from './components/TransactionForm';
 import { QuickAddWidget } from './components/QuickAddWidget';
-import { LayoutDashboard, List, Tag, FileText, Settings as SettingsIcon, Plus, Wallet, PiggyBank, Target, Sun, Moon, GitCompare, Keyboard } from 'lucide-react';
+import { Plus, Wallet, Keyboard } from 'lucide-react';
 import './index.css';
+import { Sidebar, type Page } from './components/Sidebar';
 
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
 const TransactionList = lazy(() => import('./components/TransactionList').then(m => ({ default: m.TransactionList })));
@@ -15,7 +16,6 @@ const Reports = lazy(() => import('./components/Reports').then(m => ({ default: 
 const MonthComparison = lazy(() => import('./components/MonthComparison').then(m => ({ default: m.MonthComparison })));
 const Settings = lazy(() => import('./components/Settings').then(m => ({ default: m.Settings })));
 
-type Page = 'dashboard' | 'transactions' | 'categories' | 'budgets' | 'savings' | 'reports' | 'comparison' | 'settings';
 
 function App() {
     const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -132,15 +132,15 @@ function App() {
 
     if (loading) {
         return (
-            <div className="loading-screen">
-                <div className="logo">
+            <div className="loading-screen bg-paper">
+                <div className="logo logo-large">
                     <div className="logo-icon">
-                        <Wallet size={24} />
+                        <Wallet size={32} strokeWidth={2.5} />
                     </div>
                     <span>SpendWise</span>
                 </div>
                 <div className="spinner"></div>
-                <p className="loading-text">Caricamento...</p>
+                <p className="system-status">INITIALIZING_SYSTEM...</p>
             </div>
         );
     }
@@ -195,95 +195,12 @@ function App() {
             </div>
 
             {/* Sidebar */}
-            <aside className="sidebar">
-                <div className="logo">
-                    <div className="logo-icon">
-                        <Wallet size={20} />
-                    </div>
-                    <span>SpendWise</span>
-                </div>
-
-                <nav className="nav">
-                    <button
-                        className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('dashboard')}
-                    >
-                        <LayoutDashboard size={20} />
-                        <span>Dashboard</span>
-                    </button>
-
-                    <button
-                        className={`nav-item ${currentPage === 'transactions' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('transactions')}
-                    >
-                        <List size={20} />
-                        <span>Transazioni</span>
-                    </button>
-
-                    <button
-                        className={`nav-item ${currentPage === 'budgets' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('budgets')}
-                    >
-                        <PiggyBank size={20} />
-                        <span>Budget</span>
-                    </button>
-
-                    <button
-                        className={`nav-item ${currentPage === 'categories' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('categories')}
-                    >
-                        <Tag size={20} />
-                        <span>Categorie</span>
-                    </button>
-
-                    <button
-                        className={`nav-item ${currentPage === 'savings' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('savings')}
-                    >
-                        <Target size={20} />
-                        <span>Risparmi</span>
-                    </button>
-
-                    <button
-                        className={`nav-item ${currentPage === 'reports' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('reports')}
-                    >
-                        <FileText size={20} />
-                        <span>Report</span>
-                    </button>
-
-                    <button
-                        className={`nav-item ${currentPage === 'comparison' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('comparison')}
-                    >
-                        <GitCompare size={20} />
-                        <span>Confronto</span>
-                    </button>
-
-                    <button
-                        className={`nav-item ${currentPage === 'settings' ? 'active' : ''}`}
-                        onClick={() => setCurrentPage('settings')}
-                    >
-                        <SettingsIcon size={20} />
-                        <span>Impostazioni</span>
-                    </button>
-                </nav>
-
-                {/* Theme Toggle in Sidebar */}
-                <div
-                    className="theme-toggle theme-toggle-mt-auto"
-                    onClick={handleThemeToggle}
-                >
-                    <div className={`theme-toggle-switch ${theme === 'light' ? 'active' : ''}`}>
-                        <div className="theme-toggle-knob">
-                            {theme === 'dark' ? <Moon size={12} /> : <Sun size={12} />}
-                        </div>
-                    </div>
-                    <span className="theme-toggle-label">
-                        {theme === 'dark' ? 'Tema Scuro' : 'Tema Chiaro'}
-                    </span>
-                </div>
-            </aside>
+            <Sidebar 
+                currentPage={currentPage} 
+                onNavigate={setCurrentPage} 
+                theme={theme} 
+                onThemeToggle={handleThemeToggle} 
+            />
 
             {/* Main Content */}
             <main id="main-content" className="main-content" tabIndex={-1}>

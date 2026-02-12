@@ -130,317 +130,273 @@ export const CategoryManager = memo(function CategoryManager() {
 
     if (loading) {
         return (
-            <div className="loading">
-                <div className="spinner"></div>
+            <div className="flex justify-center items-center py-xl">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="page-header">
+        <div className="space-y-xl max-w-4xl mx-auto">
+            <div className="flex items-center justify-between pb-md border-b border-border">
                 <div>
-                    <h1 className="page-title">Categorie</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
-                        {categories.length} categorie totali
+                    <h1 className="text-xl font-bold tracking-tight">GESTIONE_CATEGORIE</h1>
+                    <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
+                        SYSTEM_CONFIGURATION_V1.0
                     </p>
                 </div>
-                <button className="btn btn-primary" onClick={openAddForm}>
-                    <Plus size={16} />
-                    Nuova categoria
+                <button 
+                    className="btn btn-primary text-xs uppercase structural-border"
+                    onClick={openAddForm}
+                >
+                    <Plus size={16} className="mr-xs" />
+                    NUOVA_CATEGORIA
                 </button>
             </div>
 
-            {/* Expense Categories */}
-            <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">💸 Categorie Spese ({expenseCategories.length})</h3>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-md)' }}>
-                    {expenseCategories.map(cat => (
-                        <div
-                            key={cat.id}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--space-md)',
-                                padding: 'var(--space-md)',
-                                background: 'var(--bg-glass)',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--border)'
-                            }}
-                        >
-                            <div style={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: 'var(--radius-md)',
-                                background: `${cat.color}20`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.25rem',
-                                flexShrink: 0
-                            }}>
-                                {cat.icon}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {cat.name}
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                    {cat.keywords.length} keywords
-                                    {cat.isDefault && ' • Default'}
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
-                                <button
-                                    className="btn btn-ghost btn-icon"
-                                    style={{ width: 32, height: 32 }}
-                                    onClick={() => openEditForm(cat)}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-xl">
+                {/* Expense Categories */}
+                <div className="space-y-md">
+                    <div className="flex items-center justify-between border-l-2 border-primary pl-2">
+                        <h3 className="text-xs font-mono uppercase text-muted">
+                            CATEGORIE_SPESE
+                        </h3>
+                        <span className="text-tiny font-mono text-muted">
+                            COUNT: {expenseCategories.length}
+                        </span>
+                    </div>
+                    
+                    <div className="grid gap-sm">
+                        {expenseCategories.map(cat => (
+                            <div
+                                key={cat.id}
+                                className="group flex items-center gap-md p-sm bg-paper structural-border hover:border-ink transition-colors"
+                            >
+                                <div 
+                                    className="w-8 h-8 flex items-center justify-center rounded-sm text-lg border border-border"
+                                    style={{ backgroundColor: `${cat.color}15`, color: cat.color, borderColor: `${cat.color}30` }}
                                 >
-                                    <Edit2 size={14} />
-                                </button>
-                                {!cat.isDefault && (
-                                    deleteConfirm === cat.id ? (
-                                        <button
-                                            className="btn btn-danger btn-icon"
-                                            style={{ width: 32, height: 32 }}
-                                            onClick={() => handleDelete(cat.id!)}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="btn btn-ghost btn-icon"
-                                            style={{ width: 32, height: 32 }}
-                                            onClick={() => setDeleteConfirm(cat.id!)}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    )
-                                )}
+                                    {cat.icon}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-mono text-sm font-bold truncate pr-2">
+                                        {cat.name}
+                                    </div>
+                                    <div className="text-tiny text-muted truncate">
+                                        {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO_KEYWORDS'}
+                                    </div>
+                                </div>
+                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        className="p-1.5 hover:bg-concrete/20 text-muted hover:text-ink transition-colors"
+                                        onClick={() => openEditForm(cat)}
+                                        title="MODIFICA"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                    {!cat.isDefault && (
+                                        deleteConfirm === cat.id ? (
+                                            <button
+                                                className="p-1.5 bg-danger text-white transition-colors"
+                                                onClick={() => handleDelete(cat.id!)}
+                                                title="CONFERMA"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="p-1.5 hover:bg-danger/10 text-muted hover:text-danger transition-colors"
+                                                onClick={() => setDeleteConfirm(cat.id!)}
+                                                title="ELIMINA"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            {/* Income Categories */}
-            <div className="card">
-                <div className="card-header">
-                    <h3 className="card-title">💰 Categorie Entrate ({incomeCategories.length})</h3>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-md)' }}>
-                    {incomeCategories.map(cat => (
-                        <div
-                            key={cat.id}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--space-md)',
-                                padding: 'var(--space-md)',
-                                background: 'var(--bg-glass)',
-                                borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--border)'
-                            }}
-                        >
-                            <div style={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: 'var(--radius-md)',
-                                background: `${cat.color}20`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.25rem',
-                                flexShrink: 0
-                            }}>
-                                {cat.icon}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {cat.name}
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                    {cat.keywords.length} keywords
-                                    {cat.isDefault && ' • Default'}
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
-                                <button
-                                    className="btn btn-ghost btn-icon"
-                                    style={{ width: 32, height: 32 }}
-                                    onClick={() => openEditForm(cat)}
+                {/* Income Categories */}
+                <div className="space-y-md">
+                    <div className="flex items-center justify-between border-l-2 border-success pl-2">
+                        <h3 className="text-xs font-mono uppercase text-muted">
+                            CATEGORIE_ENTRATE
+                        </h3>
+                        <span className="text-tiny font-mono text-muted">
+                            COUNT: {incomeCategories.length}
+                        </span>
+                    </div>
+
+                    <div className="grid gap-sm">
+                        {incomeCategories.map(cat => (
+                            <div
+                                key={cat.id}
+                                className="group flex items-center gap-md p-sm bg-paper structural-border hover:border-ink transition-colors"
+                            >
+                                <div 
+                                    className="w-8 h-8 flex items-center justify-center rounded-sm text-lg border border-border"
+                                    style={{ backgroundColor: `${cat.color}15`, color: cat.color, borderColor: `${cat.color}30` }}
                                 >
-                                    <Edit2 size={14} />
-                                </button>
-                                {!cat.isDefault && (
-                                    deleteConfirm === cat.id ? (
-                                        <button
-                                            className="btn btn-danger btn-icon"
-                                            style={{ width: 32, height: 32 }}
-                                            onClick={() => handleDelete(cat.id!)}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="btn btn-ghost btn-icon"
-                                            style={{ width: 32, height: 32 }}
-                                            onClick={() => setDeleteConfirm(cat.id!)}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    )
-                                )}
+                                    {cat.icon}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-mono text-sm font-bold truncate pr-2">
+                                        {cat.name}
+                                    </div>
+                                    <div className="text-tiny text-muted truncate">
+                                        {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO_KEYWORDS'}
+                                    </div>
+                                </div>
+                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        className="p-1.5 hover:bg-concrete/20 text-muted hover:text-ink transition-colors"
+                                        onClick={() => openEditForm(cat)}
+                                        title="MODIFICA"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                    {!cat.isDefault && (
+                                        deleteConfirm === cat.id ? (
+                                            <button
+                                                className="p-1.5 bg-danger text-white transition-colors"
+                                                onClick={() => handleDelete(cat.id!)}
+                                                title="CONFERMA"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="p-1.5 hover:bg-danger/10 text-muted hover:text-danger transition-colors"
+                                                onClick={() => setDeleteConfirm(cat.id!)}
+                                                title="ELIMINA"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
 
             {/* Add/Edit Modal */}
             {showAddForm && (
-                <div className="modal-overlay" onClick={() => setShowAddForm(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">
-                                {editingCategory ? 'Modifica categoria' : 'Nuova categoria'}
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={() => setShowAddForm(false)}>
+                    <div 
+                        className="bg-paper structural-border w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between p-md border-b border-border bg-subtle">
+                            <h2 className="text-sm font-mono font-bold uppercase tracking-wider">
+                                {editingCategory ? 'CONFIGURAZIONE_CATEGORIA' : 'NUOVA_CATEGORIA'}
                             </h2>
-                            <button className="btn btn-ghost btn-icon" onClick={() => setShowAddForm(false)}>
+                            <button 
+                                className="text-muted hover:text-ink transition-colors"
+                                onClick={() => setShowAddForm(false)}
+                            >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit}>
-                            <div className="modal-body">
-                                <div className="form-grid">
-                                    {error && (
-                                        <div style={{
-                                            padding: 'var(--space-md)',
-                                            background: 'var(--danger-bg)',
-                                            borderRadius: 'var(--radius-md)',
-                                            color: 'var(--danger)'
-                                        }}>
-                                            {error}
-                                        </div>
-                                    )}
+                        <form onSubmit={handleSubmit} className="p-lg space-y-lg">
+                            {error && (
+                                <div className="p-sm bg-danger/5 border border-danger/20 text-danger text-xs font-mono">
+                                    ERROR: {error}
+                                </div>
+                            )}
 
-                                    <div className="input-group">
-                                        <label className="input-label">Nome categoria</label>
-                                        <input
-                                            type="text"
-                                            className="input"
-                                            placeholder="es. Shopping online"
-                                            value={formName}
-                                            onChange={e => setFormName(e.target.value)}
-                                            required
-                                        />
+                            <div className="space-y-xs">
+                                <label className="text-tiny font-mono uppercase text-muted">NOME_CATEGORIA</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
+                                    placeholder="NOME_CATEGORIA"
+                                    value={formName}
+                                    onChange={e => setFormName(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-md">
+                                <div className="space-y-xs">
+                                    <label className="text-tiny font-mono uppercase text-muted">ICONA_ASSET</label>
+                                    <div className="h-32 overflow-y-auto border border-border p-xs bg-concrete/10 grid grid-cols-5 gap-xs">
+                                        {EMOJI_OPTIONS.map(emoji => (
+                                            <button
+                                                key={emoji}
+                                                type="button"
+                                                className={`aspect-square flex items-center justify-center rounded-sm text-lg transition-colors ${formIcon === emoji ? 'bg-primary text-white' : 'hover:bg-concrete/20'}`}
+                                                onClick={() => setFormIcon(emoji)}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
                                     </div>
+                                </div>
 
-                                    <div className="input-group">
-                                        <label className="input-label">Icona</label>
-                                        <div style={{
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: 'var(--space-xs)',
-                                            padding: 'var(--space-sm)',
-                                            background: 'var(--bg-tertiary)',
-                                            borderRadius: 'var(--radius-md)',
-                                            maxHeight: '120px',
-                                            overflowY: 'auto'
-                                        }}>
-                                            {EMOJI_OPTIONS.map(emoji => (
-                                                <button
-                                                    key={emoji}
-                                                    type="button"
-                                                    style={{
-                                                        width: 36,
-                                                        height: 36,
-                                                        border: formIcon === emoji ? '2px solid var(--accent-primary)' : '1px solid var(--border)',
-                                                        background: formIcon === emoji ? 'var(--accent-primary)20' : 'transparent',
-                                                        borderRadius: 'var(--radius-sm)',
-                                                        cursor: 'pointer',
-                                                        fontSize: '1.25rem',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                    onClick={() => setFormIcon(emoji)}
-                                                >
-                                                    {emoji}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="input-group">
-                                        <label className="input-label">Colore</label>
-                                        <div style={{
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: 'var(--space-xs)',
-                                            padding: 'var(--space-sm)',
-                                            background: 'var(--bg-tertiary)',
-                                            borderRadius: 'var(--radius-md)'
-                                        }}>
-                                            {COLOR_OPTIONS.map(color => (
-                                                <button
-                                                    key={color}
-                                                    type="button"
-                                                    style={{
-                                                        width: 32,
-                                                        height: 32,
-                                                        border: formColor === color ? '3px solid white' : 'none',
-                                                        background: color,
-                                                        borderRadius: 'var(--radius-full)',
-                                                        cursor: 'pointer',
-                                                        boxShadow: formColor === color ? '0 0 0 2px var(--accent-primary)' : 'none'
-                                                    }}
-                                                    onClick={() => setFormColor(color)}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="input-group">
-                                        <label className="input-label">
-                                            Keywords (separati da virgola)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="input"
-                                            placeholder="es. amazon, ebay, aliexpress"
-                                            value={formKeywords}
-                                            onChange={e => setFormKeywords(e.target.value)}
-                                        />
-                                        <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                                            Le keywords vengono usate per la classificazione automatica
-                                        </small>
-                                    </div>
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                                        <input
-                                            type="checkbox"
-                                            id="isIncome"
-                                            checked={formIsIncome}
-                                            onChange={e => setFormIsIncome(e.target.checked)}
-                                            style={{ width: 20, height: 20 }}
-                                        />
-                                        <label htmlFor="isIncome" style={{ cursor: 'pointer' }}>
-                                            Questa è una categoria per entrate
-                                        </label>
+                                <div className="space-y-xs">
+                                    <label className="text-tiny font-mono uppercase text-muted">COLORE_IDENTIFICATIVO</label>
+                                    <div className="h-32 overflow-y-auto border border-border p-xs bg-concrete/10 grid grid-cols-4 gap-xs content-start">
+                                        {COLOR_OPTIONS.map(color => (
+                                            <button
+                                                key={color}
+                                                type="button"
+                                                className={`aspect-square rounded-full transition-transform ${formColor === color ? 'ring-2 ring-primary scale-90' : 'hover:scale-110'}`}
+                                                style={{ backgroundColor: color }}
+                                                onClick={() => setFormColor(color)}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowAddForm(false)}>
-                                    Annulla
+                            <div className="space-y-xs">
+                                <label className="text-tiny font-mono uppercase text-muted">KEYWORDS_AUTOMAZIONE</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
+                                    placeholder="ES: AMAZON, PAYPAL, STRIPE"
+                                    value={formKeywords}
+                                    onChange={e => setFormKeywords(e.target.value)}
+                                />
+                                <p className="text-[10px] text-muted font-mono mt-1">
+                                    SEPARATED_BY_COMMA
+                                </p>
+                            </div>
+
+                            <label className="flex items-center gap-sm cursor-pointer group p-sm border border-border hover:border-ink transition-colors">
+                                <div className={`w-4 h-4 border transition-colors ${formIsIncome ? 'bg-primary border-primary' : 'border-muted group-hover:border-ink'}`}>
+                                    {formIsIncome && <div className="w-full h-full flex items-center justify-center text-white text-[10px]">✓</div>}
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    className="hidden"
+                                    checked={formIsIncome}
+                                    onChange={e => setFormIsIncome(e.target.checked)}
+                                />
+                                <span className="text-xs font-mono uppercase text-muted group-hover:text-ink transition-colors">IS_INCOME_SOURCE</span>
+                            </label>
+
+                            <div className="flex gap-sm pt-md border-t border-border">
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary flex-1 text-xs uppercase"
+                                    onClick={() => setShowAddForm(false)}
+                                >
+                                    ANNULLA
                                 </button>
-                                <button type="submit" className="btn btn-primary" disabled={saving}>
-                                    <Save size={16} />
-                                    {saving ? 'Salvataggio...' : 'Salva'}
+                                <button 
+                                    type="submit" 
+                                    className="btn btn-primary flex-1 text-xs uppercase structural-border"
+                                    disabled={saving}
+                                >
+                                    <Save size={16} className="mr-xs" />
+                                    {saving ? 'SAVING...' : 'SALVA_CONFIGURAZIONE'}
                                 </button>
                             </div>
                         </form>

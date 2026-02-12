@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { getCategories, addTransaction, updateTransaction } from '../db/database';
 import { classifyTransaction, learnFromCorrection } from '../services/classifier';
 import type { Category, Transaction } from '../types';
-import { X, Calendar, Tag, DollarSign, FileText, Repeat } from 'lucide-react';
+import { X } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TransactionFormProps {
@@ -108,14 +108,20 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
     const incomeCategories = categories.filter(c => c.isIncome);
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2 className="modal-title">
-                        {transaction ? 'Modifica transazione' : 'Nuova transazione'}
+        <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={onClose}>
+            <div 
+                className="w-full max-w-md bg-paper structural-border shadow-none" 
+                onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between p-md border-b border-border">
+                    <h2 className="text-sm font-mono uppercase tracking-wider">
+                        {transaction ? 'MODIFICA_TRANSAZIONE' : 'NUOVA_TRANSAZIONE'}
                     </h2>
                     <button 
-                        className="btn btn-ghost btn-icon" 
+                        className="btn btn-ghost btn-icon structural-border border-0" 
                         onClick={onClose}
                         title="Chiudi"
                         aria-label="Chiudi"
@@ -125,156 +131,162 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="modal-body">
-                        <div className="form-grid">
-                            {/* Expense/Income Toggle */}
-                            <div className="flex gap-sm mb-md">
-                                <button
-                                    type="button"
-                                    className={`btn flex-1 ${isExpense ? 'btn-primary' : 'btn-secondary'}`}
-                                    onClick={() => setIsExpense(true)}
-                                >
-                                    Spesa
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`btn flex-1 ${!isExpense ? 'btn-primary' : 'btn-secondary'}`}
-                                    onClick={() => setIsExpense(false)}
-                                >
-                                    Entrata
-                                </button>
-                            </div>
+                    <div className="p-md space-y-md">
+                        {/* Transaction Type Toggle */}
+                        <div className="grid grid-cols-2 gap-px bg-border border border-border">
+                            <button
+                                type="button"
+                                className={`p-sm text-center font-mono uppercase text-xs tracking-wider transition-colors ${isExpense ? 'bg-ink text-paper' : 'bg-paper text-text hover:bg-concrete'}`}
+                                onClick={() => setIsExpense(true)}
+                            >
+                                USCITA
+                            </button>
+                            <button
+                                type="button"
+                                className={`p-sm text-center font-mono uppercase text-xs tracking-wider transition-colors ${!isExpense ? 'bg-ink text-paper' : 'bg-paper text-text hover:bg-concrete'}`}
+                                onClick={() => setIsExpense(false)}
+                            >
+                                ENTRATA
+                            </button>
+                        </div>
 
-                            {/* Amount */}
-                            <div className="input-group">
-                                <label className="input-label">
-                                    <DollarSign size={14} className="vertical-middle" /> Importo
-                                </label>
-                                <div className="relative">
-                                    <span className="currency-symbol">€</span>
-                                    <input
-                                        type="text"
-                                        inputMode="decimal"
-                                        className="input input-amount pl-amount"
-                                        placeholder="0.00"
-                                        value={amount}
-                                        onChange={e => setAmount(e.target.value)}
-                                        required
-                                        autoFocus
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Description */}
-                            <div className="input-group">
-                                <label className="input-label">
-                                    <FileText size={14} className="vertical-middle" /> Descrizione
-                                </label>
+                        {/* Amount */}
+                        <div>
+                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                                IMPORTO
+                            </label>
+                            <div className="relative">
+                                <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono text-lg opacity-40">€</span>
                                 <input
                                     type="text"
-                                    className="input"
-                                    placeholder="es. Cena al ristorante"
-                                    value={description}
-                                    onChange={e => setDescription(e.target.value)}
-                                    onBlur={handleDescriptionBlur}
+                                    inputMode="decimal"
+                                    className="w-full bg-paper border border-border p-sm pl-8 font-mono text-xl focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:opacity-40"
+                                    placeholder="0.00"
+                                    value={amount}
+                                    onChange={e => setAmount(e.target.value)}
                                     required
+                                    autoFocus
                                 />
                             </div>
+                        </div>
 
-                            {/* Date */}
-                            <div className="input-group">
-                                <label className="input-label">
-                                    <Calendar size={14} className="vertical-middle" /> Data
-                                </label>
-                                <input
-                                    type="date"
-                                    className="input"
-                                    value={date}
-                                    onChange={e => setDate(e.target.value)}
-                                    title="Seleziona data"
-                                    required
-                                />
-                            </div>
+                        {/* Description */}
+                        <div>
+                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                                DESCRIZIONE
+                            </label>
+                            <input
+                                type="text"
+                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:opacity-40"
+                                placeholder="es. Spesa Esselunga"
+                                value={description}
+                                onChange={e => setDescription(e.target.value)}
+                                onBlur={handleDescriptionBlur}
+                                required
+                            />
+                        </div>
 
-                            {/* Category */}
-                            <div className="input-group">
-                                <label className="input-label">
-                                    <Tag size={14} className="vertical-middle" /> Categoria
-                                </label>
-                                <button
-                                    type="button"
-                                    className="input input-category-btn"
-                                    onClick={() => setShowCategoryPicker(!showCategoryPicker)}
-                                    title="Seleziona categoria"
-                                >
-                                    {selectedCategory ? (
-                                        <>
-                                            <span>{selectedCategory.icon}</span>
-                                            <span>{selectedCategory.name}</span>
-                                        </>
-                                    ) : (
-                                        <span className="text-muted">Seleziona categoria</span>
-                                    )}
-                                </button>
+                        {/* Date */}
+                        <div>
+                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                                DATA
+                            </label>
+                            <input
+                                type="date"
+                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink uppercase"
+                                value={date}
+                                onChange={e => setDate(e.target.value)}
+                                required
+                            />
+                        </div>
 
-                                {showCategoryPicker && (
-                                    <div className="category-picker mt-sm">
-                                        {(isExpense ? expenseCategories : incomeCategories).map(cat => (
-                                            <button
-                                                key={cat.id}
-                                                type="button"
-                                                className={`category-option ${categoryId === cat.id ? 'selected' : ''}`}
-                                                onClick={() => {
-                                                    setCategoryId(cat.id!);
-                                                    setShowCategoryPicker(false);
-                                                }}
-                                                title={`Seleziona ${cat.name}`}
-                                            >
-                                                <span>{cat.icon}</span>
-                                                <span className="text-ellipsis">
-                                                    {cat.name}
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
+                        {/* Category */}
+                        <div>
+                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                                CATEGORIA
+                            </label>
+                            <button
+                                type="button"
+                                className={`w-full text-left border border-border p-sm font-mono text-sm flex items-center justify-between ${showCategoryPicker ? 'border-ink ring-1 ring-ink' : ''}`}
+                                onClick={() => setShowCategoryPicker(!showCategoryPicker)}
+                                title="Seleziona categoria"
+                            >
+                                {selectedCategory ? (
+                                    <span className="flex items-center gap-2">
+                                        <span>{selectedCategory.icon}</span>
+                                        <span className="uppercase">{selectedCategory.name}</span>
+                                    </span>
+                                ) : (
+                                    <span className="opacity-40 uppercase">SELEZIONA_CATEGORIA</span>
                                 )}
-                            </div>
+                            </button>
 
-                            {/* Details (optional) */}
-                            <div className="input-group">
-                                <label className="input-label">Dettagli (opzionale)</label>
-                                <input
-                                    type="text"
-                                    className="input"
-                                    placeholder="Aggiungi note..."
-                                    value={details}
-                                    onChange={e => setDetails(e.target.value)}
-                                />
-                            </div>
+                            {showCategoryPicker && (
+                                <div className="mt-xs border border-border max-h-48 overflow-y-auto grid grid-cols-2 gap-px bg-border">
+                                    {(isExpense ? expenseCategories : incomeCategories).map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            className={`p-sm text-left bg-paper hover:bg-concrete flex items-center gap-2 transition-colors ${categoryId === cat.id ? 'bg-concrete' : ''}`}
+                                            onClick={() => {
+                                                setCategoryId(cat.id!);
+                                                setShowCategoryPicker(false);
+                                            }}
+                                            title={`Seleziona ${cat.name}`}
+                                        >
+                                            <span>{cat.icon}</span>
+                                            <span className="font-mono text-xs uppercase truncate">
+                                                {cat.name}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
-                            {/* Recurring */}
-                            <div className="flex items-center gap-md">
-                                <input
-                                    type="checkbox"
-                                    id="recurring"
-                                    checked={isRecurring}
-                                    onChange={e => setIsRecurring(e.target.checked)}
-                                    className="checkbox-lg"
-                                />
-                                <label htmlFor="recurring" className="flex items-center gap-sm cursor-pointer">
-                                    <Repeat size={16} />
-                                    Spesa ricorrente
-                                </label>
-                            </div>
+                        {/* Details (optional) */}
+                        <div>
+                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                                NOTE (OPZIONALE)
+                            </label>
+                            <input
+                                type="text"
+                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:opacity-40"
+                                placeholder="..."
+                                value={details}
+                                onChange={e => setDetails(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Recurring */}
+                        <div className="flex items-center gap-sm pt-xs">
+                            <input
+                                type="checkbox"
+                                id="recurring"
+                                checked={isRecurring}
+                                onChange={e => setIsRecurring(e.target.checked)}
+                                className="w-4 h-4 border-2 border-border text-ink focus:ring-ink rounded-none"
+                            />
+                            <label htmlFor="recurring" className="font-mono text-xs uppercase cursor-pointer select-none">
+                                RICORRENTE
+                            </label>
                         </div>
                     </div>
 
-                    <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" onClick={onClose}>
-                            Annulla
+                    <div className="p-md border-t border-border flex justify-end gap-sm bg-concrete/20">
+                        <button 
+                            type="button" 
+                            className="btn btn-secondary text-xs uppercase tracking-wider" 
+                            onClick={onClose}
+                        >
+                            ANNULLA
                         </button>
-                        <button type="submit" className="btn btn-primary" disabled={saving}>
-                            {saving ? 'Salvataggio...' : (transaction ? 'Aggiorna' : 'Salva')}
+                        <button 
+                            type="submit" 
+                            className="btn btn-primary text-xs uppercase tracking-wider" 
+                            disabled={saving}
+                        >
+                            {saving ? 'ELABORAZIONE...' : (transaction ? 'AGGIORNA_DATI' : 'SALVA_DATI')}
                         </button>
                     </div>
                 </form>

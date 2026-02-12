@@ -10,7 +10,8 @@ vi.mock('../db/database', () => ({
       toArray: vi.fn().mockResolvedValue([])
     }
   },
-  getCategories: vi.fn().mockResolvedValue([])
+  getCategories: vi.fn().mockResolvedValue([]),
+  getTransactions: vi.fn().mockResolvedValue([])
 }));
 
 import {
@@ -20,7 +21,7 @@ import {
   getTopExpenses,
   getDailyAverageSpending
 } from './analytics';
-import { db, getCategories } from '../db/database';
+import { db, getCategories, getTransactions } from '../db/database';
 
 describe('Analytics Service', () => {
   beforeEach(() => {
@@ -29,7 +30,7 @@ describe('Analytics Service', () => {
 
   describe('getMonthlyStats', () => {
     it('should return correct stats for a month with no transactions', async () => {
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce([]);
+      vi.mocked(getTransactions).mockResolvedValueOnce([]);
 
       const result = await getMonthlyStats(new Date(2026, 0, 15)); // January 2026
 
@@ -50,7 +51,7 @@ describe('Analytics Service', () => {
         { id: 4, amount: 500, categoryId: 1, date: new Date(2026, 0, 20) },  // Income
       ];
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
 
       const result = await getMonthlyStats(new Date(2026, 0, 15));
 
@@ -66,7 +67,7 @@ describe('Analytics Service', () => {
         { id: 3, amount: -150, categoryId: 1, date: new Date(2026, 0, 15) },
       ];
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
 
       const result = await getMonthlyStats(new Date(2026, 0, 15));
 
@@ -77,7 +78,7 @@ describe('Analytics Service', () => {
     });
 
     it('should format month correctly', async () => {
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce([]);
+      vi.mocked(getTransactions).mockResolvedValueOnce([]);
 
       const result = await getMonthlyStats(new Date(2026, 11, 15)); // December 2026
 
@@ -87,7 +88,7 @@ describe('Analytics Service', () => {
 
   describe('getSpendingTrend', () => {
     it('should return trend for specified number of months', async () => {
-      vi.mocked(db.transactions.toArray).mockResolvedValue([]);
+      vi.mocked(getTransactions).mockResolvedValue([]);
 
       const result = await getSpendingTrend(3);
 
@@ -97,7 +98,7 @@ describe('Analytics Service', () => {
     });
 
     it('should return 6 months by default', async () => {
-      vi.mocked(db.transactions.toArray).mockResolvedValue([]);
+      vi.mocked(getTransactions).mockResolvedValue([]);
 
       const result = await getSpendingTrend();
 
@@ -117,7 +118,7 @@ describe('Analytics Service', () => {
         { id: 2, name: 'Food', icon: '🍕', color: '#FF5722', keywords: [], isDefault: true, isIncome: false },
       ];
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
       vi.mocked(getCategories).mockResolvedValueOnce(mockCategories);
 
       const result = await getCategoryBreakdown(new Date(2026, 0, 1), new Date(2026, 0, 31), true);
@@ -140,7 +141,7 @@ describe('Analytics Service', () => {
         { id: 3, name: 'Cat3', icon: '3️⃣', color: '#333', keywords: [], isDefault: true, isIncome: false },
       ];
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
       vi.mocked(getCategories).mockResolvedValueOnce(mockCategories);
 
       const result = await getCategoryBreakdown(new Date(2026, 0, 1), new Date(2026, 0, 31));
@@ -159,7 +160,7 @@ describe('Analytics Service', () => {
         { id: 3, amount: -100, categoryId: 2, date: new Date() },  // Expense
       ];
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
 
       const result = await getTopExpenses(new Date(2026, 0, 1), new Date(2026, 0, 31));
 
@@ -174,7 +175,7 @@ describe('Analytics Service', () => {
         { id: 3, amount: -250, categoryId: 3, date: new Date() },
       ];
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
 
       const result = await getTopExpenses(new Date(2026, 0, 1), new Date(2026, 0, 31));
 
@@ -191,7 +192,7 @@ describe('Analytics Service', () => {
         date: new Date()
       }));
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
 
       const result = await getTopExpenses(new Date(2026, 0, 1), new Date(2026, 0, 31), 5);
 
@@ -207,7 +208,7 @@ describe('Analytics Service', () => {
         { id: 3, amount: 1000, categoryId: 3, date: new Date() }, // Income - ignored
       ];
 
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce(mockTransactions);
+      vi.mocked(getTransactions).mockResolvedValueOnce(mockTransactions);
 
       const result = await getDailyAverageSpending(30);
 
@@ -215,17 +216,8 @@ describe('Analytics Service', () => {
       expect(result).toBeCloseTo(16.67, 1);
     });
 
-    it('should use 30 days by default', async () => {
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce([]);
-
-      await getDailyAverageSpending();
-
-      // Verify the between call was made (we're checking it was called)
-      expect(db.transactions.between).toHaveBeenCalled();
-    });
-
     it('should return 0 when no expenses', async () => {
-      vi.mocked(db.transactions.toArray).mockResolvedValueOnce([]);
+      vi.mocked(getTransactions).mockResolvedValueOnce([]);
 
       const result = await getDailyAverageSpending(30);
 

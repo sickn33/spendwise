@@ -82,168 +82,152 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded 
 
     return (
         <>
-            {/* Quick Add Bar - Fixed at bottom on mobile, floating on desktop */}
-            <div className={`quick-add-bar ${isExpanded ? 'expanded' : ''}`}>
-                <div className="quick-add-header" onClick={() => setIsExpanded(!isExpanded)}>
-                    <span className="font-semibold">⚡ Aggiunta Rapida</span>
-                    <div className="flex gap-sm">
-                        {isExpanded && (
-                            <button
-                                className="btn btn-ghost btn-icon btn-small-icon"
-                                onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
-                                title={isEditing ? "Fine modifica" : "Modifica preset"}
-                                aria-label={isEditing ? "Fine modifica" : "Modifica preset"}
-                            >
-                                <Settings size={16} />
-                            </button>
-                        )}
-                        <button
-                            className={`btn btn-ghost btn-icon btn-small-icon transition-transform ${isExpanded ? 'rotate-45' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                            title={isExpanded ? "Chiudi" : "Espandi"}
-                            aria-label={isExpanded ? "Chiudi" : "Espandi"}
-                        >
-                            <Plus size={20} />
-                        </button>
-                    </div>
-                </div>
+            <div className={`fixed bottom-md left-1/2 -translate-x-1/2 flex items-center gap-px bg-border structural-border z-50 shadow-none transition-all duration-300 ${isExpanded ? 'w-auto' : 'w-auto'}`}>
+                {/* Main Toggle */}
+                <button
+                    className="p-sm bg-paper hover:bg-concrete text-ink flex items-center gap-xs min-w-[140px] justify-center"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    title={isExpanded ? "Chiudi" : "Espandi"}
+                >
+                    <span className="font-mono text-xs uppercase tracking-wider">
+                        {isExpanded ? 'CHIUDI_PANNELLO' : '⚡ AGGIUNTA_RAPIDA'}
+                    </span>
+                </button>
 
+                {/* Expanded Actions */}
                 {isExpanded && (
-                    <div className="quick-add-content">
-                        <div className="quick-add-grid">
-                            {presets.map(preset => {
-                                const category = getCategoryById(preset.categoryId);
-                                const isSuccess = addingSuccess === preset.id;
+                    <>
+                        <button
+                            className={`p-sm bg-paper hover:bg-concrete text-ink flex items-center justify-center w-10 ${isEditing ? 'bg-concrete' : ''}`}
+                            onClick={() => setIsEditing(!isEditing)}
+                            title={isEditing ? "Fine modifica" : "Modifica preset"}
+                        >
+                            <Settings size={14} />
+                        </button>
+                        
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-sm w-72 bg-paper structural-border shadow-none overflow-hidden">
+                            <div className="grid grid-cols-2 gap-px bg-border p-px">
+                                {presets.map(preset => {
+                                    const category = getCategoryById(preset.categoryId);
+                                    const isSuccess = addingSuccess === preset.id;
 
-                                return (
-                                    <div
-                                        key={preset.id}
-                                        className={`quick-add-item ${isSuccess ? 'success' : ''} ${isEditing ? 'editing' : ''}`}
-                                        onClick={() => handleQuickAdd(preset)}
-                                    >
-                                        {isEditing && (
-                                            <button
-                                                className="quick-add-delete"
-                                                onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id!); }}
-                                                title="Elimina preset"
-                                                aria-label="Elimina preset"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        )}
-                                        <div className="quick-add-icon">
-                                            {isSuccess ? <Check size={20} /> : preset.icon}
-                                        </div>
-                                        <div className="quick-add-name">{preset.name}</div>
-                                        <div className="quick-add-amount">€{preset.amount.toFixed(2)}</div>
-                                        <div 
-                                            className="quick-add-category" 
-                                            ref={el => {
-                                                if (el) el.style.setProperty('--category-color', category?.color || '');
-                                            }}
+                                    return (
+                                        <button
+                                            key={preset.id}
+                                            className={`relative p-sm bg-paper hover:bg-concrete text-left transition-colors group ${isSuccess ? 'bg-concrete' : ''}`}
+                                            onClick={() => handleQuickAdd(preset)}
                                         >
-                                            {category?.icon}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                            <div className="flex items-center justify-between mb-xs">
+                                                <span className="text-lg">{isSuccess ? <Check size={18} /> : preset.icon}</span>
+                                                <span className="font-mono text-xs opacity-60">€{preset.amount.toFixed(2)}</span>
+                                            </div>
+                                            <div className="font-mono text-xs uppercase truncate pr-4">
+                                                {preset.name}
+                                            </div>
+                                            
+                                            {/* Category Indicator */}
+                                            <div 
+                                                className="absolute top-0 right-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                style={{ backgroundColor: category?.color }}
+                                            />
 
-                            {isEditing && (
-                                <div
-                                    className="quick-add-item add-new"
-                                    onClick={() => setShowAddNew(true)}
-                                >
-                                    <Plus size={24} />
-                                    <div className="quick-add-name">Aggiungi</div>
-                                </div>
-                            )}
+                                            {isEditing && (
+                                                <div
+                                                    className="absolute top-0 right-0 p-1 bg-paper/80 hover:bg-paper text-ink z-10"
+                                                    onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id!); }}
+                                                >
+                                                    <X size={12} />
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+
+                                {isEditing && (
+                                    <button
+                                        className="p-sm bg-paper hover:bg-concrete flex flex-col items-center justify-center gap-xs min-h-[60px]"
+                                        onClick={() => setShowAddNew(true)}
+                                    >
+                                        <Plus size={20} className="opacity-40" />
+                                        <span className="font-mono text-[10px] uppercase opacity-40">NUOVO</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
             </div>
 
-            {/* Add New Preset Modal */}
+            {/* Add New Preset Modal (Reused structural modal style) */}
             {showAddNew && (
-                <div className="modal-overlay" onClick={() => setShowAddNew(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>Nuovo Preset</h2>
-                            <button 
-                                className="btn btn-ghost btn-icon" 
-                                onClick={() => setShowAddNew(false)}
-                                title="Chiudi"
-                                aria-label="Chiudi"
-                            >
+                <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-[60] flex items-center justify-center p-md" onClick={() => setShowAddNew(false)}>
+                    <div className="w-full max-w-sm bg-paper structural-border shadow-none" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-md border-b border-border">
+                            <h2 className="text-sm font-mono uppercase tracking-wider">NUOVO_PRESET</h2>
+                            <button className="btn btn-ghost btn-icon structural-border border-0" onClick={() => setShowAddNew(false)}>
                                 <X size={20} />
                             </button>
                         </div>
+                        
+                        <div className="p-md space-y-md">
+                            {/* Name */}
+                            <div>
+                                <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">NOME</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink"
+                                    placeholder="es. Caffè"
+                                    value={newPreset.name}
+                                    onChange={e => setNewPreset({ ...newPreset, name: e.target.value })}
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Nome</label>
-                            <input
-                                type="text"
-                                className="input"
-                                placeholder="es. Caffè"
-                                value={newPreset.name}
-                                onChange={e => setNewPreset({ ...newPreset, name: e.target.value })}
-                            />
-                        </div>
+                            {/* Amount */}
+                            <div>
+                                <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">IMPORTO</label>
+                                <div className="relative">
+                                    <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono opacity-40">€</span>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-paper border border-border p-sm pl-6 font-mono text-sm focus:outline-none focus:border-ink"
+                                        placeholder="1.00"
+                                        step="0.01"
+                                        value={newPreset.amount}
+                                        onChange={e => setNewPreset({ ...newPreset, amount: e.target.value })}
+                                    />
+                                </div>
+                            </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Importo (€)</label>
-                            <input
-                                type="number"
-                                className="input"
-                                placeholder="1.50"
-                                step="0.01"
-                                value={newPreset.amount}
-                                onChange={e => setNewPreset({ ...newPreset, amount: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Categoria</label>
-                            <select
-                                className="input"
-                                value={newPreset.categoryId}
-                                onChange={e => setNewPreset({ ...newPreset, categoryId: parseInt(e.target.value) })}
-                                title="Seleziona categoria"
-                            >
-                                <option value={0}>Seleziona categoria</option>
-                                {categories.filter(c => !c.isIncome).map(c => (
-                                    <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Icona</label>
-                            <div className="flex flex-wrap gap-sm">
-                                {['☕', '🍝', '🚇', '🛒', '🍕', '🚕', '🎬', '💊', '⛽', '🍺', '🥪', '💰'].map(icon => (
-                                    <button
-                                        key={icon}
-                                        type="button"
-                                        className={`btn btn-square ${newPreset.icon === icon ? 'btn-primary' : 'btn-secondary'}`}
-                                        onClick={() => setNewPreset({ ...newPreset, icon })}
-                                        title={`Seleziona icona ${icon}`}
-                                        aria-label={`Seleziona icona ${icon}`}
-                                    >
-                                        {icon}
-                                    </button>
-                                ))}
+                            {/* Category */}
+                            <div>
+                                <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">CATEGORIA</label>
+                                <select
+                                    className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink appearance-none rounded-none"
+                                    value={newPreset.categoryId}
+                                    onChange={e => setNewPreset({ ...newPreset, categoryId: parseInt(e.target.value) })}
+                                    title="Seleziona categoria"
+                                >
+                                    <option value={0}>SELEZIONA...</option>
+                                    {categories.filter(c => !c.isIncome).map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
-                        <div className="modal-actions">
-                            <button className="btn btn-secondary" onClick={() => setShowAddNew(false)}>
-                                Annulla
+                        <div className="p-md border-t border-border flex justify-end gap-sm bg-concrete/20">
+                            <button 
+                                className="btn btn-secondary text-xs uppercase tracking-wider" 
+                                onClick={() => setShowAddNew(false)}
+                            >
+                                ANNULLA
                             </button>
                             <button
-                                className="btn btn-primary"
+                                className="btn btn-primary text-xs uppercase tracking-wider"
                                 onClick={handleAddNewPreset}
                                 disabled={!newPreset.name || !newPreset.amount || !newPreset.categoryId}
                             >
-                                Salva
+                                SALVA
                             </button>
                         </div>
                     </div>

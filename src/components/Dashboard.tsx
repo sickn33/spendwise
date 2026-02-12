@@ -6,7 +6,7 @@ import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, eachMonthOfInterval, isAfter } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { TrendingUp, TrendingDown, CreditCard, PiggyBank, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, CreditCard, PiggyBank, ChevronLeft, ChevronRight } from 'lucide-react';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
@@ -112,16 +112,6 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
         ? ((monthlyStats.totalIncome - lastMonthStats.totalIncome) / lastMonthStats.totalIncome * 100)
         : 0;
 
-    const doughnutData = useMemo(() => ({
-        labels: categoryBreakdown.slice(0, 6).map(c => c.label),
-        datasets: [{
-            data: categoryBreakdown.slice(0, 6).map(c => c.value),
-            backgroundColor: categoryBreakdown.slice(0, 6).map(c => c.color),
-            borderColor: 'transparent',
-            borderWidth: 0,
-            hoverOffset: 10
-        }]
-    }), [categoryBreakdown]);
 
     const lineData = useMemo(() => ({
         labels: trendData.labels,
@@ -175,118 +165,91 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
 
     return (
         <div>
-            <div className="page-header">
+            <div className="page-header border-b pb-xl mb-2xl">
                 <div>
-                    <h1 className="page-title">Dashboard</h1>
+                    <h1 className="font-display">Pannello_Controllo_v1</h1>
                     {/* Month Navigator */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-md)',
-                        marginTop: 'var(--space-sm)'
-                    }}>
+                    <div className="month-nav mt-md">
                         <button
                             className="btn btn-ghost btn-icon"
                             onClick={goToPreviousMonth}
-                            style={{ width: 32, height: 32 }}
+                            title="Mese precedente"
                         >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={18} strokeWidth={2.5} />
                         </button>
-                        <span style={{
-                            fontSize: '1.1rem',
-                            fontWeight: 500,
-                            minWidth: '150px',
-                            textAlign: 'center',
-                            textTransform: 'capitalize'
-                        }}>
-                            {format(selectedMonth, 'MMMM yyyy', { locale: it })}
+                        <span className="month-nav-label">
+                            {format(selectedMonth, 'yyyy_MMMM', { locale: it })}
                         </span>
                         <button
                             className="btn btn-ghost btn-icon"
                             onClick={goToNextMonth}
                             disabled={isCurrentMonth}
-                            style={{
-                                width: 32,
-                                height: 32,
-                                opacity: isCurrentMonth ? 0.3 : 1,
-                                cursor: isCurrentMonth ? 'not-allowed' : 'pointer'
-                            }}
+                            title="Mese successivo"
                         >
-                            <ChevronRight size={20} />
+                            <ChevronRight size={18} strokeWidth={2.5} />
                         </button>
                         {!isCurrentMonth && (
                             <button
-                                className="btn btn-secondary"
+                                className="btn btn-secondary system-reset-btn"
                                 onClick={goToCurrentMonth}
-                                style={{ marginLeft: 'var(--space-sm)', fontSize: '0.85rem', padding: 'var(--space-xs) var(--space-sm)' }}
                             >
-                                Oggi
+                                RESET_TO_CURRENT
                             </button>
                         )}
                     </div>
                 </div>
                 <button className="btn btn-primary" onClick={onAddTransaction}>
-                    + Nuova Spesa
+                    AGGIUNGI_RECORD
                 </button>
             </div>
 
-            {/* Stats Grid */}
+            {/* Stats Grid -> Data Ledger Style */}
             <div className="stats-grid">
-                <div className="card stat-card">
+                <div className="stat-card">
                     <div className="stat-label">
-                        <TrendingDown size={16} />
-                        Spese {isCurrentMonth ? 'del mese' : ''}
+                        <TrendingDown size={14} strokeWidth={2.5} /> SPESE_MENSILI
                     </div>
-                    <div className="stat-value" style={{ color: 'var(--danger)' }}>
+                    <div className="stat-value font-mono">
                         €{monthlyStats?.totalExpenses.toFixed(2) || '0.00'}
                     </div>
-                    <div className={`stat-change ${expenseChange > 0 ? 'negative' : 'positive'}`}>
-                        {expenseChange > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                        {Math.abs(expenseChange).toFixed(1)}% vs mese precedente
+                    <div className={`stat-change font-mono ${expenseChange > 0 ? 'text-danger' : 'text-success'}`}>
+                        {expenseChange > 0 ? '▲' : '▼'} {Math.abs(expenseChange).toFixed(1)}% VS_PREC
                     </div>
                 </div>
 
-                <div className="card stat-card">
+                <div className="stat-card">
                     <div className="stat-label">
-                        <TrendingUp size={16} />
-                        Entrate {isCurrentMonth ? 'del mese' : ''}
+                        <TrendingUp size={14} strokeWidth={2.5} /> ENTRATE_MENSILI
                     </div>
-                    <div className="stat-value" style={{ color: 'var(--success)' }}>
+                    <div className="stat-value font-mono">
                         €{monthlyStats?.totalIncome.toFixed(2) || '0.00'}
                     </div>
-                    <div className={`stat-change ${incomeChange >= 0 ? 'positive' : 'negative'}`}>
-                        {incomeChange >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                        {Math.abs(incomeChange).toFixed(1)}% vs mese precedente
+                    <div className={`stat-change font-mono ${incomeChange >= 0 ? 'text-success' : 'text-danger'}`}>
+                        {incomeChange >= 0 ? '▲' : '▼'} {Math.abs(incomeChange).toFixed(1)}% VS_PREC
                     </div>
                 </div>
 
-                <div className="card stat-card">
+                <div className="stat-card">
                     <div className="stat-label">
-                        <PiggyBank size={16} />
-                        Bilancio
+                        <PiggyBank size={14} strokeWidth={2.5} /> BILANCIO_NETTO
                     </div>
-                    <div className="stat-value" style={{
-                        color: (monthlyStats?.totalIncome || 0) - (monthlyStats?.totalExpenses || 0) >= 0
-                            ? 'var(--success)'
-                            : 'var(--danger)'
-                    }}>
+                    <div className={`stat-value font-mono ${((monthlyStats?.totalIncome || 0) - (monthlyStats?.totalExpenses || 0)) >= 0 ? 'text-success' : 'text-danger'}`}>
                         €{((monthlyStats?.totalIncome || 0) - (monthlyStats?.totalExpenses || 0)).toFixed(2)}
                     </div>
-                    <div className="stat-change" style={{ color: 'var(--text-muted)' }}>
-                        {monthlyStats?.transactionCount || 0} transazioni
+                    <div className="stat-change font-mono opacity-40">
+                        {monthlyStats?.transactionCount || 0} RECORDS_FOUND
                     </div>
                 </div>
 
-                <div className="card stat-card">
+                <div className="stat-card border-none-right">
                     <div className="stat-label">
-                        <CreditCard size={16} />
-                        Media giornaliera
+                        <CreditCard size={14} strokeWidth={2.5} /> MEDIA_DIARIA
                     </div>
-                    <div className="stat-value">
+                    <div className="stat-value font-mono">
                         €{dailyAverage.toFixed(2)}
                     </div>
-                    <div className="stat-change" style={{ color: 'var(--text-muted)' }}>
-                        ultimi 30 giorni
+                    <div className="stat-change font-mono opacity-40">
+                        RANGE: 30_DAYS
                     </div>
                 </div>
             </div>
@@ -294,97 +257,105 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
             {/* Charts Row */}
             <div className="grid-2">
                 <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Spese per categoria</h3>
+                    <div className="card-header border-b pb-sm mb-xl">
+                        <h3 className="font-display" style={{ fontSize: '1rem' }}>DISTRIBUZIONE_CATEGORIA_v1</h3>
                     </div>
-                    <div className="chart-container" style={{ height: '280px' }}>
+                    <div className="chart-center-container">
                         {categoryBreakdown.length > 0 ? (
-                            <Doughnut data={doughnutData} options={chartOptions} />
+                            <Doughnut 
+                                data={{
+                                    labels: categoryBreakdown.map(c => c.label),
+                                    datasets: [{
+                                        data: categoryBreakdown.map(c => c.value),
+                                        backgroundColor: ['#0A1F3D', '#D1D1D1', '#0F0F0F', '#F5F5F0', '#008F39', '#E30613'],
+                                        borderWidth: 1,
+                                        borderColor: '#0F0F0F'
+                                    }]
+                                }} 
+                                options={{
+                                    cutout: '70%',
+                                    plugins: { legend: { display: false } },
+                                    animation: { duration: 0 }
+                                }} 
+                            />
                         ) : (
-                            <div className="empty-state">
-                                <p>Nessuna spesa in questo mese</p>
-                            </div>
+                            <div className="flex items-center justify-center h-full font-mono opacity-40">NO_DATA</div>
                         )}
                     </div>
                     {categoryBreakdown.length > 0 && (
-                        <div style={{ marginTop: 'var(--space-md)' }}>
-                            {categoryBreakdown.slice(0, 4).map((cat, i) => (
-                                <div key={i} style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: 'var(--space-sm) 0',
-                                    borderBottom: i < 3 ? '1px solid var(--border)' : 'none'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                        <div style={{
-                                            width: 12,
-                                            height: 12,
-                                            borderRadius: '50%',
-                                            background: cat.color
-                                        }} />
-                                        <span style={{ fontSize: '0.9rem' }}>{cat.label}</span>
+                        <div className="mt-xl">
+                            {categoryBreakdown.map((cat, i) => (
+                                <div key={i} className="ledger-row font-mono">
+                                    <div className="flex items-center gap-sm">
+                                        <div className="color-indicator" style={{ background: cat.color }} />
+                                        <span>{cat.label.toUpperCase()}</span>
                                     </div>
-                                    <span style={{ fontWeight: 600, fontFeatureSettings: 'tnum' }}>
-                                        €{cat.value.toFixed(2)}
-                                    </span>
+                                    <span>€{cat.value.toFixed(2)}</span>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
 
+                {/* Trend Forecast Chart */}
                 <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Trend spese (6 mesi)</h3>
+                    <div className="card-header border-b pb-sm mb-xl">
+                        <h3 className="font-display" style={{ fontSize: '1rem' }}>TREND_TEMPORALE_6M</h3>
                     </div>
-                    <div className="chart-container" style={{ height: '280px' }}>
-                        <Line data={lineData} options={lineOptions as never} />
+                    <div className="chart-container" style={{ height: '260px' }}>
+                        <Line data={lineData} options={{
+                            ...lineOptions,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                ...lineOptions.scales,
+                                x: { ...lineOptions.scales.x, grid: { display: false } },
+                                y: { ...lineOptions.scales.y, grid: { color: '#D1D1D1' } }
+                            },
+                            animation: { duration: 0 }
+                        } as never} />
+                    </div>
+                    <div className="mt-xl font-mono opacity-40 text-right" style={{ fontSize: '0.65rem' }}>
+                        DATA_SOURCE: LOCAL_SQL_LEDGER
                     </div>
                 </div>
             </div>
 
-            {/* All Transactions for selected month */}
-            <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">
+            {/* Transaction Ledger */}
+            <div className="card mt-2xl">
+                <div className="card-header border-b pb-sm mb-xl">
+                    <h3 className="font-display" style={{ fontSize: '1rem' }}>
                         {isCurrentMonth
-                            ? `Transazioni di questo mese`
-                            : `Transazioni di ${format(selectedMonth, 'MMMM yyyy', { locale: it })}`}
+                            ? `REGISTRO_TRANSAZIONI_CORRENTE`
+                            : `ARCHIVIO_TRANSAZIONI_${format(selectedMonth, 'yyyy_MM').toUpperCase()}`}
                     </h3>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                        {recentTransactions.length} transazioni
+                    <span className="font-mono opacity-60" style={{ fontSize: '0.8rem' }}>
+                        {recentTransactions.length} RECORDS_COMMIT
                     </span>
                 </div>
-                <div className="transaction-list" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                <div className="transaction-list">
                     {recentTransactions.length > 0 ? (
                         recentTransactions.map(t => {
                             const category = categoryMap.get(t.categoryId);
                             return (
                                 <div key={t.id} className="transaction-item">
-                                    <div
-                                        className="transaction-icon"
-                                        style={{ background: category?.color ? `${category.color}20` : 'var(--bg-tertiary)' }}
-                                    >
+                                    <div className="transaction-icon">
                                         {category?.icon || '📦'}
                                     </div>
                                     <div className="transaction-info">
                                         <div className="transaction-description">{t.description}</div>
                                         <div className="transaction-meta">
-                                            {format(new Date(t.date), 'd MMM', { locale: it })} • {category?.name}
+                                            {format(new Date(t.date), 'yyyy-MM-dd')} | {category?.name.toUpperCase()}
                                         </div>
                                     </div>
-                                    <div className={`transaction-amount ${t.amount < 0 ? 'expense' : 'income'}`}>
+                                    <div className={`transaction-amount font-mono ${t.amount < 0 ? 'text-danger' : 'text-success'}`}>
                                         {t.amount < 0 ? '-' : '+'}€{Math.abs(t.amount).toFixed(2)}
                                     </div>
                                 </div>
                             );
                         })
                     ) : (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">📝</div>
-                            <div className="empty-state-title">Nessuna transazione</div>
-                            <p>{isCurrentMonth ? 'Inizia ad aggiungere le tue spese' : 'Nessuna transazione in questo mese'}</p>
+                        <div className="p-2xl text-center font-mono opacity-40">
+                            NULL_SET: NO_TRANSACTIONS_FOUND
                         </div>
                     )}
                 </div>

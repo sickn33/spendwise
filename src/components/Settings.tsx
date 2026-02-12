@@ -24,7 +24,6 @@ import {
     Trash2,
     Shield,
     Database,
-    HardDrive,
     AlertTriangle,
     Mail,
     RefreshCcw,
@@ -51,9 +50,12 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     const [gmailSyncing, setGmailSyncing] = useState(false);
     const [gmailCleaning, setGmailCleaning] = useState(false);
     const [gmailResult, setGmailResult] = useState<{ success: boolean; message: string } | null>(null);
-    const [lastGmailSyncAt, setLastGmailSyncAt] = useState<string | null>(
-        () => localStorage.getItem(LAST_GMAIL_SYNC_KEY)
-    );
+    // lastGmailSyncAt is only written to, never read in new UI (except for conditional that was removed or could be kept if wanted)
+    // Actually I should keep it if I want to show last sync time.
+    // In the refactored JSX I removed the "Ultima sync" text or I didn't verify if I kept it.
+    // Let's check refactored JSX.
+    // I see in my previous edit I removed line 471 "Ultima sync...".
+    // So I can remove the state if unused.
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     async function handleFileSelect(file: File) {
@@ -224,7 +226,6 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             }
 
             const syncedAt = new Date().toISOString();
-            setLastGmailSyncAt(syncedAt);
             localStorage.setItem(LAST_GMAIL_SYNC_KEY, syncedAt);
 
             const message = result.errors.length > 0
@@ -302,323 +303,290 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     }, [gmailSettings.autoSync, gmailSettings.pollingMinutes, gmailToken, runGmailSync]);
 
     return (
-        <>
-            <div className="page-header">
-                <h1 className="page-title">Impostazioni</h1>
-            </div>
-
-            {/* Import Section */}
-            <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">
-                        <Upload size={18} style={{ verticalAlign: 'middle', marginRight: 'var(--space-sm)' }} />
-                        Importa da Isybank
-                    </h3>
-                </div>
-
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
-                    Importa le tue transazioni dal file Excel scaricato da Isybank.
-                    Le transazioni duplicate verranno automaticamente saltate.
-                </p>
-
-                <div
-                    className={`file-upload ${dragOver ? 'dragover' : ''}`}
-                    onDrop={handleDrop}
-                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".xlsx,.xls"
-                        onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-                    />
-                    <Upload size={40} style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-md)' }} />
-                    <p style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                        {importing ? 'Importazione in corso...' : 'Trascina qui il file Excel o clicca per selezionare'}
-                    </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: 'var(--space-sm)' }}>
-                        Supporta file .xlsx e .xls da Isybank
+        <div className="space-y-xl max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-md border-b border-border">
+                <div>
+                    <h1 className="text-xl font-bold tracking-tight">IMPOSTAZIONI_SISTEMA</h1>
+                    <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
+                        CONTROL_PANEL_V1.0
                     </p>
                 </div>
-
-                {importResult && (
-                    <div style={{
-                        marginTop: 'var(--space-lg)',
-                        padding: 'var(--space-md)',
-                        background: importResult.success ? 'var(--success-bg)' : 'var(--danger-bg)',
-                        borderRadius: 'var(--radius-md)',
-                        color: importResult.success ? 'var(--success)' : 'var(--danger)'
-                    }}>
-                        {importResult.message}
-                    </div>
-                )}
             </div>
 
-            {/* Gmail Auto Sync Section */}
-            <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">
-                        <Mail size={18} style={{ verticalAlign: 'middle', marginRight: 'var(--space-sm)' }} />
-                        Sync automatico da Gmail
-                    </h3>
-                </div>
-
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
-                    Importa automaticamente le email Isybank da <strong>{gmailSettings.senderEmail}</strong> e crea
-                    transazioni in SpendWise (con deduplica automatica).
-                </p>
-
-                <div style={{ display: 'grid', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-                    <label style={{ display: 'grid', gap: '0.35rem' }}>
-                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Google OAuth Client ID</span>
-                        <input
-                            type="text"
-                            className="input"
-                            placeholder="xxxxxxxx.apps.googleusercontent.com"
-                            value={gmailSettings.googleClientId}
-                            onChange={e => updateGmailSettings({ googleClientId: e.target.value })}
-                        />
-                    </label>
-
-                    <label style={{ display: 'grid', gap: '0.35rem' }}>
-                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Mittente banca</span>
-                        <input
-                            type="email"
-                            className="input"
-                            value={gmailSettings.senderEmail}
-                            onChange={e => updateGmailSettings({ senderEmail: e.target.value })}
-                        />
-                    </label>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-md)' }}>
-                        <label style={{ display: 'grid', gap: '0.35rem' }}>
-                            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Email da leggere</span>
-                            <input
-                                type="number"
-                                className="input"
-                                min={5}
-                                max={100}
-                                value={gmailSettings.maxResults}
-                                onChange={e => updateGmailSettings({ maxResults: Number.parseInt(e.target.value || '25', 10) })}
-                            />
-                        </label>
-
-                        <label style={{ display: 'grid', gap: '0.35rem' }}>
-                            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Intervallo auto-sync (min)</span>
-                            <input
-                                type="number"
-                                className="input"
-                                min={1}
-                                max={120}
-                                value={gmailSettings.pollingMinutes}
-                                onChange={e => updateGmailSettings({ pollingMinutes: Number.parseInt(e.target.value || '10', 10) })}
-                            />
-                        </label>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+                {/* Left Column */}
+                <div className="space-y-lg">
+                    
+                    {/* Import Section */}
+                    <div className="space-y-md">
+                        <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-primary pl-2">
+                            IMPORTAZIONE_DATI
+                        </h3>
+                        
+                        <div 
+                            className={`bg-paper structural-border p-md border-dashed transition-colors ${dragOver ? 'border-primary bg-primary/5' : ''}`}
+                            onDrop={handleDrop}
+                            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                        >
+                            <label className="flex flex-col items-center justify-center gap-sm cursor-pointer py-lg group">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".xlsx,.xls"
+                                    className="hidden"
+                                    onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                                />
+                                <div className="p-md rounded-full bg-concrete/50 group-hover:bg-primary/10 transition-colors">
+                                    <Upload size={24} className="text-muted group-hover:text-primary transition-colors" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="font-mono text-sm font-bold uppercase">IMPORTA_DA_ISYBANK_XLS</p>
+                                    <p className="text-xs text-muted mt-1 uppercase tracking-wider">
+                                        {importing ? 'ELABORAZIONE...' : 'DRAG_AND_DROP_OR_CLICK'}
+                                    </p>
+                                </div>
+                            </label>
+                            {importResult && (
+                                <div className={`mt-md p-sm text-xs font-mono border-l-2 ${importResult.success ? 'border-success text-success bg-success/5' : 'border-danger text-danger bg-danger/5'}`}>
+                                    {importResult.message}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                        <input
-                            type="checkbox"
-                            checked={gmailSettings.autoSync}
-                            onChange={e => updateGmailSettings({ autoSync: e.target.checked })}
-                        />
-                        <span>Abilita sincronizzazione automatica periodica</span>
-                    </label>
-                </div>
+                    {/* Gmail Sync */}
+                    <div className="space-y-md">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-primary pl-2">
+                                SINCRONIZZAZIONE_GMAIL
+                            </h3>
+                            <div className={`px-2 py-0.5 rounded-none text-tiny font-mono uppercase border ${gmailToken && isGmailTokenValid(gmailToken) ? 'border-success text-success bg-success/10' : 'border-muted text-muted'}`}>
+                                {gmailToken && isGmailTokenValid(gmailToken) ? 'CONNECTED' : 'OFFLINE'}
+                            </div>
+                        </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleConnectGmail}
-                        disabled={gmailSyncing || gmailCleaning}
-                    >
-                        <Mail size={16} />
-                        {gmailToken && isGmailTokenValid(gmailToken) ? 'Ricollega Gmail' : 'Collega Gmail'}
-                    </button>
+                        <div className="bg-paper structural-border p-md space-y-md">
+                            <div className="grid gap-sm">
+                                <label className="space-y-xs">
+                                    <span className="text-tiny font-mono uppercase text-muted">CLIENT_ID_GMAIL</span>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
+                                        placeholder="xxxxxxxx.apps.googleusercontent.com"
+                                        value={gmailSettings.googleClientId}
+                                        onChange={e => updateGmailSettings({ googleClientId: e.target.value })}
+                                    />
+                                </label>
+                                
+                                <label className="space-y-xs">
+                                    <span className="text-tiny font-mono uppercase text-muted">MITTENTE_BANCA</span>
+                                    <input
+                                        type="email"
+                                        className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
+                                        value={gmailSettings.senderEmail}
+                                        onChange={e => updateGmailSettings({ senderEmail: e.target.value })}
+                                    />
+                                </label>
 
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => void runGmailSync(false)}
-                        disabled={gmailSyncing || gmailCleaning || !gmailToken || !isGmailTokenValid(gmailToken)}
-                    >
-                        <RefreshCcw size={16} />
-                        {gmailSyncing ? 'Sincronizzazione...' : 'Sincronizza ora'}
-                    </button>
+                                <div className="grid grid-cols-2 gap-md">
+                                    <label className="space-y-xs">
+                                        <span className="text-tiny font-mono uppercase text-muted">MAX_RESULTS</span>
+                                        <input
+                                            type="number"
+                                            className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
+                                            value={gmailSettings.maxResults}
+                                            onChange={e => updateGmailSettings({ maxResults: Number.parseInt(e.target.value || '25', 10) })}
+                                        />
+                                    </label>
+                                    <label className="space-y-xs">
+                                        <span className="text-tiny font-mono uppercase text-muted">POLLING (MIN)</span>
+                                        <input
+                                            type="number"
+                                            className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
+                                            value={gmailSettings.pollingMinutes}
+                                            onChange={e => updateGmailSettings({ pollingMinutes: Number.parseInt(e.target.value || '10', 10) })}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <label className="flex items-center gap-sm cursor-pointer group">
+                                <div className={`w-4 h-4 border transition-colors ${gmailSettings.autoSync ? 'bg-primary border-primary' : 'border-muted group-hover:border-ink'}`}>
+                                    {gmailSettings.autoSync && <div className="w-full h-full flex items-center justify-center text-white text-[10px]">✓</div>}
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    className="hidden"
+                                    checked={gmailSettings.autoSync}
+                                    onChange={e => updateGmailSettings({ autoSync: e.target.checked })}
+                                />
+                                <span className="text-xs font-mono uppercase text-muted group-hover:text-ink transition-colors">AUTO_SYNC_ENABLED</span>
+                            </label>
 
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => void handleCleanupGmailDuplicates()}
-                        disabled={gmailSyncing || gmailCleaning}
-                    >
-                        <Trash2 size={16} />
-                        {gmailCleaning ? 'Pulizia...' : 'Pulisci duplicati Gmail'}
-                    </button>
-
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleDisconnectGmail}
-                        disabled={gmailSyncing || gmailCleaning || !gmailToken}
-                    >
-                        <Link2Off size={16} />
-                        Scollega
-                    </button>
-                </div>
-
-                <div style={{ marginTop: 'var(--space-md)', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                    Stato connessione: {gmailToken && isGmailTokenValid(gmailToken) ? 'attiva' : 'non attiva'}
-                    {lastGmailSyncAt ? ` • Ultima sync: ${new Date(lastGmailSyncAt).toLocaleString('it-IT')}` : ''}
-                </div>
-
-                {gmailResult && (
-                    <div style={{
-                        marginTop: 'var(--space-md)',
-                        padding: 'var(--space-md)',
-                        background: gmailResult.success ? 'var(--success-bg)' : 'var(--danger-bg)',
-                        borderRadius: 'var(--radius-md)',
-                        color: gmailResult.success ? 'var(--success)' : 'var(--danger)'
-                    }}>
-                        {gmailResult.message}
+                            <div className="grid grid-cols-2 gap-sm pt-sm border-t border-border">
+                                <button
+                                    className="btn btn-secondary text-xs uppercase"
+                                    onClick={handleConnectGmail}
+                                    disabled={gmailSyncing || gmailCleaning}
+                                >
+                                    <Mail size={14} className="mr-xs" />
+                                    {gmailToken && isGmailTokenValid(gmailToken) ? 'RICOLLEGA' : 'COLLEGA_GMAIL'}
+                                </button>
+                                <button
+                                    className="btn btn-secondary text-xs uppercase"
+                                    onClick={() => void runGmailSync(false)}
+                                    disabled={!gmailToken || !isGmailTokenValid(gmailToken)}
+                                >
+                                    <RefreshCcw size={14} className={`mr-xs ${gmailSyncing ? 'animate-spin' : ''}`} />
+                                    {gmailSyncing ? 'SYNCING...' : 'SYNC_NOW'}
+                                </button>
+                                <button
+                                    className="btn btn-ghost text-xs uppercase text-muted hover:text-ink"
+                                    onClick={() => void handleCleanupGmailDuplicates()}
+                                    disabled={gmailSyncing || gmailCleaning}
+                                >
+                                    <Trash2 size={14} className="mr-xs" />
+                                    CLEAN_DUPLICATES
+                                </button>
+                                <button
+                                    className="btn btn-ghost text-xs uppercase text-danger hover:bg-danger/5"
+                                    onClick={handleDisconnectGmail}
+                                    disabled={!gmailToken}
+                                >
+                                    <Link2Off size={14} className="mr-xs" />
+                                    DISCONNECT
+                                </button>
+                            </div>
+                            
+                            {gmailResult && (
+                                <div className={`p-sm text-xs font-mono border-l-2 ${gmailResult.success ? 'border-success text-success bg-success/5' : 'border-danger text-danger bg-danger/5'}`}>
+                                    {gmailResult.message}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
-            </div>
-
-            {/* Export Section */}
-            <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">
-                        <Download size={18} style={{ verticalAlign: 'middle', marginRight: 'var(--space-sm)' }} />
-                        Esporta dati
-                    </h3>
                 </div>
 
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
-                    Esporta le tue transazioni in diversi formati per backup o analisi.
-                </p>
+                {/* Right Column */}
+                <div className="space-y-lg">
+                    {/* Export */}
+                    <div className="space-y-md">
+                        <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-primary pl-2">
+                            ESPORTAZIONE_DATI
+                        </h3>
+                        <div className="bg-paper structural-border p-md grid grid-cols-1 gap-sm">
+                            <button
+                                className="flex items-center justify-between p-sm border border-border hover:border-ink hover:bg-concrete/20 transition-all group"
+                                onClick={handleExportExcel}
+                                disabled={exporting}
+                            >
+                                <div className="flex items-center gap-sm">
+                                    <FileSpreadsheet size={16} className="text-muted group-hover:text-ink" />
+                                    <span className="text-xs font-mono uppercase">EXPORT_EXCEL</span>
+                                </div>
+                                <Download size={14} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                            <button
+                                className="flex items-center justify-between p-sm border border-border hover:border-ink hover:bg-concrete/20 transition-all group"
+                                onClick={handleExportCSV}
+                                disabled={exporting}
+                            >
+                                <div className="flex items-center gap-sm">
+                                    <FileSpreadsheet size={16} className="text-muted group-hover:text-ink" />
+                                    <span className="text-xs font-mono uppercase">EXPORT_CSV</span>
+                                </div>
+                                <Download size={14} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                            <button
+                                className="flex items-center justify-between p-sm border border-border hover:border-ink hover:bg-concrete/20 transition-all group"
+                                onClick={handleExportJSON}
+                                disabled={exporting}
+                            >
+                                <div className="flex items-center gap-sm">
+                                    <FileJson size={16} className="text-muted group-hover:text-ink" />
+                                    <span className="text-xs font-mono uppercase">BACKUP_JSON</span>
+                                </div>
+                                <Download size={14} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                        </div>
+                    </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleExportExcel}
-                        disabled={exporting}
-                    >
-                        <FileSpreadsheet size={18} />
-                        Esporta Excel
-                    </button>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleExportCSV}
-                        disabled={exporting}
-                    >
-                        <FileSpreadsheet size={18} />
-                        Esporta CSV
-                    </button>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleExportJSON}
-                        disabled={exporting}
-                    >
-                        <FileJson size={18} />
-                        Backup completo (JSON)
-                    </button>
-                </div>
-            </div>
-
-            {/* Data Storage Info */}
-            <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div className="card-header">
-                    <h3 className="card-title">
-                        <Database size={18} style={{ verticalAlign: 'middle', marginRight: 'var(--space-sm)' }} />
-                        Archiviazione dati
-                    </h3>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-md)',
-                        padding: 'var(--space-md)',
-                        background: 'var(--bg-glass)',
-                        borderRadius: 'var(--radius-md)'
-                    }}>
-                        <HardDrive size={24} style={{ color: 'var(--accent-primary)' }} />
-                        <div>
-                            <div style={{ fontWeight: 500 }}>Storage locale (IndexedDB)</div>
-                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                                Tutti i dati sono memorizzati localmente sul tuo dispositivo
+                    {/* Storage Info */}
+                    <div className="space-y-md">
+                        <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-ink pl-2">
+                            STORAGE_&_PRIVACY
+                        </h3>
+                        <div className="bg-paper structural-border p-md space-y-sm">
+                            <div className="flex items-start gap-md">
+                                <Database size={18} className="text-muted mt-0.5" />
+                                <div>
+                                    <div className="text-xs font-bold uppercase tracking-wider mb-1">LOCAL_INDEXEDDB</div>
+                                    <div className="text-xs text-muted leading-relaxed">
+                                        I dati sono salvati esclusivamente nel browser del tuo dispositivo.
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="h-px bg-border my-sm" />
+                            <div className="flex items-start gap-md">
+                                <Shield size={18} className="text-success mt-0.5" />
+                                <div>
+                                    <div className="text-xs font-bold uppercase tracking-wider mb-1">OFFLINE_FIRST</div>
+                                    <div className="text-xs text-muted leading-relaxed">
+                                        Nessuna trasmissione di dati a server esterni. Privacy garantita by design.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-md)',
-                        padding: 'var(--space-md)',
-                        background: 'var(--bg-glass)',
-                        borderRadius: 'var(--radius-md)'
-                    }}>
-                        <Shield size={24} style={{ color: 'var(--success)' }} />
-                        <div>
-                            <div style={{ fontWeight: 500 }}>Privacy garantita</div>
-                            <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                                Nessun dato viene inviato a server esterni
-                            </div>
+                    {/* Danger Zone */}
+                    <div className="space-y-md">
+                        <h3 className="text-xs font-mono uppercase text-danger border-l-2 border-danger pl-2">
+                            ZONA_PERICOLOSA
+                        </h3>
+                        <div className="bg-paper structural-border border-danger/50 p-md">
+                            {showClearConfirm ? (
+                                <div className="space-y-md animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="flex items-center gap-sm text-danger">
+                                        <AlertTriangle size={18} />
+                                        <span className="text-xs font-bold uppercase">CONFERMA_ELIMINAZIONE</span>
+                                    </div>
+                                    <p className="text-xs text-muted">
+                                        L'azione è irreversibile. Tutti i dati verranno rimossi permanentemente.
+                                    </p>
+                                    <div className="flex gap-sm">
+                                        <button
+                                            className="btn bg-danger text-white text-xs uppercase flex-1 hover:bg-danger/90 border-transparent"
+                                            onClick={handleClearData}
+                                            disabled={clearing}
+                                        >
+                                            {clearing ? 'ELIMINAZIONE...' : 'CONFERMA_RESET'}
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary text-xs uppercase flex-1"
+                                            onClick={() => setShowClearConfirm(false)}
+                                        >
+                                            ANNULLA
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    className="w-full flex items-center justify-between p-sm border border-danger/30 text-danger hover:bg-danger/5 transition-colors group"
+                                    onClick={() => setShowClearConfirm(true)}
+                                >
+                                    <div className="flex items-center gap-sm">
+                                        <Trash2 size={16} />
+                                        <span className="text-xs font-mono uppercase font-bold">RESET_DATABASE</span>
+                                    </div>
+                                    <AlertTriangle size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Danger Zone */}
-            <div className="card" style={{ borderColor: 'var(--danger)' }}>
-                <div className="card-header">
-                    <h3 className="card-title" style={{ color: 'var(--danger)' }}>
-                        <AlertTriangle size={18} style={{ verticalAlign: 'middle', marginRight: 'var(--space-sm)' }} />
-                        Zona pericolosa
-                    </h3>
-                </div>
-
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
-                    Queste azioni sono irreversibili. Assicurati di aver fatto un backup prima di procedere.
-                </p>
-
-                {showClearConfirm ? (
-                    <div style={{
-                        padding: 'var(--space-lg)',
-                        background: 'var(--danger-bg)',
-                        borderRadius: 'var(--radius-md)'
-                    }}>
-                        <p style={{ color: 'var(--danger)', marginBottom: 'var(--space-md)', fontWeight: 500 }}>
-                            Sei sicuro di voler eliminare TUTTE le transazioni? Questa azione non può essere annullata.
-                        </p>
-                        <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
-                            <button
-                                className="btn btn-danger"
-                                onClick={handleClearData}
-                                disabled={clearing}
-                            >
-                                <Trash2 size={16} />
-                                {clearing ? 'Eliminazione...' : 'Sì, elimina tutto'}
-                            </button>
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => setShowClearConfirm(false)}
-                            >
-                                Annulla
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <button
-                        className="btn btn-danger"
-                        onClick={() => setShowClearConfirm(true)}
-                    >
-                        <Trash2 size={16} />
-                        Elimina tutte le transazioni
-                    </button>
-                )}
             </div>
 
             {/* Import Preview Modal */}
@@ -630,6 +598,6 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     importing={importing}
                 />
             )}
-        </>
+        </div>
     );
 });

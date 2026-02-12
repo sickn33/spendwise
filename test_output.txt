@@ -1,0 +1,1248 @@
+
+ RUN  v3.2.4 /Users/nicco/Projects/spendwise
+
+stdout | src/components/TransactionList.test.tsx > TransactionList Component > displays summary grid with technical labels
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-title"[39m
+          [36m>[39m
+            [0mREGISTRO_TRANSAZIONI_v1[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-tiny font-mono opacity-60"[39m
+          [36m>[39m
+            [0m2[0m
+            [0m_ENTRIES_LOADED[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Mostra filtri"[39m
+          [33mclass[39m=[32m"btn btn-secondary"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-funnel"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mFiltri[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid-3 gap-md mb-lg"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"structural-border p-md"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+          [36m>[39m
+            [0mUSCITE_TOTALI[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"font-mono text-lg text-danger"[39m
+          [36m>[39m
+            [0m€[0m
+            [0m50.00[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"structural-border p-md"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+          [36m>[39m
+            [0mENTRATE_TOTALI[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"font-mono text-lg text-success"[39m
+          [36m>[39m
+            [0m€[0m
+            [0m1200.00[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"structural-border p-md"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+          [36m>[39m
+            [0mNET_FLOW[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"font-mono text-lg text-success"[39m
+          [36m>[39m
+            [0m+[0m
+            [0m€[0m
+            [0m1150.00[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"margin-bottom: var(--space-lg);"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"position: relative;"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mstyle[39m=[32m"position: absolute; left: var(--space-md); top: 50%; transform: translateY(-50%); color: var(--text-muted);"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mplaceholder[39m=[32m"Cerca per descrizione, dettagli o categoria..."[39m
+            [33mstyle[39m=[32m"padding-left: 2.5rem;"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"card"[39m
+        [33mstyle[39m=[32m"padding: 0px; overflow: hidden;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: var(--space-sm) var(--space-md); background: var(--bg-glass); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); position: sticky; top: 0px; display: flex; justify-content: space-between;"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0msabato 20 maggio 2023[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"font-feature-settings: tnum;"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m transazioni[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"transaction-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ledger-row"[39m
+              [33mstyle[39m=[32m"display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-md); padding: var(--space-sm) var(--space-md); align-items: center; border-bottom-width: var(--border-color); border-bottom-style: var(--border-color); border-bottom-color: var(--border-color);"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-icon"[39m
+                [33mstyle[39m=[32m"background: transparent; border: 1px solid; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-width: var(--border-color); border-style: var(--border-color); border-color: var(--border-color);"[39m
+              [36m>[39m
+                [0m💼[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-info"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-mono text-sm"[39m
+                [36m>[39m
+                  [0mStipendio[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-tiny font-mono opacity-60 uppercase"[39m
+                [36m>[39m
+                  [0mLavoro[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"font-mono text-success"[39m
+              [36m>[39m
+                [0m+[0m
+                [0m€[0m
+                [0m1200.00[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: var(--space-xs);"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Modifica"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-pen"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Elimina"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M10 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M14 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 6h18"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: var(--space-sm) var(--space-md); background: var(--bg-glass); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); position: sticky; top: 0px; display: flex; justify-content: space-between;"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mlunedì 15 maggio 2023[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"font-feature-settings: tnum;"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m transazioni[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"transaction-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ledger-row"[39m
+              [33mstyle[39m=[32m"display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-md); padding: var(--space-sm) var(--space-md); align-items: center; border-bottom-width: var(--border-color); border-bottom-style: var(--border-color); border-bottom-color: var(--border-color);"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-icon"[39m
+                [33mstyle[39m=[32m"background: transparent; border: 1px solid; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-width: var(--border-color); border-style: var(--border-color); border-color: var(--border-color);"[39m
+              [36m>[39m
+                [0m🍔[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-info"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-mono text-sm"[39m
+                [36m>[39m
+                  [0mSpesa Esselunga[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-tiny font-mono opacity-60 uppercase"[39m
+                [36m>[39m
+                  [0mCibo[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"font-mono text-danger"[39m
+              [36m>[39m
+                [0m€[0m
+                [0m50.00[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: var(--space-xs);"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Modifica"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-pen"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Elimina"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M10 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M14 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 6h18"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+ ✓ src/components/TransactionList.test.tsx > TransactionList Component > renders the technical header and load stats 56ms
+ × src/components/TransactionList.test.tsx > TransactionList Component > displays summary grid with technical labels 29ms
+   → Found multiple elements with the text: /€50\.00/
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"font-mono text-lg text-danger"[39m
+[36m>[39m
+  [0m€[0m
+  [0m50.00[0m
+[36m</div>[39m
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"font-mono text-danger"[39m
+[36m>[39m
+  [0m€[0m
+  [0m50.00[0m
+[36m</div>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"page-title"[39m
+          [36m>[39m
+            [0mREGISTRO_TRANSAZIONI_v1[0m
+          [36m</h1>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-tiny font-mono opacity-60"[39m
+          [36m>[39m
+            [0m2[0m
+            [0m_ENTRIES_LOADED[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33maria-label[39m=[32m"Mostra filtri"[39m
+          [33mclass[39m=[32m"btn btn-secondary"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-funnel"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"16"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"16"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mFiltri[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid-3 gap-md mb-lg"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"structural-border p-md"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+          [36m>[39m
+            [0mUSCITE_TOTALI[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"font-mono text-lg text-danger"[39m
+          [36m>[39m
+            [0m€[0m
+            [0m50.00[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"structural-border p-md"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+          [36m>[39m
+            [0mENTRATE_TOTALI[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"font-mono text-lg text-success"[39m
+          [36m>[39m
+            [0m€[0m
+            [0m1200.00[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"structural-border p-md"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+          [36m>[39m
+            [0mNET_FLOW[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"font-mono text-lg text-success"[39m
+          [36m>[39m
+            [0m+[0m
+            [0m€[0m
+            [0m1150.00[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mstyle[39m=[32m"margin-bottom: var(--space-lg);"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"position: relative;"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-search"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"18"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mstyle[39m=[32m"position: absolute; left: var(--space-md); top: 50%; transform: translateY(-50%); color: var(--text-muted);"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"18"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"m21 21-4.34-4.34"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mcx[39m=[32m"11"[39m
+              [33mcy[39m=[32m"11"[39m
+              [33mr[39m=[32m"8"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"input"[39m
+            [33mplaceholder[39m=[32m"Cerca per descrizione, dettagli o categoria..."[39m
+            [33mstyle[39m=[32m"padding-left: 2.5rem;"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m""[39m
+          [36m/>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"card"[39m
+        [33mstyle[39m=[32m"padding: 0px; overflow: hidden;"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: var(--space-sm) var(--space-md); background: var(--bg-glass); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); position: sticky; top: 0px; display: flex; justify-content: space-between;"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0msabato 20 maggio 2023[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"font-feature-settings: tnum;"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m transazioni[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"transaction-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ledger-row"[39m
+              [33mstyle[39m=[32m"display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-md); padding: var(--space-sm) var(--space-md); align-items: center; border-bottom-width: var(--border-color); border-bottom-style: var(--border-color); border-bottom-color: var(--border-color);"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-icon"[39m
+                [33mstyle[39m=[32m"background: transparent; border: 1px solid; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-width: var(--border-color); border-style: var(--border-color); border-color: var(--border-color);"[39m
+              [36m>[39m
+                [0m💼[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-info"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-mono text-sm"[39m
+                [36m>[39m
+                  [0mStipendio[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-tiny font-mono opacity-60 uppercase"[39m
+                [36m>[39m
+                  [0mLavoro[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"font-mono text-success"[39m
+              [36m>[39m
+                [0m+[0m
+                [0m€[0m
+                [0m1200.00[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: var(--space-xs);"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Modifica"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-pen"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Elimina"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M10 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M14 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 6h18"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"padding: var(--space-sm) var(--space-md); background: var(--bg-glass); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); position: sticky; top: 0px; display: flex; justify-content: space-between;"[39m
+          [36m>[39m
+            [36m<span>[39m
+              [0mlunedì 15 maggio 2023[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mstyle[39m=[32m"font-feature-settings: tnum;"[39m
+            [36m>[39m
+              [0m1[0m
+              [0m transazioni[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"transaction-list"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ledger-row"[39m
+              [33mstyle[39m=[32m"display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-md); padding: var(--space-sm) var(--space-md); align-items: center; border-bottom-width: var(--border-color); border-bottom-style: var(--border-color); border-bottom-color: var(--border-color);"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-icon"[39m
+                [33mstyle[39m=[32m"background: transparent; border: 1px solid; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-width: var(--border-color); border-style: var(--border-color); border-color: var(--border-color);"[39m
+              [36m>[39m
+                [0m🍔[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"transaction-info"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-mono text-sm"[39m
+                [36m>[39m
+                  [0mSpesa Esselunga[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"text-tiny font-mono opacity-60 uppercase"[39m
+                [36m>[39m
+                  [0mCibo[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"font-mono text-danger"[39m
+              [36m>[39m
+                [0m€[0m
+                [0m50.00[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mstyle[39m=[32m"display: flex; gap: var(--space-xs);"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Modifica"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-pen"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Elimina"[39m
+                  [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                  [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M10 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M14 11v6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M3 6h18"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+stdout | src/components/TransactionList.test.tsx > TransactionList Component > handles delete interaction
+handleDelete called with: [33m2[39m
+
+ × src/components/TransactionList.test.tsx > TransactionList Component > renders the transaction ledger with correct data 19ms
+   → Unable to find an element with the text: CIBO. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"ledger-row"[39m
+  [33mstyle[39m=[32m"display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-md); padding: var(--space-sm) var(--space-md); align-items: center; border-bottom-width: var(--border-color); border-bottom-style: var(--border-color); border-bottom-color: var(--border-color);"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"transaction-icon"[39m
+    [33mstyle[39m=[32m"background: transparent; border: 1px solid; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-width: var(--border-color); border-style: var(--border-color); border-color: var(--border-color);"[39m
+  [36m>[39m
+    [0m🍔[0m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"transaction-info"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"font-mono text-sm"[39m
+    [36m>[39m
+      [0mSpesa Esselunga[0m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"text-tiny font-mono opacity-60 uppercase"[39m
+    [36m>[39m
+      [0mCibo[0m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"font-mono text-danger"[39m
+  [36m>[39m
+    [0m€[0m
+    [0m50.00[0m
+  [36m</div>[39m
+  [36m<div[39m
+    [33mstyle[39m=[32m"display: flex; gap: var(--space-xs);"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Modifica"[39m
+      [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+      [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-pen"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"12"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"12"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Elimina"[39m
+      [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+      [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"12"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"12"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M10 11v6"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M14 11v6"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M3 6h18"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × src/components/TransactionList.test.tsx > TransactionList Component > handles delete interaction 1028ms
+   → expected "spy" to be called with arguments: [ 1 ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  [[22m
+[32m-   1,[90m
+[31m+   2,[90m
+[2m  ][22m
+[39m[90m
+
+Number of calls: [1m1[22m
+[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"page-header"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"page-title"[39m
+            [36m>[39m
+              [0mREGISTRO_TRANSAZIONI_v1[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-tiny font-mono opacity-60"[39m
+            [36m>[39m
+              [0m2[0m
+              [0m_ENTRIES_LOADED[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33maria-label[39m=[32m"Mostra filtri"[39m
+            [33mclass[39m=[32m"btn btn-secondary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-funnel"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"16"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0mFiltri[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid-3 gap-md mb-lg"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"structural-border p-md"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+            [36m>[39m
+              [0mUSCITE_TOTALI[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"font-mono text-lg text-danger"[39m
+            [36m>[39m
+              [0m€[0m
+              [0m50.00[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"structural-border p-md"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+            [36m>[39m
+              [0mENTRATE_TOTALI[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"font-mono text-lg text-success"[39m
+            [36m>[39m
+              [0m€[0m
+              [0m1200.00[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"structural-border p-md"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-tiny font-mono uppercase opacity-60 mb-xs"[39m
+            [36m>[39m
+              [0mNET_FLOW[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"font-mono text-lg text-success"[39m
+            [36m>[39m
+              [0m+[0m
+              [0m€[0m
+              [0m1150.00[0m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"margin-bottom: var(--space-lg);"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"position: relative;"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-search"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"18"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mstyle[39m=[32m"position: absolute; left: var(--space-md); top: 50%; transform: translateY(-50%); color: var(--text-muted);"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"18"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m21 21-4.34-4.34"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mcx[39m=[32m"11"[39m
+                [33mcy[39m=[32m"11"[39m
+                [33mr[39m=[32m"8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<input[39m
+              [33mclass[39m=[32m"input"[39m
+              [33mplaceholder[39m=[32m"Cerca per descrizione, dettagli o categoria..."[39m
+              [33mstyle[39m=[32m"padding-left: 2.5rem;"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"card"[39m
+          [33mstyle[39m=[32m"padding: 0px; overflow: hidden;"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"padding: var(--space-sm) var(--space-md); background: var(--bg-glass); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); position: sticky; top: 0px; display: flex; justify-content: space-between;"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0msabato 20 maggio 2023[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mstyle[39m=[32m"font-feature-settings: tnum;"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m transazioni[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"transaction-list"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ledger-row"[39m
+                [33mstyle[39m=[32m"display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-md); padding: var(--space-sm) var(--space-md); align-items: center; border-bottom-width: var(--border-color); border-bottom-style: var(--border-color); border-bottom-color: var(--border-color);"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"transaction-icon"[39m
+                  [33mstyle[39m=[32m"background: transparent; border: 1px solid; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-width: var(--border-color); border-style: var(--border-color); border-color: var(--border-color);"[39m
+                [36m>[39m
+                  [0m💼[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"transaction-info"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-mono text-sm"[39m
+                  [36m>[39m
+                    [0mStipendio[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-tiny font-mono opacity-60 uppercase"[39m
+                  [36m>[39m
+                    [0mLavoro[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-mono text-success"[39m
+                [36m>[39m
+                  [0m+[0m
+                  [0m€[0m
+                  [0m1200.00[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mstyle[39m=[32m"display: flex; gap: var(--space-xs);"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Modifica"[39m
+                    [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                    [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-pen"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"12"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"12"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Elimina"[39m
+                    [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                    [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"12"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"12"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M10 11v6"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M14 11v6"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 6h18"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mstyle[39m=[32m"padding: var(--space-sm) var(--space-md); background: var(--bg-glass); font-size: 0.85rem; font-weight: 600; color: var(--text-muted); position: sticky; top: 0px; display: flex; justify-content: space-between;"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mlunedì 15 maggio 2023[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mstyle[39m=[32m"font-feature-settings: tnum;"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m transazioni[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"transaction-list"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ledger-row"[39m
+                [33mstyle[39m=[32m"display: grid; grid-template-columns: auto 1fr auto auto; gap: var(--space-md); padding: var(--space-sm) var(--space-md); align-items: center; border-bottom-width: var(--border-color); border-bottom-style: var(--border-color); border-bottom-color: var(--border-color);"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"transaction-icon"[39m
+                  [33mstyle[39m=[32m"background: transparent; border: 1px solid; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-width: var(--border-color); border-style: var(--border-color); border-color: var(--border-color);"[39m
+                [36m>[39m
+                  [0m🍔[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"transaction-info"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"font-mono text-sm"[39m
+                  [36m>[39m
+                    [0mSpesa Esselunga[0m
+                  [36m</div>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"text-tiny font-mono opacity-60 uppercase"[39m
+                  [36m>[39m
+                    [0mCibo[0m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"font-mono text-danger"[39m
+                [36m>[39m
+                  [0m€[0m
+                  [0m50.00[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mstyle[39m=[32m"display: flex; gap: var(--space-xs);"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Modifica"[39m
+                    [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                    [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-pen"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"12"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"12"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                  [36m</button>[39m
+                  [36m<button[39m
+                    [33maria-label[39m=[32m"Elimina"[39m
+                    [33mclass[39m=[32m"btn btn-ghost btn-icon structural-border"[39m
+                    [33mstyle[39m=[32m"width: 28px; height: 28px; border-radius: 0px;"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-trash2 lucide-trash-2"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"12"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"12"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M10 11v6"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M14 11v6"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M3 6h18"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  12:22:40
+   Duration  3.28s (transform 80ms, setup 113ms, collect 1.61s, tests 1.13s, environment 150ms, prepare 55ms)
+

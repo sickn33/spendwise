@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addToSavingsGoal, withdrawFromSavingsGoal } from '../db/database';
 import type { SavingsGoal } from '../types';
 import { format, differenceInDays } from 'date-fns';
-import { Plus, Edit2, Trash2, X, Save, Target, TrendingUp, Calendar, PlusCircle, MinusCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, Target, TrendingUp, Calendar, PlusCircle } from 'lucide-react';
 
 export const SavingsGoals = memo(function SavingsGoals() {
     const [goals, setGoals] = useState<SavingsGoal[]>([]);
@@ -110,30 +110,34 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
     if (loading) {
         return (
-            <div className="loading">
-                <div className="spinner"></div>
+            <div className="flex justify-center p-xl">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ink"></div>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="page-header">
+        <div className="space-y-lg">
+            {/* Header */}
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="page-title">Obiettivi di Risparmio</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
-                        Monitora i tuoi progressi verso i tuoi obiettivi
+                    <h1 className="text-xl font-bold tracking-tight">OBIETTIVI_DI_RISPARMIO</h1>
+                    <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
+                        TRACKING_ASSET_LIQUIDITA
                     </p>
                 </div>
-                <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                    <Plus size={18} />
-                    Nuovo Obiettivo
+                <button 
+                    className="btn btn-primary flex items-center gap-xs text-xs uppercase tracking-wider" 
+                    onClick={() => setShowForm(true)}
+                >
+                    <Plus size={14} />
+                    NUOVO_ASSET
                 </button>
             </div>
 
             {/* Goals Grid */}
             {goals.length > 0 ? (
-                <div className="savings-grid">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                     {goals.map(goal => {
                         const percentage = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
                         const remaining = goal.targetAmount - goal.currentAmount;
@@ -145,129 +149,130 @@ export const SavingsGoals = memo(function SavingsGoals() {
                         return (
                             <div
                                 key={goal.id}
-                                className={`card savings-card ${isComplete ? 'complete' : ''}`}
-                                style={{ '--goal-color': goal.color } as React.CSSProperties}
+                                className={`bg-paper structural-border p-md relative group transition-all hover:shadow-none hover:border-ink ${isComplete ? 'border-success' : ''}`}
                             >
-                                <div className="savings-header">
-                                    <div className="savings-icon" style={{ background: `${goal.color}20`, color: goal.color }}>
-                                        {goal.icon}
+                                <div className="flex justify-between items-start mb-md">
+                                    <div className="flex items-center gap-md">
+                                        <div className="w-10 h-10 flex items-center justify-center bg-concrete/20 text-xl rounded-none structural-border border-border">
+                                            {goal.icon}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-lg tracking-tight leading-none mb-1">{goal.name}</h3>
+                                            {goal.deadline && (
+                                                <div className="flex items-center gap-xs text-xs font-mono text-muted uppercase">
+                                                    <Calendar size={10} />
+                                                    {daysLeft !== null && daysLeft > 0
+                                                        ? `${daysLeft}_GIORNI`
+                                                        : daysLeft === 0
+                                                            ? 'SCADE_OGGI'
+                                                            : 'SCADUTO'}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="savings-info">
-                                        <h3 className="savings-name">{goal.name}</h3>
-                                        {goal.deadline && (
-                                            <div className="savings-deadline">
-                                                <Calendar size={14} />
-                                                {daysLeft !== null && daysLeft > 0
-                                                    ? `${daysLeft} giorni rimanenti`
-                                                    : daysLeft === 0
-                                                        ? 'Scade oggi!'
-                                                        : 'Scaduto'}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="savings-actions">
+                                    <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
-                                            className="btn btn-ghost btn-icon"
+                                            className="p-1 hover:bg-concrete text-muted hover:text-ink transition-colors"
                                             onClick={() => handleEdit(goal)}
-                                            style={{ width: 32, height: 32 }}
+                                            aria-label="MODIFICA"
                                         >
                                             <Edit2 size={14} />
                                         </button>
                                         <button
-                                            className="btn btn-ghost btn-icon"
+                                            className="p-1 hover:bg-concrete text-muted hover:text-danger transition-colors"
                                             onClick={() => handleDelete(goal.id!)}
-                                            style={{ width: 32, height: 32 }}
+                                            aria-label="ELIMINA"
                                         >
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="savings-amounts">
-                                    <div className="savings-current">
-                                        <span className="label">Risparmiato</span>
-                                        <span className="value" style={{ color: goal.color }}>
+                                <div className="grid grid-cols-2 gap-md mb-md">
+                                    <div>
+                                        <div className="text-tiny font-mono uppercase text-muted mb-xs">RISPARMIATO</div>
+                                        <div className="text-lg font-mono font-bold" style={{ color: goal.color }}>
                                             €{goal.currentAmount.toFixed(2)}
-                                        </span>
+                                        </div>
                                     </div>
-                                    <div className="savings-target">
-                                        <span className="label">Obiettivo</span>
-                                        <span className="value">€{goal.targetAmount.toFixed(2)}</span>
+                                    <div className="text-right">
+                                        <div className="text-tiny font-mono uppercase text-muted mb-xs">OBIETTIVO</div>
+                                        <div className="text-lg font-mono font-bold">
+                                            €{goal.targetAmount.toFixed(2)}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="savings-progress">
-                                    <div
-                                        className="savings-progress-fill"
-                                        style={{
-                                            width: `${percentage}%`,
-                                            background: isComplete
-                                                ? 'var(--success)'
-                                                : `linear-gradient(90deg, ${goal.color}, ${goal.color}88)`
-                                        }}
-                                    />
+                                {/* Progress Bar */}
+                                <div className="mb-md">
+                                    <div className="flex justify-between text-xs font-mono text-muted mb-1 uppercase">
+                                        <span>PROGRESSO</span>
+                                        <span>{percentage.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-concrete overflow-hidden">
+                                        <div
+                                            className="h-full transition-all duration-500 ease-out"
+                                            style={{
+                                                width: `${percentage}%`,
+                                                background: isComplete ? 'var(--success)' : goal.color
+                                            }}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div className="savings-footer">
+                                <div className="flex items-center justify-between pt-sm border-t border-dotted border-border">
                                     {isComplete ? (
-                                        <div className="savings-complete">
-                                            <Target size={16} />
-                                            Obiettivo raggiunto! 🎉
+                                        <div className="flex items-center gap-xs text-success font-mono text-sm uppercase font-bold">
+                                            <Target size={14} />
+                                            COMPLETED
                                         </div>
                                     ) : (
-                                        <div className="savings-remaining">
+                                        <div className="flex items-center gap-xs text-muted font-mono text-xs uppercase">
                                             <TrendingUp size={14} />
-                                            Mancano €{remaining.toFixed(2)}
+                                            MANCANO_€{remaining.toFixed(2)}
                                         </div>
                                     )}
-                                    <span className="savings-percentage">{percentage.toFixed(0)}%</span>
                                 </div>
 
-                                {/* Contribute Buttons */}
+                                {/* Quick Contribute */}
                                 {showContribute === goal.id ? (
-                                    <div className="savings-contribute-form">
+                                    <div className="absolute inset-x-0 bottom-0 top-auto bg-paper structural-border border-t-0 p-sm z-10 animate-in slide-in-from-top-2">
                                         <input
                                             type="number"
-                                            className="input"
-                                            placeholder="Importo"
+                                            className="w-full bg-concrete/20 border-b border-ink p-xs font-mono text-sm focus:outline-none mb-sm"
+                                            placeholder="IMPORTO..."
                                             value={contributeAmount}
                                             onChange={e => setContributeAmount(e.target.value)}
                                             autoFocus
                                         />
-                                        <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                                        <div className="grid grid-cols-2 gap-xs">
                                             <button
-                                                className="btn btn-primary"
+                                                className="btn btn-primary text-xs py-1"
                                                 onClick={() => handleContribute(goal.id!, false)}
-                                                style={{ flex: 1 }}
                                             >
-                                                <PlusCircle size={16} />
-                                                Aggiungi
+                                                VERSA
                                             </button>
                                             <button
-                                                className="btn btn-secondary"
+                                                className="btn btn-secondary text-xs py-1"
                                                 onClick={() => handleContribute(goal.id!, true)}
-                                                style={{ flex: 1 }}
                                             >
-                                                <MinusCircle size={16} />
-                                                Preleva
+                                                PRELEVA
                                             </button>
                                         </div>
                                         <button
-                                            className="btn btn-ghost"
+                                            className="w-full text-center text-xs text-muted uppercase mt-xs hover:text-ink"
                                             onClick={() => { setShowContribute(null); setContributeAmount(''); }}
-                                            style={{ width: '100%' }}
                                         >
-                                            Annulla
+                                            ANNULLA
                                         </button>
                                     </div>
                                 ) : (
                                     <button
-                                        className="btn btn-primary savings-contribute-btn"
+                                        className="absolute bottom-md right-md btn btn-ghost btn-icon bg-paper hover:bg-concrete structural-border border-border shadow-none"
                                         onClick={() => setShowContribute(goal.id!)}
-                                        style={{ width: '100%', marginTop: 'var(--space-md)' }}
+                                        aria-label="GESTISCI_FONDI"
                                     >
                                         <PlusCircle size={16} />
-                                        Aggiungi / Preleva
                                     </button>
                                 )}
                             </div>
@@ -275,59 +280,68 @@ export const SavingsGoals = memo(function SavingsGoals() {
                     })}
                 </div>
             ) : (
-                <div className="empty-state">
-                    <div className="empty-state-icon">🎯</div>
-                    <div className="empty-state-title">Nessun obiettivo di risparmio</div>
-                    <p>Crea il tuo primo obiettivo per iniziare a risparmiare!</p>
-                    <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                        <Plus size={18} />
-                        Crea Obiettivo
+                <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
+                    <Target size={32} className="text-muted mb-md opacity-50" />
+                    <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_ASSET_DEFINITO</h3>
+                    <p className="text-muted text-sm max-w-xs mb-md">
+                        Definisci il tuo primo obiettivo di risparmio per iniziare il tracking.
+                    </p>
+                    <button className="btn btn-primary text-xs uppercase tracking-wider" onClick={() => setShowForm(true)}>
+                        <Plus size={14} className="mr-xs" />
+                        CREA_PRIMO_ASSET
                     </button>
                 </div>
             )}
 
-            {/* Add/Edit Goal Modal */}
+            {/* Add/Edit Goal Modal - Data Entry Sheet Style */}
             {showForm && (
-                <div className="modal-overlay" onClick={resetForm}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>{editingGoal ? 'Modifica Obiettivo' : 'Nuovo Obiettivo'}</h2>
-                            <button className="btn btn-ghost btn-icon" onClick={resetForm}>
+                <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={resetForm}>
+                    <div className="w-full max-w-md bg-paper structural-border shadow-none" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-md border-b border-border">
+                            <h2 className="text-sm font-mono uppercase tracking-wider">
+                                {editingGoal ? 'MODIFICA_ASSET' : 'NUOVO_ASSET'}
+                            </h2>
+                            <button 
+                                className="btn btn-ghost btn-icon structural-border border-0" 
+                                onClick={resetForm}
+                                aria-label="CHIUDI"
+                            >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} style={{ padding: 'var(--space-lg)' }}>
-                            <div className="form-group">
-                                <label className="form-label">Nome obiettivo</label>
+                        <form onSubmit={handleSubmit} className="p-lg space-y-md">
+                            <div className="space-y-xs">
+                                <label className="text-tiny font-mono uppercase text-muted">NOME_ASSET</label>
                                 <input
                                     type="text"
-                                    className="input"
-                                    placeholder="es. Vacanza estiva"
+                                    className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
+                                    placeholder="NOME_ASSET"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    autoFocus
                                 />
                             </div>
 
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label className="form-label">Obiettivo (€)</label>
+                            <div className="grid grid-cols-2 gap-md">
+                                <div className="space-y-xs">
+                                    <label className="text-tiny font-mono uppercase text-muted">TARGET (€)</label>
                                     <input
                                         type="number"
-                                        className="input"
-                                        placeholder="1000"
+                                        className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none"
+                                        placeholder="0.00"
                                         step="1"
                                         min="0"
                                         value={formData.targetAmount}
                                         onChange={e => setFormData({ ...formData, targetAmount: e.target.value })}
                                     />
                                 </div>
-                                <div className="form-group">
-                                    <label className="form-label">Già risparmiato (€)</label>
+                                <div className="space-y-xs">
+                                    <label className="text-tiny font-mono uppercase text-muted">ATTUALE (€)</label>
                                     <input
                                         type="number"
-                                        className="input"
-                                        placeholder="0"
+                                        className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none"
+                                        placeholder="0.00"
                                         step="1"
                                         min="0"
                                         value={formData.currentAmount}
@@ -336,26 +350,25 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                 </div>
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Data obiettivo (opzionale)</label>
+                            <div className="space-y-xs">
+                                <label className="text-tiny font-mono uppercase text-muted">DEADLINE (OPTIONAL)</label>
                                 <input
                                     type="date"
-                                    className="input"
+                                    className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none uppercase"
                                     value={formData.deadline}
                                     onChange={e => setFormData({ ...formData, deadline: e.target.value })}
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Icona</label>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                            <div className="space-y-xs">
+                                <label className="text-tiny font-mono uppercase text-muted">ICONA_ASSET</label>
+                                <div className="flex flex-wrap gap-xs">
                                     {ICON_OPTIONS.map(icon => (
                                         <button
                                             key={icon}
                                             type="button"
-                                            className={`btn ${formData.icon === icon ? 'btn-primary' : 'btn-secondary'}`}
+                                            className={`w-10 h-10 flex items-center justify-center text-lg transition-colors border ${formData.icon === icon ? 'bg-concrete border-ink' : 'bg-transparent border-transparent hover:bg-concrete/50'}`}
                                             onClick={() => setFormData({ ...formData, icon })}
-                                            style={{ width: 44, height: 44, fontSize: '1.25rem', padding: 0 }}
                                         >
                                             {icon}
                                         </button>
@@ -363,39 +376,36 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                 </div>
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Colore</label>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                            <div className="space-y-xs">
+                                <label className="text-tiny font-mono uppercase text-muted">COLORE_ASSET</label>
+                                <div className="flex flex-wrap gap-xs">
                                     {COLOR_OPTIONS.map(color => (
                                         <button
                                             key={color}
                                             type="button"
-                                            className="btn"
+                                            className="w-8 h-8 structural-border border-border transition-transform hover:scale-110"
                                             onClick={() => setFormData({ ...formData, color })}
                                             style={{
-                                                width: 36,
-                                                height: 36,
-                                                padding: 0,
-                                                background: color,
-                                                border: formData.color === color ? '3px solid white' : 'none',
-                                                boxShadow: formData.color === color ? `0 0 0 2px ${color}` : 'none'
+                                                backgroundColor: color,
+                                                borderColor: formData.color === color ? 'var(--ink)' : 'transparent',
+                                                boxShadow: formData.color === color ? '0 0 0 2px var(--paper), 0 0 0 3px var(--ink)' : 'none'
                                             }}
                                         />
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="modal-actions">
-                                <button type="button" className="btn btn-secondary" onClick={resetForm}>
-                                    Annulla
+                            <div className="pt-md flex justify-end gap-sm">
+                                <button type="button" className="btn btn-secondary text-xs uppercase tracking-wider" onClick={resetForm}>
+                                    ANNULLA
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn btn-primary"
+                                    className="btn btn-primary text-xs uppercase tracking-wider flex items-center gap-xs"
                                     disabled={!formData.name || !formData.targetAmount}
                                 >
-                                    <Save size={16} />
-                                    {editingGoal ? 'Salva' : 'Crea Obiettivo'}
+                                    <Save size={14} />
+                                    {editingGoal ? 'SALVA_MODIFICHE' : 'CREA_ASSET'}
                                 </button>
                             </div>
                         </form>
