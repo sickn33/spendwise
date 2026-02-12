@@ -6,7 +6,8 @@ import {
   generateTransactionHash,
   buildDateAmountKey,
   isLikelyDuplicateByDateAmount,
-  findLikelyDuplicateTransactionIds
+  findLikelyDuplicateTransactionIds,
+  hasLikelyExistingDuplicate
 } from './gmailSync';
 
 function toBase64Url(value: string): string {
@@ -167,5 +168,41 @@ describe('gmailSync utilities', () => {
     ];
 
     expect(findLikelyDuplicateTransactionIds(txs)).toEqual([60]);
+  });
+
+  it('sync dedupe skips generic merchant if same amount exists within one day', () => {
+    const shouldSkip = hasLikelyExistingDuplicate(
+      new Date('2026-02-07T22:30:00.000Z'),
+      -2.5,
+      'Transazione carta',
+      [
+        {
+          date: new Date('2026-02-07T09:00:00.000Z'),
+          amount: -2.5,
+          description: 'Careggi Firenze Parche Vial',
+          details: 'CSV'
+        }
+      ]
+    );
+
+    expect(shouldSkip).toBe(true);
+  });
+
+  it('sync dedupe skips specific merchant when equivalent merchant already exists', () => {
+    const shouldSkip = hasLikelyExistingDuplicate(
+      new Date('2026-02-03T21:11:00.000Z'),
+      -7.28,
+      'PAYPAL *FLIXBUS',
+      [
+        {
+          date: new Date('2026-02-03T08:00:00.000Z'),
+          amount: -7.28,
+          description: 'Paypal *flixbus 30300137300',
+          details: 'CSV'
+        }
+      ]
+    );
+
+    expect(shouldSkip).toBe(true);
   });
 });

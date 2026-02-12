@@ -291,6 +291,35 @@ export function isLikelyDuplicateByDateAmount(
   });
 }
 
+interface SyncDuplicateCandidate {
+  date: Date;
+  amount: number;
+  description: string;
+  details: string;
+}
+
+export function hasLikelyExistingDuplicate(
+  date: Date,
+  amount: number,
+  merchant: string,
+  existingTransactions: SyncDuplicateCandidate[]
+): boolean {
+  const toleranceMs = 36 * 60 * 60 * 1000;
+  const sameAmountCandidates = existingTransactions.filter(transaction => {
+    if (transaction.amount.toFixed(2) !== amount.toFixed(2)) return false;
+    return Math.abs(transaction.date.getTime() - date.getTime()) <= toleranceMs;
+  });
+
+  if (sameAmountCandidates.length === 0) return false;
+  if (isGenericMerchantName(merchant)) return true;
+
+  return sameAmountCandidates.some(candidate => {
+    if (isGenericMerchantName(candidate.description)) return true;
+    if (areLikelySameMerchant(merchant, candidate.description)) return true;
+    return false;
+  });
+}
+
 function decodeBase64Url(data: string): string {
   const normalized = data.replace(/-/g, '+').replace(/_/g, '/');
   const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
@@ -654,6 +683,12 @@ export async function syncIsybankTransactionsFromGmail(options: {
   }
 
   const existingTransactions = await db.transactions.toArray();
+  const existingForSyncDedup: SyncDuplicateCandidate[] = existingTransactions.map(transaction => ({
+    date: transaction.date,
+    amount: transaction.amount,
+    description: transaction.description,
+    details: transaction.details
+  }));
   const existingHashes = new Set(
     existingTransactions.map(transaction =>
       generateTransactionHash(transaction.date, transaction.amount, transaction.description, transaction.details)
@@ -752,6 +787,11 @@ export async function syncIsybankTransactionsFromGmail(options: {
         continue;
       }
 
+      if (hasLikelyExistingDuplicate(parsed.date, parsed.amount, parsed.merchant, existingForSyncDedup)) {
+        skipped++;
+        continue;
+      }
+
       const classification = await classifyTransaction(parsed.merchant, details, parsed.amount);
       const dateAmountKey = buildDateAmountKey(parsed.date, parsed.amount);
       const bucket = existingByDateAmount.get(dateAmountKey) ?? [];
@@ -763,6 +803,12 @@ export async function syncIsybankTransactionsFromGmail(options: {
 
       existingHashes.add(hash);
       existingByMessageId.set(detail.id, []);
+      existingForSyncDedup.push({
+        date: parsed.date,
+        amount: parsed.amount,
+        description: parsed.merchant,
+        details
+      });
       toAdd.push({
         date: parsed.date,
         description: parsed.merchant,
