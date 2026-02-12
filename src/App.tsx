@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { initializeDatabase } from './db/database';
+import { initializeDatabase, getTransactions, getCategories } from './db/database';
 import { buildMerchantCacheFromHistory } from './services/classifier';
+import { useLocalBackup } from './hooks/useLocalBackup';
 import { TransactionForm } from './components/TransactionForm';
-import { QuickAddWidget } from './components/QuickAddWidget';
 import { Plus, Wallet, Keyboard } from 'lucide-react';
 import './index.css';
 import { Sidebar, type Page } from './components/Sidebar';
@@ -26,6 +26,8 @@ function App() {
     const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
     const [announcement, setAnnouncement] = useState('');
 
+    const { fileHandle, permissionStatus, saveToBackup } = useLocalBackup();
+
     useEffect(() => {
         async function init() {
             try {
@@ -44,6 +46,9 @@ function App() {
         if (savedTheme) {
             setTheme(savedTheme);
             document.documentElement.setAttribute('data-theme', savedTheme);
+        } else {
+            // Default to dark if no saved theme
+            document.documentElement.setAttribute('data-theme', 'dark');
         }
     }, []);
 
@@ -51,6 +56,29 @@ function App() {
         setShowTransactionForm(false);
         setRefreshTrigger(prev => prev + 1);
     }
+
+    // Auto-backup trigger
+    useEffect(() => {
+        if (fileHandle && permissionStatus === 'granted') {
+            const performBackup = async () => {
+                try {
+                    const [transactions, categories] = await Promise.all([
+                        getTransactions(),
+                        getCategories()
+                    ]);
+                    await saveToBackup({
+                        version: '1.0',
+                        exportedAt: new Date().toISOString(),
+                        transactions,
+                        categories
+                    });
+                } catch (err) {
+                    console.error('Auto-backup failed:', err);
+                }
+            };
+            performBackup();
+        }
+    }, [refreshTrigger, fileHandle, permissionStatus, saveToBackup]);
 
     function handleThemeToggle() {
         const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -200,6 +228,7 @@ function App() {
                 onNavigate={setCurrentPage} 
                 theme={theme} 
                 onThemeToggle={handleThemeToggle} 
+                onTransactionAdded={() => setRefreshTrigger(prev => prev + 1)}
             />
 
             {/* Main Content */}
@@ -216,8 +245,6 @@ function App() {
                 <Plus size={24} />
             </button>
 
-            {/* Quick Add Widget */}
-            <QuickAddWidget onTransactionAdded={() => setRefreshTrigger(prev => prev + 1)} />
 
             {/* Transaction Form Modal */}
             {showTransactionForm && (

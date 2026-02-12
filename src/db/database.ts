@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Transaction, Category, UserSettings, Budget, QuickAddPreset, SavingsGoal } from '../types';
+import type { Transaction, Category, UserSettings, Budget, QuickAddPreset, SavingsGoal, FileHandleRecord } from '../types';
 
 // Default categories based on Isybank data
 export const DEFAULT_CATEGORIES: Omit<Category, 'id'>[] = [
@@ -43,6 +43,7 @@ class SpendWiseDB extends Dexie {
     budgets!: EntityTable<Budget, 'id'>;
     quickAddPresets!: EntityTable<QuickAddPreset, 'id'>;
     savingsGoals!: EntityTable<SavingsGoal, 'id'>;
+    fileHandles!: EntityTable<FileHandleRecord, 'id'>;
 
     constructor() {
         super('SpendWiseDB');
@@ -68,6 +69,16 @@ class SpendWiseDB extends Dexie {
             budgets: '++id, categoryId',
             quickAddPresets: '++id, categoryId',
             savingsGoals: '++id, name'
+        });
+
+        this.version(4).stores({
+            transactions: '++id, date, categoryId, amount, description, [date+categoryId]',
+            categories: '++id, name, parentId, isDefault',
+            settings: '++id',
+            budgets: '++id, categoryId',
+            quickAddPresets: '++id, categoryId',
+            savingsGoals: '++id, name',
+            fileHandles: '++id, name'
         });
     }
 }
@@ -329,6 +340,27 @@ export async function withdrawFromSavingsGoal(id: number, amount: number): Promi
             updatedAt: new Date()
         });
     }
+}
+
+// File Handle operations
+export async function saveFileHandle(handle: FileSystemFileHandle): Promise<void> {
+    // Clear existing handles first, we only support one backup file for now
+    await db.fileHandles.clear();
+    await db.fileHandles.add({
+        handle,
+        name: handle.name,
+        kind: 'file',
+        updatedAt: new Date()
+    });
+}
+
+export async function getFileHandle(): Promise<FileSystemFileHandle | undefined> {
+    const record = await db.fileHandles.toCollection().first();
+    return record?.handle;
+}
+
+export async function deleteFileHandle(): Promise<void> {
+    await db.fileHandles.clear();
 }
 
 

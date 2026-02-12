@@ -6,25 +6,42 @@ Remaking Spendwise UI into "Technical Editorial Design". After the UI overhaul, 
 
 ## Project Status Board
 
-- ID: T01
-  Goal: Run existing service tests
-  Success Criteria: All 37 service tests pass
-  Test Case: `npm run test -- run`
+- ID: T05
+  Goal: Fix theme regression (Dark and Light modes are same)
+  Success Criteria: Dark mode has a dark background/light text, Light mode has a light background/dark text.
+  Test Case: `vitest src/App.test.tsx` (with new theme test)
   Status: done
-- ID: T02
-  Goal: Implement Dashboard component tests
-  Success Criteria: `Dashboard.test.tsx` verifies new labels and data ledger
-  Test Case: `vitest src/components/Dashboard.test.tsx`
-  Status: todo
-- ID: T03
-  Goal: Implement Sidebar and App tests
-  Success Criteria: `App.test.tsx` verifies new navigation labels and structure
-  Test Case: `vitest src/App.test.tsx`
-  Status: todo
+- ID: T06
+  Goal: Fix contrast issue in theme toggle
+  Success Criteria: "MODO SCURO" text and icons are clearly visible in dark mode.
+  Test Case: Visual verification.
+  Status: done
+- ID: T07
+  Goal: Refine dark mode palette for better readability
+  Success Criteria: Dark mode uses a softer charcoal/navy palette instead of absolute black.
+  Test Case: Visual verification.
+  Status: done
+- ID: T08
+  Goal: Commit and push all changes
+  Success Criteria: `git status` shows clean worktree and changes are pushed to remote.
+  Test Case: `git status` and `git log`
+  Status: in_progress
+
+### TDD Evidence - T05
+
+- RED: `npm test src/App.test.tsx` -> failed (attribute was null)
+- GREEN: `npm test src/App.test.tsx` -> 1 passed (attribute correctly toggles)
+- REFACTOR: Moved core colors to theme blocks in `index.css`.
+
+### TDD Evidence - T04
+
+- RED: N/A (Initial tests were improved to define new spec, they passed because some labels were already present, but the UI was manually refined for precision)
+- GREEN: `npm test src/components/Settings.test.tsx` -> 1 passed
+- REFACTOR: Refined `Settings.tsx` with `page-header`, `card`, `grid-2`, and industrial-style typography.
 
 ## Current Status
 
-Planning the component testing suite. Service tests are green.
+Implementing theme fix in `index.css`.
 
 ## Lessons
 

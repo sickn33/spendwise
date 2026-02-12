@@ -1,6 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { Sidebar, Page } from './Sidebar';
+import { Sidebar } from './Sidebar';
+
+// Mock QuickAddWidget dependencies since it's now embedded in Sidebar
+vi.mock('../db/database', () => ({
+    getQuickAddPresets: vi.fn().mockResolvedValue([]),
+    getCategories: vi.fn().mockResolvedValue([]),
+    addTransaction: vi.fn(),
+    initializeQuickAddPresets: vi.fn().mockResolvedValue(undefined),
+    addQuickAddPreset: vi.fn(),
+    deleteQuickAddPreset: vi.fn(),
+}));
 
 describe('Sidebar Component', () => {
     it('renders all navigation items with Technical Editorial labels', () => {
@@ -10,32 +20,35 @@ describe('Sidebar Component', () => {
                 onNavigate={() => {}} 
                 theme="dark" 
                 onThemeToggle={() => {}} 
+                onTransactionAdded={() => {}}
             />
         );
 
-        expect(screen.getByText('RIEPILOGO')).toBeInTheDocument();
-        expect(screen.getByText('REGISTRO')).toBeInTheDocument();
-        expect(screen.getByText('REPORT')).toBeInTheDocument();
-        expect(screen.getByText('CATEGORIE')).toBeInTheDocument();
-        expect(screen.getByText('CONFIGURAZIONE')).toBeInTheDocument();
+        expect(screen.getByText('Riepilogo')).toBeInTheDocument();
+        expect(screen.getByText('Registro')).toBeInTheDocument();
+        expect(screen.getByText('Report')).toBeInTheDocument();
+        expect(screen.getByText('Categorie')).toBeInTheDocument();
+        expect(screen.getByText('Configurazione')).toBeInTheDocument();
     });
 
     it('highlights the active page', () => {
-        const { container } = render(
+        render(
             <Sidebar 
                 currentPage="transactions" 
                 onNavigate={() => {}} 
                 theme="dark" 
                 onThemeToggle={() => {}} 
+                onTransactionAdded={() => {}}
             />
         );
 
-        const activeItem = screen.getByText('REGISTRO').closest('button');
-        // Check for specific background class
-        expect(activeItem?.className).toContain(' bg-concrete');
+        // Find the button that contains 'Registro'
+        const activeItem = screen.getByText('Registro').closest('button');
+        // Check for specific active class
+        expect(activeItem?.className).toContain('active');
         
-        const inactiveItem = screen.getByText('RIEPILOGO').closest('button');
-        expect(inactiveItem?.className).toContain('bg-transparent');
+        const inactiveItem = screen.getByText('Riepilogo').closest('button');
+        expect(inactiveItem?.className).not.toContain('active');
     });
 
     it('displays the logo and version', () => {
@@ -45,6 +58,7 @@ describe('Sidebar Component', () => {
                 onNavigate={() => {}} 
                 theme="dark" 
                 onThemeToggle={() => {}} 
+                onTransactionAdded={() => {}}
             />
         );
         expect(screen.getByText('SPENDWISE')).toBeInTheDocument();
@@ -60,10 +74,11 @@ describe('Sidebar Component', () => {
                 onNavigate={handleNavigate} 
                 theme="dark" 
                 onThemeToggle={() => {}} 
+                onTransactionAdded={() => {}}
             />
         );
 
-        fireEvent.click(screen.getByText('REGISTRO'));
+        fireEvent.click(screen.getByText('Registro'));
         expect(handleNavigate).toHaveBeenCalledWith('transactions');
     });
 
@@ -75,6 +90,7 @@ describe('Sidebar Component', () => {
                 onNavigate={() => {}} 
                 theme="dark" 
                 onThemeToggle={handleThemeToggle} 
+                onTransactionAdded={() => {}}
             />
         );
 

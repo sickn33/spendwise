@@ -16,6 +16,7 @@ import {
     type GmailAccessToken,
     type GmailSyncSettings
 } from '../services/gmailSync';
+import { useLocalBackup } from '../hooks/useLocalBackup';
 import {
     Upload,
     Download,
@@ -27,7 +28,8 @@ import {
     AlertTriangle,
     Mail,
     RefreshCcw,
-    Link2Off
+    Link2Off,
+    HardDrive
 } from 'lucide-react';
 
 const LAST_GMAIL_SYNC_KEY = 'spendwise-gmail-last-sync';
@@ -56,6 +58,15 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     // Let's check refactored JSX.
     // I see in my previous edit I removed line 471 "Ultima sync...".
     // So I can remove the state if unused.
+    const { 
+        fileHandle, 
+        permissionStatus, 
+        connectBackup, 
+        disconnectBackup, 
+        requestPermission,
+        error: backupError
+    } = useLocalBackup();
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     async function handleFileSelect(file: File) {
@@ -303,34 +314,37 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     }, [gmailSettings.autoSync, gmailSettings.pollingMinutes, gmailToken, runGmailSync]);
 
     return (
-        <div className="space-y-xl max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-md border-b border-border">
+        <div className="max-w-4xl mx-auto space-y-2xl">
+            {/* Page Header - Industrial Style */}
+            <div className="page-header border-b pb-xl mb-xl">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight">IMPOSTAZIONI_SISTEMA</h1>
-                    <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
-                        CONTROL_PANEL_V1.0
-                    </p>
+                    <h1 className="font-display">IMPOSTAZIONI_SISTEMA</h1>
+                    <div className="flex items-center gap-sm opacity-50 font-mono text-[10px] uppercase tracking-[0.2em] mt-2">
+                        <span>CONTROL_PANEL</span>
+                        <div className="w-8 h-px bg-border-structural"></div>
+                        <span>v1.0.0_STABLE</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl">
-                {/* Left Column */}
-                <div className="space-y-lg">
+            <div className="grid-2">
+                {/* Left Column: Import & Gmail */}
+                <div className="space-y-xl">
                     
-                    {/* Import Section */}
-                    <div className="space-y-md">
-                        <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-primary pl-2">
-                            IMPORTAZIONE_DATI
-                        </h3>
+                    {/* Import Section - Technical Spec Box */}
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">IMPORTAZIONE_DATI</h3>
+                            <div className="text-[10px] font-mono opacity-40">MODULE_01</div>
+                        </div>
                         
                         <div 
-                            className={`bg-paper structural-border p-md border-dashed transition-colors ${dragOver ? 'border-primary bg-primary/5' : ''}`}
+                            className={`p-xl border-2 border-dashed border-border-structural bg-concrete/10 transition-all ${dragOver ? 'border-accent-signal bg-accent-signal/5' : ''}`}
                             onDrop={handleDrop}
                             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                             onDragLeave={() => setDragOver(false)}
                         >
-                            <label className="flex flex-col items-center justify-center gap-sm cursor-pointer py-lg group">
+                            <label className="flex flex-col items-center justify-center gap-md cursor-pointer py-xl group">
                                 <input
                                     ref={fileInputRef}
                                     type="file"
@@ -338,83 +352,85 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     className="hidden"
                                     onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                                 />
-                                <div className="p-md rounded-full bg-concrete/50 group-hover:bg-primary/10 transition-colors">
-                                    <Upload size={24} className="text-muted group-hover:text-primary transition-colors" />
+                                <div className="w-12 h-12 flex items-center justify-center bg-concrete group-hover:bg-accent-signal group-hover:text-white transition-all">
+                                    <Upload size={20} />
                                 </div>
                                 <div className="text-center">
-                                    <p className="font-mono text-sm font-bold uppercase">IMPORTA_DA_ISYBANK_XLS</p>
-                                    <p className="text-xs text-muted mt-1 uppercase tracking-wider">
-                                        {importing ? 'ELABORAZIONE...' : 'DRAG_AND_DROP_OR_CLICK'}
+                                    <p className="font-mono text-xs font-bold uppercase tracking-wider">IMPORTA_XLS_ISYBANK</p>
+                                    <p className="font-mono text-[9px] text-muted mt-2 uppercase tracking-[0.1em]">
+                                        {importing ? 'STATUS: PROCESSING...' : 'STATUS: READY_FOR_INPUT'}
                                     </p>
                                 </div>
                             </label>
                             {importResult && (
-                                <div className={`mt-md p-sm text-xs font-mono border-l-2 ${importResult.success ? 'border-success text-success bg-success/5' : 'border-danger text-danger bg-danger/5'}`}>
-                                    {importResult.message}
+                                <div className={`mt-lg p-md font-mono text-[10px] border-l-4 ${importResult.success ? 'border-success bg-success/5 text-success' : 'border-danger bg-danger/5 text-danger'}`}>
+                                    {importResult.message.toUpperCase()}
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Gmail Sync */}
-                    <div className="space-y-md">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-primary pl-2">
-                                SINCRONIZZAZIONE_GMAIL
-                            </h3>
-                            <div className={`px-2 py-0.5 rounded-none text-tiny font-mono uppercase border ${gmailToken && isGmailTokenValid(gmailToken) ? 'border-success text-success bg-success/10' : 'border-muted text-muted'}`}>
-                                {gmailToken && isGmailTokenValid(gmailToken) ? 'CONNECTED' : 'OFFLINE'}
+                    {/* Gmail Sync - Industrial Specs */}
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">GMAIL_SYNCHRONIZER</h3>
+                            <div className={`px-2 py-0.5 font-mono text-[9px] uppercase border ${gmailToken && isGmailTokenValid(gmailToken) ? 'border-success text-success bg-success/5' : 'border-border-structural text-muted'}`}>
+                                {gmailToken && isGmailTokenValid(gmailToken) ? 'STATUS: ONLINE' : 'STATUS: OFFLINE'}
                             </div>
                         </div>
 
-                        <div className="bg-paper structural-border p-md space-y-md">
-                            <div className="grid gap-sm">
-                                <label className="space-y-xs">
-                                    <span className="text-tiny font-mono uppercase text-muted">CLIENT_ID_GMAIL</span>
+                        <div className="space-y-lg">
+                            <div className="grid gap-md">
+                                <div className="input-group">
+                                    <label htmlFor="gmail-client-id" className="input-label">CLIENT_ID_GMAIL</label>
                                     <input
+                                        id="gmail-client-id"
                                         type="text"
-                                        className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
-                                        placeholder="xxxxxxxx.apps.googleusercontent.com"
+                                        className="input font-mono text-xs"
+                                        placeholder="CLIENT_ID.apps.googleusercontent.com"
                                         value={gmailSettings.googleClientId}
                                         onChange={e => updateGmailSettings({ googleClientId: e.target.value })}
                                     />
-                                </label>
+                                </div>
                                 
-                                <label className="space-y-xs">
-                                    <span className="text-tiny font-mono uppercase text-muted">MITTENTE_BANCA</span>
+                                <div className="input-group">
+                                    <label htmlFor="gmail-sender-email" className="input-label">BANCA_SENDER_EMAIL</label>
                                     <input
+                                        id="gmail-sender-email"
                                         type="email"
-                                        className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
+                                        className="input font-mono text-xs"
                                         value={gmailSettings.senderEmail}
                                         onChange={e => updateGmailSettings({ senderEmail: e.target.value })}
                                     />
-                                </label>
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-md">
-                                    <label className="space-y-xs">
-                                        <span className="text-tiny font-mono uppercase text-muted">MAX_RESULTS</span>
+                                    <div className="input-group">
+                                        <label htmlFor="gmail-max-results" className="input-label">MAX_RECORDS</label>
                                         <input
+                                            id="gmail-max-results"
                                             type="number"
-                                            className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
+                                            className="input font-mono text-xs"
                                             value={gmailSettings.maxResults}
                                             onChange={e => updateGmailSettings({ maxResults: Number.parseInt(e.target.value || '25', 10) })}
                                         />
-                                    </label>
-                                    <label className="space-y-xs">
-                                        <span className="text-tiny font-mono uppercase text-muted">POLLING (MIN)</span>
+                                    </div>
+                                    <div className="input-group">
+                                        <label htmlFor="gmail-polling" className="input-label">POLLING_LATENCY_(M)</label>
                                         <input
+                                            id="gmail-polling"
                                             type="number"
-                                            className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-xs focus:outline-none"
+                                            className="input font-mono text-xs"
                                             value={gmailSettings.pollingMinutes}
                                             onChange={e => updateGmailSettings({ pollingMinutes: Number.parseInt(e.target.value || '10', 10) })}
                                         />
-                                    </label>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <label className="flex items-center gap-sm cursor-pointer group">
-                                <div className={`w-4 h-4 border transition-colors ${gmailSettings.autoSync ? 'bg-primary border-primary' : 'border-muted group-hover:border-ink'}`}>
-                                    {gmailSettings.autoSync && <div className="w-full h-full flex items-center justify-center text-white text-[10px]">✓</div>}
+                            <label className="flex items-center gap-md cursor-pointer group py-sm border-t border-b border-border-structural/30">
+                                <div className={`w-4 h-4 border border-text-ink flex items-center justify-center transition-all ${gmailSettings.autoSync ? 'bg-text-ink' : 'bg-transparent'}`}>
+                                    {gmailSettings.autoSync && <div className="w-2 h-2 bg-paper"></div>}
                                 </div>
                                 <input
                                     type="checkbox"
@@ -422,119 +438,198 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     checked={gmailSettings.autoSync}
                                     onChange={e => updateGmailSettings({ autoSync: e.target.checked })}
                                 />
-                                <span className="text-xs font-mono uppercase text-muted group-hover:text-ink transition-colors">AUTO_SYNC_ENABLED</span>
+                                <span className="font-mono text-[10px] uppercase tracking-wider text-muted group-hover:text-ink">ENABLE_AUTO_SYNC_DAEMON</span>
                             </label>
 
-                            <div className="grid grid-cols-2 gap-sm pt-sm border-t border-border">
+                            <div className="grid grid-cols-2 gap-sm">
                                 <button
-                                    className="btn btn-secondary text-xs uppercase"
+                                    className="btn btn-secondary text-[10px]"
                                     onClick={handleConnectGmail}
                                     disabled={gmailSyncing || gmailCleaning}
                                 >
-                                    <Mail size={14} className="mr-xs" />
-                                    {gmailToken && isGmailTokenValid(gmailToken) ? 'RICOLLEGA' : 'COLLEGA_GMAIL'}
+                                    <Mail size={14} />
+                                    {gmailToken && isGmailTokenValid(gmailToken) ? 'RECONNECT' : 'AUTHORIZE_GMAIL'}
                                 </button>
                                 <button
-                                    className="btn btn-secondary text-xs uppercase"
+                                    className="btn btn-primary text-[10px]"
                                     onClick={() => void runGmailSync(false)}
                                     disabled={!gmailToken || !isGmailTokenValid(gmailToken)}
                                 >
-                                    <RefreshCcw size={14} className={`mr-xs ${gmailSyncing ? 'animate-spin' : ''}`} />
-                                    {gmailSyncing ? 'SYNCING...' : 'SYNC_NOW'}
+                                    <RefreshCcw size={14} className={gmailSyncing ? 'animate-spin' : ''} />
+                                    {gmailSyncing ? 'SYNCING...' : 'RUN_MANUAL_SYNC'}
                                 </button>
                                 <button
-                                    className="btn btn-ghost text-xs uppercase text-muted hover:text-ink"
-                                    onClick={() => void handleCleanupGmailDuplicates()}
-                                    disabled={gmailSyncing || gmailCleaning}
-                                >
-                                    <Trash2 size={14} className="mr-xs" />
-                                    CLEAN_DUPLICATES
-                                </button>
-                                <button
-                                    className="btn btn-ghost text-xs uppercase text-danger hover:bg-danger/5"
+                                    className="btn btn-ghost text-[10px] text-danger hover:bg-danger/5"
                                     onClick={handleDisconnectGmail}
                                     disabled={!gmailToken}
                                 >
-                                    <Link2Off size={14} className="mr-xs" />
-                                    DISCONNECT
+                                    <Link2Off size={14} />
+                                    TERMINATE_SESSION
+                                </button>
+                                <button
+                                    className="btn btn-ghost text-[10px] col-span-2 border-border-structural"
+                                    onClick={() => void handleCleanupGmailDuplicates()}
+                                    disabled={gmailSyncing || gmailCleaning}
+                                >
+                                    <Trash2 size={14} />
+                                    PURGE_DUPLICATE_RECORDS
                                 </button>
                             </div>
                             
                             {gmailResult && (
-                                <div className={`p-sm text-xs font-mono border-l-2 ${gmailResult.success ? 'border-success text-success bg-success/5' : 'border-danger text-danger bg-danger/5'}`}>
-                                    {gmailResult.message}
+                                <div className={`p-md font-mono text-[10px] border-l-4 ${gmailResult.success ? 'border-success bg-success/5 text-success' : 'border-danger bg-danger/5 text-danger'}`}>
+                                    {gmailResult.message.toUpperCase()}
                                 </div>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* Right Column */}
-                <div className="space-y-lg">
-                    {/* Export */}
-                    <div className="space-y-md">
-                        <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-primary pl-2">
-                            ESPORTAZIONE_DATI
-                        </h3>
-                        <div className="bg-paper structural-border p-md grid grid-cols-1 gap-sm">
+                {/* Right Column: Export & Storage */}
+                <div className="space-y-xl">
+                    {/* Export Section */}
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">DATA_EXTRACTION</h3>
+                            <div className="text-[10px] font-mono opacity-40">EXTRACT_v1</div>
+                        </div>
+                        <div className="space-y-sm">
                             <button
-                                className="flex items-center justify-between p-sm border border-border hover:border-ink hover:bg-concrete/20 transition-all group"
+                                className="w-full flex items-center justify-between p-md border border-border-structural hover:border-text-ink hover:bg-concrete/30 transition-all group"
                                 onClick={handleExportExcel}
                                 disabled={exporting}
                             >
-                                <div className="flex items-center gap-sm">
-                                    <FileSpreadsheet size={16} className="text-muted group-hover:text-ink" />
-                                    <span className="text-xs font-mono uppercase">EXPORT_EXCEL</span>
+                                <div className="flex items-center gap-md">
+                                    <FileSpreadsheet size={16} className="text-muted" />
+                                    <span className="font-mono text-xs uppercase font-bold">EXPORT_SPEC_XLSX</span>
                                 </div>
-                                <Download size={14} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Download size={14} className="opacity-0 group-hover:opacity-100" />
                             </button>
                             <button
-                                className="flex items-center justify-between p-sm border border-border hover:border-ink hover:bg-concrete/20 transition-all group"
+                                className="w-full flex items-center justify-between p-md border border-border-structural hover:border-text-ink hover:bg-concrete/30 transition-all group"
                                 onClick={handleExportCSV}
                                 disabled={exporting}
                             >
-                                <div className="flex items-center gap-sm">
-                                    <FileSpreadsheet size={16} className="text-muted group-hover:text-ink" />
-                                    <span className="text-xs font-mono uppercase">EXPORT_CSV</span>
+                                <div className="flex items-center gap-md">
+                                    <FileSpreadsheet size={16} className="text-muted" />
+                                    <span className="font-mono text-xs uppercase font-bold">EXPORT_LEDGER_CSV</span>
                                 </div>
-                                <Download size={14} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Download size={14} className="opacity-0 group-hover:opacity-100" />
                             </button>
                             <button
-                                className="flex items-center justify-between p-sm border border-border hover:border-ink hover:bg-concrete/20 transition-all group"
+                                className="w-full flex items-center justify-between p-md border border-border-structural hover:border-text-ink hover:bg-concrete/30 transition-all group"
                                 onClick={handleExportJSON}
                                 disabled={exporting}
                             >
-                                <div className="flex items-center gap-sm">
-                                    <FileJson size={16} className="text-muted group-hover:text-ink" />
-                                    <span className="text-xs font-mono uppercase">BACKUP_JSON</span>
+                                <div className="flex items-center gap-md">
+                                    <FileJson size={16} className="text-muted" />
+                                    <span className="font-mono text-xs uppercase font-bold">SYSTEM_BACKUP_JSON</span>
                                 </div>
-                                <Download size={14} className="text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Download size={14} className="opacity-0 group-hover:opacity-100" />
                             </button>
                         </div>
                     </div>
 
-                    {/* Storage Info */}
-                    <div className="space-y-md">
-                        <h3 className="text-xs font-mono uppercase text-muted border-l-2 border-ink pl-2">
-                            STORAGE_&_PRIVACY
-                        </h3>
-                        <div className="bg-paper structural-border p-md space-y-sm">
-                            <div className="flex items-start gap-md">
-                                <Database size={18} className="text-muted mt-0.5" />
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-wider mb-1">LOCAL_INDEXEDDB</div>
-                                    <div className="text-xs text-muted leading-relaxed">
-                                        I dati sono salvati esclusivamente nel browser del tuo dispositivo.
+                    {/* Automatic Backup Protocol - Industrial Style */}
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">AUTOMATIC_BACKUP_PROTOCOL</h3>
+                            <div className={`px-2 py-0.5 font-mono text-[9px] uppercase border ${fileHandle ? (permissionStatus === 'granted' ? 'border-success text-success bg-success/5' : 'border-warning text-warning bg-warning/5') : 'border-border-structural text-muted'}`}>
+                                {fileHandle ? (permissionStatus === 'granted' ? 'STATUS: ACTIVE' : 'STATUS: PERMISSION_REQUIRED') : 'STATUS: INACTIVE'}
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-lg">
+                            <div className="flex items-start gap-lg p-md border border-border-structural bg-concrete/5">
+                                <div className={`p-sm flex-shrink-0 ${fileHandle ? 'bg-concrete' : 'bg-concrete/30 opacity-40'}`}>
+                                    <HardDrive size={18} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">LOCAL_FILE_POINTER</div>
+                                    <div className="font-mono text-[9px] text-muted truncate uppercase tracking-tight">
+                                        {fileHandle ? `TARGET: ${fileHandle.name}` : 'TARGET: NOT_CONFIGURED'}
                                     </div>
                                 </div>
                             </div>
-                            <div className="h-px bg-border my-sm" />
-                            <div className="flex items-start gap-md">
-                                <Shield size={18} className="text-success mt-0.5" />
+
+                            {backupError && (
+                                <div className="p-sm bg-danger/5 border-l-2 border-danger font-mono text-[9px] text-danger uppercase">
+                                    {backupError}
+                                </div>
+                            )}
+
+                            <div className="grid gap-sm">
+                                {!fileHandle ? (
+                                    <button
+                                        className="btn btn-primary w-full text-[10px] font-bold uppercase tracking-widest"
+                                        onClick={connectBackup}
+                                    >
+                                        <Database size={14} />
+                                        INITIALIZE_BACKUP_FILE
+                                    </button>
+                                ) : (
+                                    <>
+                                        {permissionStatus !== 'granted' && (
+                                            <button
+                                                className="btn btn-primary w-full text-[10px] font-bold uppercase tracking-widest bg-warning hover:bg-warning/80 border-none"
+                                                onClick={requestPermission}
+                                            >
+                                                <Shield size={14} />
+                                                RESTORE_ACCESS_PERMISSION
+                                            </button>
+                                        )}
+                                        <div className="grid grid-cols-2 gap-sm">
+                                            <button
+                                                className="btn btn-secondary text-[10px]"
+                                                onClick={connectBackup}
+                                            >
+                                                <RefreshCcw size={14} />
+                                                CHANGE_FILE
+                                            </button>
+                                            <button
+                                                className="btn btn-ghost text-[10px] border-danger/30 text-danger hover:bg-danger/10"
+                                                onClick={disconnectBackup}
+                                            >
+                                                <Link2Off size={14} />
+                                                TERMINATE_LINK
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            <p className="font-mono text-[8px] text-muted uppercase leading-relaxed text-center opacity-60">
+                                This configuration enables periodic background sync to local filesystem. User activation required for session restoration.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Storage Info */}
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">MEMORY_&_PROTOCOLS</h3>
+                        </div>
+                        <div className="space-y-lg">
+                            <div className="flex items-start gap-lg">
+                                <div className="p-sm bg-concrete flex-shrink-0">
+                                    <Database size={18} />
+                                </div>
                                 <div>
-                                    <div className="text-xs font-bold uppercase tracking-wider mb-1">OFFLINE_FIRST</div>
-                                    <div className="text-xs text-muted leading-relaxed">
-                                        Nessuna trasmissione di dati a server esterni. Privacy garantita by design.
+                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">LOCAL_INDEXEDDB_LEDGER</div>
+                                    <div className="font-sans text-xs text-muted leading-relaxed uppercase">
+                                        Data Persistance: Local Environment Only. No Cloud Transmission.
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="h-px bg-border-structural" />
+                            <div className="flex items-start gap-lg">
+                                <div className="p-sm bg-success/10 text-success flex-shrink-0">
+                                    <Shield size={18} />
+                                </div>
+                                <div>
+                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">SECURITY_PROTOCOL_P1</div>
+                                    <div className="font-sans text-xs text-muted leading-relaxed uppercase">
+                                        Privacy Guarantee: Offline-First Architecture. Zero External Telemetry.
                                     </div>
                                 </div>
                             </div>
@@ -542,46 +637,46 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     </div>
 
                     {/* Danger Zone */}
-                    <div className="space-y-md">
-                        <h3 className="text-xs font-mono uppercase text-danger border-l-2 border-danger pl-2">
-                            ZONA_PERICOLOSA
-                        </h3>
-                        <div className="bg-paper structural-border border-danger/50 p-md">
+                    <div className="card border-danger/30 bg-danger/[0.02]">
+                        <div className="card-header border-danger/50 mb-xl">
+                            <h3 className="card-title text-danger">SYSTEM_OVERRIDE</h3>
+                            <AlertTriangle size={14} className="text-danger opacity-50" />
+                        </div>
+                        <div>
                             {showClearConfirm ? (
-                                <div className="space-y-md animate-in fade-in zoom-in-95 duration-200">
-                                    <div className="flex items-center gap-sm text-danger">
-                                        <AlertTriangle size={18} />
-                                        <span className="text-xs font-bold uppercase">CONFERMA_ELIMINAZIONE</span>
+                                <div className="space-y-lg animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="font-mono text-[10px] text-danger font-bold uppercase tracking-widest text-center">
+                                        !! WARNING: DATA_DESTRUCTION_PENDING !!
                                     </div>
-                                    <p className="text-xs text-muted">
-                                        L'azione è irreversibile. Tutti i dati verranno rimossi permanentemente.
+                                    <p className="font-mono text-[9px] text-muted text-center uppercase">
+                                        Irreversible Action. This will clear the entire IndexedDB instance.
                                     </p>
-                                    <div className="flex gap-sm">
+                                    <div className="flex gap-md">
                                         <button
-                                            className="btn bg-danger text-white text-xs uppercase flex-1 hover:bg-danger/90 border-transparent"
+                                            className="btn bg-danger text-white border-none flex-1 font-bold text-[10px]"
                                             onClick={handleClearData}
                                             disabled={clearing}
                                         >
-                                            {clearing ? 'ELIMINAZIONE...' : 'CONFERMA_RESET'}
+                                            {clearing ? 'EXECUTING...' : 'CONFIRM_DESTRUCTION'}
                                         </button>
                                         <button
-                                            className="btn btn-secondary text-xs uppercase flex-1"
+                                            className="btn btn-secondary flex-1 text-[10px]"
                                             onClick={() => setShowClearConfirm(false)}
                                         >
-                                            ANNULLA
+                                            ABORT_MISSION
                                         </button>
                                     </div>
                                 </div>
                             ) : (
                                 <button
-                                    className="w-full flex items-center justify-between p-sm border border-danger/30 text-danger hover:bg-danger/5 transition-colors group"
+                                    className="w-full flex items-center justify-between p-md border border-danger/30 text-danger hover:bg-danger/10 transition-colors group"
                                     onClick={() => setShowClearConfirm(true)}
                                 >
-                                    <div className="flex items-center gap-sm">
+                                    <div className="flex items-center gap-md">
                                         <Trash2 size={16} />
-                                        <span className="text-xs font-mono uppercase font-bold">RESET_DATABASE</span>
+                                        <span className="font-mono text-xs uppercase font-bold">RESET_SYSTEM_DATABASE</span>
                                     </div>
-                                    <AlertTriangle size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <Shield size={14} className="opacity-0 group-hover:opacity-100" />
                                 </button>
                             )}
                         </div>

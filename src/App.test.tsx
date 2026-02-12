@@ -40,7 +40,12 @@ vi.mock('./services/classifier', () => ({
 }));
 
 vi.mock('./components/Sidebar', () => ({
-    Sidebar: () => <div data-testid="sidebar-mock">SIDEBAR_MOCK</div>
+    Sidebar: ({ theme, onThemeToggle }: { theme: string; onThemeToggle: () => void }) => (
+        <div data-testid="sidebar-mock">
+            <span data-testid="current-theme">{theme}</span>
+            <button data-testid="theme-toggle-btn" onClick={onThemeToggle}>Toggle Theme</button>
+        </div>
+    )
 }));
 
 describe('App Integration', () => {
@@ -49,14 +54,29 @@ describe('App Integration', () => {
         vi.mocked(initializeDatabase).mockResolvedValue(undefined);
     });
 
-    it('renders the app shell with sidebar', async () => {
+    it('toggles theme correctly', async () => {
         render(<App />);
         
-        // Wait for loading to finish
+        // Wait for app to load
         await screen.findByTestId('sidebar-mock');
-        expect(screen.getByTestId('sidebar-mock')).toBeInTheDocument();
         
-        // Check main content area
-        expect(screen.getByRole('main')).toBeInTheDocument();
+        // Initial theme should be 'dark' (as per App.tsx state default)
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+        expect(screen.getByTestId('current-theme').textContent).toBe('dark');
+        
+        // Click toggle
+        const toggleBtn = screen.getByTestId('theme-toggle-btn');
+        fireEvent.click(toggleBtn);
+        
+        // Should toggle to 'light'
+        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+        expect(screen.getByTestId('current-theme').textContent).toBe('light');
+        
+        // Click toggle again
+        fireEvent.click(toggleBtn);
+        
+        // Should toggle back to 'dark'
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+        expect(screen.getByTestId('current-theme').textContent).toBe('dark');
     });
 });

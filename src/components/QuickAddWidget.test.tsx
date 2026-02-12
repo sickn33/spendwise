@@ -28,37 +28,36 @@ describe('QuickAddWidget Component', () => {
         vi.mocked(getCategories).mockResolvedValue(mockCategories);
     });
 
-    it('renders as a utility bar', async () => {
-        render(<QuickAddWidget onTransactionAdded={() => {}} />);
+    it('renders as a sidebar variant in closed state by default', async () => {
+        render(<QuickAddWidget onTransactionAdded={() => {}} variant="sidebar" />);
         
-        const button = screen.getByTitle('Apertura rapida');
-        expect(button).toBeInTheDocument();
-        expect(button.textContent).toMatch(/AGGIUNTA RAPIDA/i);
+        expect(screen.getByText('AGGIUNTA RAPIDA')).toBeInTheDocument();
+        // Presets should NOT be visible initially in sidebar variant
+        expect(screen.queryByText('Caffè')).not.toBeInTheDocument();
     });
 
-    it('expands to show grid of presets', async () => {
-        render(<QuickAddWidget onTransactionAdded={() => {}} />);
+    it('expands sidebar dropdown to show list of presets', async () => {
+        render(<QuickAddWidget onTransactionAdded={() => {}} variant="sidebar" />);
         
-        await waitFor(() => screen.getByTitle('Apertura rapida'));
+        const header = screen.getByText('AGGIUNTA RAPIDA');
+        fireEvent.click(header);
         
-        const toggleBtn = screen.getByTitle('Apertura rapida');
-        fireEvent.click(toggleBtn);
-        
-        expect(screen.getByText('Caffè')).toBeInTheDocument();
-        expect(screen.getByText('€1.50')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Caffè')).toBeInTheDocument();
+            expect(screen.getByText('NUOVO PRESET')).toBeInTheDocument();
+        });
     });
 
-    it('handles quick add interaction', async () => {
+    it('handles quick add interaction in sidebar dropdown', async () => {
         const onTransactionAdded = vi.fn();
-        render(<QuickAddWidget onTransactionAdded={onTransactionAdded} />);
-        
-        await waitFor(() => screen.getByTitle('Apertura rapida'));
+        render(<QuickAddWidget onTransactionAdded={onTransactionAdded} variant="sidebar" />);
         
         // Expand
-        fireEvent.click(screen.getByTitle('Apertura rapida'));
+        fireEvent.click(screen.getByText('AGGIUNTA RAPIDA'));
         
         // Click preset
-        fireEvent.click(screen.getByText('Caffè'));
+        const preset = await screen.findByText('Caffè');
+        fireEvent.click(preset);
         
         await waitFor(() => {
             expect(addTransaction).toHaveBeenCalledWith(expect.objectContaining({

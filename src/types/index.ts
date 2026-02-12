@@ -294,3 +294,11 @@ export interface MonthlyComparisonData {
   // ML predictions
   prediction?: MonthlyPrediction;
 }
+// Backup types
+export interface FileHandleRecord {
+  id?: number;
+  handle: FileSystemFileHandle;
+  name: string;
+  kind: 'file';
+  updatedAt: Date;
+}
