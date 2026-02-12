@@ -96,6 +96,24 @@ describe('gmailSync utilities', () => {
     expect(findLikelyDuplicateTransactionIds(txs)).toEqual([10]);
   });
 
+  it('finds generic duplicates even without gmail tag when specific counterpart exists', () => {
+    const txs = [
+      { id: 30, date: new Date('2026-02-07'), amount: -2.5, description: 'Transazione carta', tags: [] },
+      { id: 31, date: new Date('2026-02-07'), amount: -2.5, description: 'CAREGGI FIRENZE PARCHE VIAL', tags: [] }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([30]);
+  });
+
+  it('finds generic duplicates when specific counterpart is within one day (timezone drift)', () => {
+    const txs = [
+      { id: 40, date: new Date('2026-02-07T00:05:00.000Z'), amount: -7.28, description: 'Transazione carta', tags: ['gmail'] },
+      { id: 41, date: new Date('2026-02-06T23:40:00.000Z'), amount: -7.28, description: 'PAYPAL *FLIXBUS 30300137300', tags: [] }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([40]);
+  });
+
   it('does not remove generic transactions when no specific counterpart exists', () => {
     const txs = [
       { id: 21, date: new Date('2026-02-07'), amount: -2.5, description: 'Transazione carta', tags: ['gmail'] },

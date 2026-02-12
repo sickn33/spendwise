@@ -290,12 +290,6 @@ function extractMessageIdTags(tags: string[] | undefined): string[] {
     .filter(Boolean);
 }
 
-function hasGmailTag(tags: string[] | undefined): boolean {
-  if (!tags?.length) return false;
-  if (tags.includes('gmail')) return true;
-  return tags.some(tag => tag.startsWith('gmail-msg:'));
-}
-
 export function findLikelyDuplicateTransactionIds(
   transactions: DuplicateScanTransaction[]
 ): number[] {
@@ -321,24 +315,32 @@ export function findLikelyDuplicateTransactionIds(
     }
   }
 
-  // Rule 2: generic Gmail merchant duplicated by a specific merchant same day/amount
-  const byDateAmount = new Map<string, DuplicateScanTransaction[]>();
+  // Rule 2: generic merchant duplicated by a specific merchant with same amount and close date.
+  // We allow up to 24h to absorb timezone/day serialization drifts.
+  const byAmount = new Map<string, DuplicateScanTransaction[]>();
   for (const transaction of transactions) {
-    const key = buildDateAmountKey(transaction.date, transaction.amount);
-    const list = byDateAmount.get(key) ?? [];
+    const key = transaction.amount.toFixed(2);
+    const list = byAmount.get(key) ?? [];
     list.push(transaction);
-    byDateAmount.set(key, list);
+    byAmount.set(key, list);
   }
 
-  for (const group of byDateAmount.values()) {
-    const hasSpecificMerchant = group.some(transaction => !isGenericMerchantName(transaction.description));
-    if (!hasSpecificMerchant) continue;
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  for (const group of byAmount.values()) {
+    const specificTransactions = group.filter(transaction => !isGenericMerchantName(transaction.description));
+    if (specificTransactions.length === 0) continue;
 
     for (const transaction of group) {
       if (!transaction.id) continue;
-      if (!hasGmailTag(transaction.tags)) continue;
       if (!isGenericMerchantName(transaction.description)) continue;
-      toDelete.add(transaction.id);
+
+      const hasSpecificCounterpart = specificTransactions.some(specific => {
+        return Math.abs(specific.date.getTime() - transaction.date.getTime()) <= oneDayMs;
+      });
+
+      if (hasSpecificCounterpart) {
+        toDelete.add(transaction.id);
+      }
     }
   }
 
