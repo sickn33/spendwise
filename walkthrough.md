@@ -287,6 +287,12 @@ Tests       21 passed (21)
   - Parsing basato su `Subject + Body + Snippet` (non solo body).
   - Deduplica hard tramite tag `gmail-msg:<id>`.
   - Deduplica soft tramite chiave `data+importo` quando merchant è generico o già equivalente.
+  - Nuova utility `cleanupLikelyGmailDuplicates()` per pulire i duplicati storici già importati.
+
+- `src/components/Settings.tsx`
+  - Nuovo bottone **Pulisci duplicati Gmail** nella sezione sync Gmail.
+  - Messaggio di esito con numero duplicati rimossi.
+  - Refresh automatico dashboard/lista dopo la pulizia.
 
 ### Test aggiunti/aggiornati
 
@@ -294,13 +300,14 @@ Tests       21 passed (21)
   - test `Esercente:` e `Pagamento carta ...`
 - `src/services/gmailSync.test.ts`
   - test deduplica su merchant generico/specifico.
+  - test finder duplicati storici (`findLikelyDuplicateTransactionIds`).
 
 ### Evidenza
 
 ```
 npx vitest run
 Test Files  3 passed (3)
-Tests       26 passed (26)
+Tests       29 passed (29)
 ```
 
 ```

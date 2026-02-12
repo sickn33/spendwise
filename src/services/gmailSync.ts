@@ -29,6 +29,12 @@ export interface GmailSyncResult {
   errors: string[];
 }
 
+export interface GmailDuplicateCleanupResult {
+  scanned: number;
+  removed: number;
+  removedIds: number[];
+}
+
 interface GoogleTokenResponse {
   access_token?: string;
   expires_in?: number;
@@ -88,6 +94,14 @@ interface GmailMessageDetail {
 interface DuplicateCandidate {
   description: string;
   details: string;
+}
+
+interface DuplicateScanTransaction {
+  id?: number;
+  date: Date;
+  amount: number;
+  description: string;
+  tags: string[];
 }
 
 const GENERIC_MERCHANT_NAMES = new Set([
@@ -274,6 +288,84 @@ function extractMessageIdTags(tags: string[] | undefined): string[] {
     .filter(tag => tag.startsWith('gmail-msg:'))
     .map(tag => tag.replace('gmail-msg:', '').trim())
     .filter(Boolean);
+}
+
+function hasGmailTag(tags: string[] | undefined): boolean {
+  if (!tags?.length) return false;
+  if (tags.includes('gmail')) return true;
+  return tags.some(tag => tag.startsWith('gmail-msg:'));
+}
+
+export function findLikelyDuplicateTransactionIds(
+  transactions: DuplicateScanTransaction[]
+): number[] {
+  const toDelete = new Set<number>();
+
+  // Rule 1: exact duplicate imports with same Gmail message ID
+  const byMessageId = new Map<string, number[]>();
+  for (const transaction of transactions) {
+    if (!transaction.id) continue;
+
+    for (const messageId of extractMessageIdTags(transaction.tags)) {
+      const ids = byMessageId.get(messageId) ?? [];
+      ids.push(transaction.id);
+      byMessageId.set(messageId, ids);
+    }
+  }
+
+  for (const ids of byMessageId.values()) {
+    if (ids.length < 2) continue;
+    ids.sort((a, b) => a - b);
+    for (const id of ids.slice(1)) {
+      toDelete.add(id);
+    }
+  }
+
+  // Rule 2: generic Gmail merchant duplicated by a specific merchant same day/amount
+  const byDateAmount = new Map<string, DuplicateScanTransaction[]>();
+  for (const transaction of transactions) {
+    const key = buildDateAmountKey(transaction.date, transaction.amount);
+    const list = byDateAmount.get(key) ?? [];
+    list.push(transaction);
+    byDateAmount.set(key, list);
+  }
+
+  for (const group of byDateAmount.values()) {
+    const hasSpecificMerchant = group.some(transaction => !isGenericMerchantName(transaction.description));
+    if (!hasSpecificMerchant) continue;
+
+    for (const transaction of group) {
+      if (!transaction.id) continue;
+      if (!hasGmailTag(transaction.tags)) continue;
+      if (!isGenericMerchantName(transaction.description)) continue;
+      toDelete.add(transaction.id);
+    }
+  }
+
+  return [...toDelete].sort((a, b) => a - b);
+}
+
+export async function cleanupLikelyGmailDuplicates(): Promise<GmailDuplicateCleanupResult> {
+  const transactions = await db.transactions.toArray();
+  const removedIds = findLikelyDuplicateTransactionIds(
+    transactions.map(transaction => ({
+      id: transaction.id,
+      date: transaction.date,
+      amount: transaction.amount,
+      description: transaction.description,
+      tags: transaction.tags ?? []
+    }))
+  );
+
+  if (removedIds.length > 0) {
+    await db.transactions.bulkDelete(removedIds);
+  }
+
+  return {
+    scanned: transactions.length,
+    removed: removedIds.length,
+    removedIds
+  };
 }
 
 async function gmailGet<T>(

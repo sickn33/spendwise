@@ -4,7 +4,8 @@ import {
   extractMessageBody,
   generateTransactionHash,
   buildDateAmountKey,
-  isLikelyDuplicateByDateAmount
+  isLikelyDuplicateByDateAmount,
+  findLikelyDuplicateTransactionIds
 } from './gmailSync';
 
 function toBase64Url(value: string): string {
@@ -74,5 +75,33 @@ describe('gmailSync utilities', () => {
     ]);
 
     expect(isLikelyDuplicateByDateAmount(date, -7.28, 'PAYPAL *FLIXBUS 30300137300', existing)).toBe(true);
+  });
+
+  it('finds duplicate ids by gmail message id', () => {
+    const txs = [
+      { id: 1, date: new Date('2026-02-01'), amount: -10, description: 'SHOP A', tags: ['gmail', 'gmail-msg:abc'] },
+      { id: 2, date: new Date('2026-02-01'), amount: -10, description: 'SHOP A', tags: ['gmail', 'gmail-msg:abc'] },
+      { id: 3, date: new Date('2026-02-01'), amount: -10, description: 'SHOP A', tags: ['gmail', 'gmail-msg:def'] }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([2]);
+  });
+
+  it('finds generic gmail duplicates when specific transaction exists on same day/amount', () => {
+    const txs = [
+      { id: 10, date: new Date('2026-02-07'), amount: -2.5, description: 'Transazione carta', tags: ['gmail'] },
+      { id: 11, date: new Date('2026-02-07'), amount: -2.5, description: 'CAREGGI FIRENZE PARCHE VIAL', tags: [] }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([10]);
+  });
+
+  it('does not remove generic transactions when no specific counterpart exists', () => {
+    const txs = [
+      { id: 21, date: new Date('2026-02-07'), amount: -2.5, description: 'Transazione carta', tags: ['gmail'] },
+      { id: 22, date: new Date('2026-02-07'), amount: -2.5, description: 'Transazione carta', tags: ['gmail'] }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([]);
   });
 });

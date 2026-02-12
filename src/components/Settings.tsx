@@ -12,6 +12,7 @@ import {
     isGmailTokenValid,
     requestGmailAccessToken,
     syncIsybankTransactionsFromGmail,
+    cleanupLikelyGmailDuplicates,
     type GmailAccessToken,
     type GmailSyncSettings
 } from '../services/gmailSync';
@@ -48,6 +49,7 @@ export function Settings({ onTransactionsImported }: SettingsProps) {
     const [gmailSettings, setGmailSettings] = useState<GmailSyncSettings>(() => loadGmailSyncSettings());
     const [gmailToken, setGmailToken] = useState<GmailAccessToken | null>(() => loadGmailToken());
     const [gmailSyncing, setGmailSyncing] = useState(false);
+    const [gmailCleaning, setGmailCleaning] = useState(false);
     const [gmailResult, setGmailResult] = useState<{ success: boolean; message: string } | null>(null);
     const [lastGmailSyncAt, setLastGmailSyncAt] = useState<string | null>(
         () => localStorage.getItem(LAST_GMAIL_SYNC_KEY)
@@ -259,6 +261,25 @@ export function Settings({ onTransactionsImported }: SettingsProps) {
         setGmailResult({ success: true, message: 'Account Gmail scollegato.' });
     }
 
+    async function handleCleanupGmailDuplicates() {
+        setGmailCleaning(true);
+        try {
+            const result = await cleanupLikelyGmailDuplicates();
+            if (result.removed > 0) {
+                onTransactionsImported?.();
+            }
+            setGmailResult({
+                success: true,
+                message: `Pulizia completata: ${result.removed} duplicati rimossi su ${result.scanned} transazioni.`
+            });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Errore durante la pulizia duplicati';
+            setGmailResult({ success: false, message });
+        } finally {
+            setGmailCleaning(false);
+        }
+    }
+
     useEffect(() => {
         if (!gmailToken) return;
         if (isGmailTokenValid(gmailToken)) return;
@@ -411,7 +432,7 @@ export function Settings({ onTransactionsImported }: SettingsProps) {
                     <button
                         className="btn btn-secondary"
                         onClick={handleConnectGmail}
-                        disabled={gmailSyncing}
+                        disabled={gmailSyncing || gmailCleaning}
                     >
                         <Mail size={16} />
                         {gmailToken && isGmailTokenValid(gmailToken) ? 'Ricollega Gmail' : 'Collega Gmail'}
@@ -420,7 +441,7 @@ export function Settings({ onTransactionsImported }: SettingsProps) {
                     <button
                         className="btn btn-secondary"
                         onClick={() => void runGmailSync(false)}
-                        disabled={gmailSyncing || !gmailToken || !isGmailTokenValid(gmailToken)}
+                        disabled={gmailSyncing || gmailCleaning || !gmailToken || !isGmailTokenValid(gmailToken)}
                     >
                         <RefreshCcw size={16} />
                         {gmailSyncing ? 'Sincronizzazione...' : 'Sincronizza ora'}
@@ -428,8 +449,17 @@ export function Settings({ onTransactionsImported }: SettingsProps) {
 
                     <button
                         className="btn btn-secondary"
+                        onClick={() => void handleCleanupGmailDuplicates()}
+                        disabled={gmailSyncing || gmailCleaning}
+                    >
+                        <Trash2 size={16} />
+                        {gmailCleaning ? 'Pulizia...' : 'Pulisci duplicati Gmail'}
+                    </button>
+
+                    <button
+                        className="btn btn-secondary"
                         onClick={handleDisconnectGmail}
-                        disabled={gmailSyncing || !gmailToken}
+                        disabled={gmailSyncing || gmailCleaning || !gmailToken}
                     >
                         <Link2Off size={16} />
                         Scollega
