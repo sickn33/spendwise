@@ -22,8 +22,8 @@ Remaking Spendwise UI into "Technical Editorial Design". After the UI overhaul, 
   Test Case: Visual verification.
   Status: done
 - ID: T05
-  Goal: Fix accessibility (contrast, headings, font sizes)
-  Success Criteria: H1->H2 hierarchy, text-muted instead of low opacity, min 0.8rem for labels
+  Goal: Comprehensive Accessibility Refinement
+  Success Criteria: WebAIM Contrast > 7.0 for small text, Header Hierarchy H1->H2, Zero text opacities in static views.
   Test Case: npm test src/Accessibility.test.tsx
   Status: done
 - ID: T08
@@ -32,17 +32,17 @@ Remaking Spendwise UI into "Technical Editorial Design". After the UI overhaul, 
   Test Case: `git status` and `git log`
   Status: done
 
-### TDD Evidence - T05
-
-- RED: N/A (Manual identifying of opacity-based contrast killers)
-- GREEN: npm test src/Accessibility.test.tsx -> 3 passed
-- REFACTOR: Moved inline heading sizes to CSS or kept them but ensured color/size were upped.
-
 ### TDD Evidence - T04
 
 - RED: N/A (Initial tests were improved to define new spec, they passed because some labels were already present, but the UI was manually refined for precision)
 - GREEN: `npm test src/components/Settings.test.tsx` -> 1 passed
 - REFACTOR: Refined `Settings.tsx` with `page-header`, `card`, `grid-2`, and industrial-style typography.
+
+### TDD Evidence - T05
+
+- RED: `npm test src/Contrast.test.ts` -> Failed (found opacities and light hex codes)
+- GREEN: `npm test src/Contrast.test.ts` -> Passed
+- REFACTOR: Darkened `--text-muted` to `#2c2c2c`, `--success` to `#00600f`, and removed all text opacity in CSS.
 
 ## Current Status
 

@@ -36,11 +36,11 @@
   --border-structural: #d1d1d1;
   --accent-signal: #0a1f3d;
 
-  --success: #008f39;
+  --success: #00600f;
   --danger: #e30613;
   --warning: #ffd700;
 
-  --text-muted: #424242; /* Even darker for perfect contrast */
+  --text-muted: #2c2c2c; /* Even darker for perfect contrast */
   --bg-glass: rgba(0, 0, 0, 0.08);
 }
 
@@ -428,8 +428,8 @@ h4 {
 }
 
 .input::placeholder {
-  color: var(--text-ink);
-  opacity: 0.3;
+  color: var(--text-muted);
+  opacity: 1;
 }
 
 .input-amount {
@@ -503,8 +503,7 @@ select.input {
 .transaction-meta {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--text-ink);
-  opacity: 0.6;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -2031,7 +2030,7 @@ select.input {
 
 .delta-percentage {
   font-size: 0.8rem;
-  opacity: 0.8;
+  color: var(--text-muted);
 }
 
 .trend-badge {
@@ -2058,7 +2057,7 @@ select.input {
   font-weight: 700;
   text-transform: uppercase;
   margin-bottom: var(--space-sm);
-  opacity: 0.6;
+  color: var(--text-muted);
 }
 
 .prediction-value {
@@ -2253,7 +2252,7 @@ select.input {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  color: var(--text-muted); /* Replaced opacity: 0.5 with specific color */
+  color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.8rem; /* Increased from 0.65rem */
 }
@@ -2284,7 +2283,6 @@ select.input {
   cursor: pointer;
   transition: all var(--transition-base);
   color: var(--text-ink);
-  opacity: 0.7;
 }
 
 .nav-item-v2:hover {
@@ -2424,7 +2422,7 @@ select.input {
 .preset-icon {
   font-size: 1.25rem;
   filter: grayscale(1);
-  opacity: 0.8;
+  color: var(--text-muted);
   transition: all var(--transition-fast);
 }
 
@@ -2483,8 +2481,7 @@ select.input {
   letter-spacing: 0.05em;
   cursor: pointer;
   transition: background var(--transition-fast);
-  color: var(--text-ink);
-  opacity: 0.6;
+  color: var(--text-muted);
 }
 
 .add-preset-btn:hover {
