@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Dashboard } from './Dashboard';
 import { getMonthlyStats, getCategoryBreakdown, getDailyAverageSpending } from '../services/analytics';
 import { getCategories, getTransactions } from '../db/database';
+import type { MonthlyStats, Category, Transaction } from '../types';
 
 // Mock dependencies
 vi.mock('../services/analytics', () => ({
@@ -45,11 +46,11 @@ describe('Dashboard Component', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(getMonthlyStats).mockResolvedValue(mockMonthlyStats as any);
-        vi.mocked(getCategoryBreakdown).mockResolvedValue(mockCategoryBreakdown as any);
+        vi.mocked(getMonthlyStats).mockResolvedValue(mockMonthlyStats as unknown as MonthlyStats);
+        vi.mocked(getCategoryBreakdown).mockResolvedValue(mockCategoryBreakdown as unknown as Array<{ label: string; value: number; color: string }>);
         vi.mocked(getDailyAverageSpending).mockResolvedValue(41.68);
-        vi.mocked(getCategories).mockResolvedValue(mockCategories as any);
-        vi.mocked(getTransactions).mockResolvedValue(mockTransactions as any);
+        vi.mocked(getCategories).mockResolvedValue(mockCategories as unknown as Category[]);
+        vi.mocked(getTransactions).mockResolvedValue(mockTransactions as unknown as Transaction[]);
     });
 
     it('renders the technical dashboard title', async () => {

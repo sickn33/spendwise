@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SavingsGoals } from './SavingsGoals';
-import { getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal } from '../db/database';
+import { getSavingsGoals } from '../db/database';
 
 // Mock dependencies
 vi.mock('../db/database', () => ({

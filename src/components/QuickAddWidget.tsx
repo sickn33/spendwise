@@ -271,7 +271,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
 
 interface AddNewPresetModalProps {
     newPreset: { name: string; amount: string; categoryId: number; icon: string };
-    setNewPreset: (v: any) => void;
+    setNewPreset: (v: { name: string; amount: string; categoryId: number; icon: string }) => void;
     onClose: () => void;
     onSave: () => void;
     categories: Category[];

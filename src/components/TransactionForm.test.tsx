@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TransactionForm } from './TransactionForm';
-import { getCategories, addTransaction, updateTransaction } from '../db/database';
+import { getCategories, addTransaction } from '../db/database';
 import { classifyTransaction } from '../services/classifier';
 
 // Mock dependencies

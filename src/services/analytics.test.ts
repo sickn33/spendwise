@@ -21,7 +21,7 @@ import {
   getTopExpenses,
   getDailyAverageSpending
 } from './analytics';
-import { db, getCategories, getTransactions } from '../db/database';
+import { getCategories, getTransactions } from '../db/database';
 
 describe('Analytics Service', () => {
   beforeEach(() => {

@@ -120,8 +120,8 @@ export const CategoryManager = memo(function CategoryManager() {
             await deleteCategory(id);
             setDeleteConfirm(null);
             loadCategories();
-        } catch (err: any) {
-            setError(err.message || 'Errore durante l\'eliminazione');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Errore durante l\'eliminazione');
         }
     }
 

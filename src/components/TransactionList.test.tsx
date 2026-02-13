@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TransactionList } from './TransactionList';
 import { getTransactions, getCategories, deleteTransaction } from '../db/database';
+import type { Category, Transaction } from '../types';
 
 // Mock dependencies
 vi.mock('../db/database', () => ({
@@ -12,7 +13,7 @@ vi.mock('../db/database', () => ({
 
 // Mock TransactionForm
 vi.mock('./TransactionForm', () => ({
-    TransactionForm: ({ onClose }: any) => (
+    TransactionForm: ({ onClose }: { onClose: () => void }) => (
         <div data-testid="transaction-form">
             <button onClick={onClose}>Close</button>
         </div>
@@ -32,8 +33,8 @@ const mockCategories = [
 describe('TransactionList Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(getTransactions).mockResolvedValue(mockTransactions as any);
-        vi.mocked(getCategories).mockResolvedValue(mockCategories as any);
+        vi.mocked(getTransactions).mockResolvedValue(mockTransactions as unknown as Transaction[]);
+        vi.mocked(getCategories).mockResolvedValue(mockCategories as unknown as Category[]);
     });
 
     it('renders the technical header and load stats', async () => {
