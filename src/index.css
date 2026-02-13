@@ -1613,8 +1613,7 @@ select.input {
 
 /* Utility Classes */
 .text-muted {
-  color: var(--text-ink);
-  opacity: 0.5;
+  color: var(--text-muted);
 }
 
 .text-success {

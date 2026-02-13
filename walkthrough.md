@@ -28,6 +28,11 @@ Successfully improved the accessibility of SpendWise through a three-phase initi
   - Darkened `--success` from `#008f39` to `#00600f`.
 - **Opacity Removal**: Removed all text opacity rules from `index.css`, replacing them with solid colors to prevent "washed out" rendering on different backgrounds.
 
+## Phase 4: WebAIM/WAVE Fixes (Light Mode)
+
+- **Muted Text Utility Fix**: Updated `.text-muted` to use `color: var(--text-muted)` instead of `opacity`-based reduction (fixes "Very low contrast" warnings in WAVE for common metadata/empty states).
+- **Icon-Only Button Labels**: Added explicit `aria-label` to Dashboard month navigation buttons ("Mese precedente", "Mese successivo") so the accessible name is not title-only.
+
 ## Verification Results
 
 - **Automated Tests**:
@@ -40,11 +45,13 @@ Successfully improved the accessibility of SpendWise through a three-phase initi
 
 - `src/index.css`: Core design system updates.
 - `src/Contrast.test.ts`: New verification suite.
+- `src/Accessibility.test.tsx`: Accessibility verification and regression coverage.
 - `src/components/Dashboard.tsx`: Header hierarchy and contrast.
 - `src/components/Sidebar.tsx`: Legibility for version tags and footer.
 - `src/components/TransactionForm.tsx`: Full form audit.
 - `src/components/QuickAddWidget.tsx`: Modular cleanup.
 - `src/components/Settings.tsx`: Security and config labels.
+- `src/components/Settings.test.tsx`: Test mocks for Settings backup hook.
 - `src/components/BudgetManager.tsx`: Empty state and progress labels.
 - `src/components/SavingsGoals.tsx`: Asset tracking legibility.
 - `src/components/Reports.tsx`: Chart legends and tabular data.

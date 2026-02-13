@@ -32,7 +32,10 @@ vi.mock('../services/gmailSync', () => ({
 vi.mock('../db/database', () => ({
     getTransactions: vi.fn().mockResolvedValue([]),
     getCategories: vi.fn().mockResolvedValue([]),
-    clearAllTransactions: vi.fn()
+    clearAllTransactions: vi.fn(),
+    getFileHandle: vi.fn().mockResolvedValue(null),
+    saveFileHandle: vi.fn().mockResolvedValue(undefined),
+    deleteFileHandle: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('Settings Component', () => {

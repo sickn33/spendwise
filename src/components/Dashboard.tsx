@@ -174,6 +174,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                             className="btn btn-ghost btn-icon"
                             onClick={goToPreviousMonth}
                             title="Mese precedente"
+                            aria-label="Mese precedente"
                         >
                             <ChevronLeft size={18} strokeWidth={2.5} />
                         </button>
@@ -185,6 +186,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                             onClick={goToNextMonth}
                             disabled={isCurrentMonth}
                             title="Mese successivo"
+                            aria-label="Mese successivo"
                         >
                             <ChevronRight size={18} strokeWidth={2.5} />
                         </button>

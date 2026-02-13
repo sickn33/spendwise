@@ -69,6 +69,22 @@ L'utente vuole importare automaticamente le transazioni dalle email Gmail inviat
 - Test Case:
   - due test espliciti su `findLikelyDuplicateTransactionIds`
 - Status: done
+- ID: T8
+- Goal: Correggere i "Very low contrast" in light mode segnalati da WebAIM/WAVE
+- Success Criteria:
+  - `.text-muted` non usa più `opacity` per "muted", ma un colore dedicato con contrasto adeguato
+  - In light mode WAVE non segnala più "Very low contrast" per version tag, label tema, empty states principali
+- Test Case:
+  - test unit su `src/index.css` che verifica `.text-muted` usa `var(--text-muted)` e non contiene `opacity: 0.5`
+- Status: done
+- ID: T9
+- Goal: Dare un nome accessibile (stable) ai bottoni solo-icona principali
+- Success Criteria:
+  - I pulsanti mese precedente/successivo e altri icon-only hanno `aria-label` (non solo `title`)
+  - WAVE non segnala "button has no text" (se presente) per questi controlli
+- Test Case:
+  - test RTL che verifica `aria-label` sui pulsanti mese precedente/successivo nella Dashboard
+- Status: done
 
 # Current Status
 
@@ -82,6 +98,9 @@ Implementazione completata:
 - Cleanup esteso per casi senza tag gmail e drift timezone
 - Lettura contenuto email via attachmentId (MIME part)
 - Sync che aggiorna/rimuove righe Gmail già esistenti e generiche
+
+Prossimo lavoro pianificato:
+- Accessibility pass su light mode (contrasto e nomi accessibili icon-only)
 
 # Lessons
 
@@ -167,5 +186,25 @@ Integrazione realizzata interamente client-side per mantenere privacy e coerenza
   - `npx vitest run` (26 test passati)
   - `npm run build` (build produzione OK)
   - `npx eslint src/services/isybankEmailParser.ts src/services/isybankEmailParser.test.ts src/services/gmailSync.ts src/services/gmailSync.test.ts` (OK)
+- REFACTOR:
+  - N/A
+
+## TDD Evidence (T8)
+
+- RED:
+  - `npx vitest run src/Accessibility.test.tsx`
+  - fallito: `.text-muted` usava `opacity: 0.5` e `color: var(--text-ink)` invece di `var(--text-muted)`
+- GREEN:
+  - `npx vitest run src/Accessibility.test.tsx` (4 test passati)
+- REFACTOR:
+  - N/A
+
+## TDD Evidence (T9)
+
+- RED:
+  - `npx vitest run src/Accessibility.test.tsx`
+  - fallito: bottoni mese precedente/successivo non avevano `aria-label`
+- GREEN:
+  - `npx vitest run src/Accessibility.test.tsx` (5 test passati)
 - REFACTOR:
   - N/A
