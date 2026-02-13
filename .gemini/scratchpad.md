@@ -21,17 +21,22 @@ Remaking Spendwise UI into "Technical Editorial Design". After the UI overhaul, 
   Success Criteria: Dark mode uses a softer charcoal/navy palette instead of absolute black.
   Test Case: Visual verification.
   Status: done
+- ID: T05
+  Goal: Fix accessibility (contrast, headings, font sizes)
+  Success Criteria: H1->H2 hierarchy, text-muted instead of low opacity, min 0.8rem for labels
+  Test Case: npm test src/Accessibility.test.tsx
+  Status: done
 - ID: T08
   Goal: Commit and push all changes
   Success Criteria: `git status` shows clean worktree and changes are pushed to remote.
   Test Case: `git status` and `git log`
-  Status: in_progress
+  Status: done
 
 ### TDD Evidence - T05
 
-- RED: `npm test src/App.test.tsx` -> failed (attribute was null)
-- GREEN: `npm test src/App.test.tsx` -> 1 passed (attribute correctly toggles)
-- REFACTOR: Moved core colors to theme blocks in `index.css`.
+- RED: N/A (Manual identifying of opacity-based contrast killers)
+- GREEN: npm test src/Accessibility.test.tsx -> 3 passed
+- REFACTOR: Moved inline heading sizes to CSS or kept them but ensured color/size were upped.
 
 ### TDD Evidence - T04
 

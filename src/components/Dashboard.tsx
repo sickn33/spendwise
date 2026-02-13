@@ -236,7 +236,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                     <div className={`stat-value font-mono ${((monthlyStats?.totalIncome || 0) - (monthlyStats?.totalExpenses || 0)) >= 0 ? 'text-success' : 'text-danger'}`}>
                         €{((monthlyStats?.totalIncome || 0) - (monthlyStats?.totalExpenses || 0)).toFixed(2)}
                     </div>
-                    <div className="stat-change font-mono opacity-40">
+                    <div className="stat-change font-mono text-muted">
                         {monthlyStats?.transactionCount || 0} RECORDS_FOUND
                     </div>
                 </div>
@@ -248,7 +248,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                     <div className="stat-value font-mono">
                         €{dailyAverage.toFixed(2)}
                     </div>
-                    <div className="stat-change font-mono opacity-40">
+                    <div className="stat-change font-mono text-muted">
                         RANGE: 30_DAYS
                     </div>
                 </div>
@@ -258,7 +258,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
             <div className="grid-2">
                 <div className="card">
                     <div className="card-header border-b pb-sm mb-xl">
-                        <h3 className="font-display" style={{ fontSize: '1rem' }}>DISTRIBUZIONE_CATEGORIA_v1</h3>
+                        <h2 className="font-display" style={{ fontSize: '1rem' }}>DISTRIBUZIONE_CATEGORIA_v1</h2>
                     </div>
                     <div className="chart-center-container">
                         {categoryBreakdown.length > 0 ? (
@@ -279,7 +279,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                                 }} 
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full font-mono opacity-40">NO_DATA</div>
+                            <div className="flex items-center justify-center h-full font-mono text-muted">NO_DATA</div>
                         )}
                     </div>
                     {categoryBreakdown.length > 0 && (
@@ -300,7 +300,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                 {/* Trend Forecast Chart */}
                 <div className="card">
                     <div className="card-header border-b pb-sm mb-xl">
-                        <h3 className="font-display" style={{ fontSize: '1rem' }}>TREND_TEMPORALE_6M</h3>
+                        <h2 className="font-display" style={{ fontSize: '1rem' }}>TREND_TEMPORALE_6M</h2>
                     </div>
                     <div className="chart-container" style={{ height: '260px' }}>
                         <Line data={lineData} options={{
@@ -314,7 +314,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                             animation: { duration: 0 }
                         } as never} />
                     </div>
-                    <div className="mt-xl font-mono opacity-40 text-right" style={{ fontSize: '0.65rem' }}>
+                    <div className="mt-xl font-mono text-muted text-right" style={{ fontSize: '0.65rem' }}>
                         DATA_SOURCE: LOCAL_SQL_LEDGER
                     </div>
                 </div>
@@ -323,11 +323,11 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
             {/* Transaction Ledger */}
             <div className="card mt-2xl">
                 <div className="card-header border-b pb-sm mb-xl">
-                    <h3 className="font-display" style={{ fontSize: '1rem' }}>
+                    <h2 className="font-display" style={{ fontSize: '1rem' }}>
                         {isCurrentMonth
                             ? `REGISTRO_TRANSAZIONI_CORRENTE`
                             : `ARCHIVIO_TRANSAZIONI_${format(selectedMonth, 'yyyy_MM').toUpperCase()}`}
-                    </h3>
+                    </h2>
                     <span className="font-mono opacity-60" style={{ fontSize: '0.8rem' }}>
                         {recentTransactions.length} RECORDS_COMMIT
                     </span>
@@ -354,7 +354,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                             );
                         })
                     ) : (
-                        <div className="p-2xl text-center font-mono opacity-40">
+                        <div className="p-2xl text-center font-mono text-muted">
                             NULL_SET: NO_TRANSACTIONS_FOUND
                         </div>
                     )}

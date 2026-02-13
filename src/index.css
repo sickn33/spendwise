@@ -40,8 +40,8 @@
   --danger: #e30613;
   --warning: #ffd700;
 
-  --text-muted: #666666;
-  --bg-glass: rgba(0, 0, 0, 0.05);
+  --text-muted: #595959; /* Better contrast than #666666 */
+  --bg-glass: rgba(0, 0, 0, 0.08);
 }
 
 [data-theme="dark"] {
@@ -301,7 +301,7 @@ h4 {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  opacity: 0.6;
+  color: var(--text-muted); /* Replaced opacity: 0.6 with specific color */
 }
 
 .stat-value {
@@ -407,8 +407,7 @@ h4 {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-ink);
-  opacity: 0.6;
+  color: var(--text-muted); /* Replaced opacity: 0.6 with specific color */
 }
 
 .input {
@@ -2254,9 +2253,9 @@ select.input {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  opacity: 0.5;
+  color: var(--text-muted); /* Replaced opacity: 0.5 with specific color */
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.8rem; /* Increased from 0.65rem */
 }
 
 .version-divider {
@@ -2301,9 +2300,9 @@ select.input {
 
 .nav-label {
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: 0.95rem; /* Slightly larger */
   letter-spacing: 0.02em;
-  font-weight: 500;
+  font-weight: 600; /* Bolder for better readability */
 }
 
 .active-dot {
@@ -2384,10 +2383,10 @@ select.input {
 
 .panel-title {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.8rem; /* Increased from 0.65rem */
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  opacity: 0.5;
+  color: var(--text-muted); /* Replaced opacity: 0.5 with specific color */
 }
 
 .panel-scroll {

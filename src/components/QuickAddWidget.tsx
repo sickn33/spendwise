@@ -128,7 +128,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                                                     <span className="text-xs font-medium text-ink truncate">{preset.name}</span>
                                                     <div className="flex items-center gap-1">
                                                         <div className="w-1.5 h-1.5 rounded-full" style={{ background: category?.color }} />
-                                                        <span className="text-[9px] font-mono opacity-50 uppercase">{category?.name}</span>
+                                                        <span className="text-[9px] font-mono text-muted uppercase">{category?.name}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -150,7 +150,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                         </div>
 
                         <button
-                            className="w-full py-sm px-md flex items-center gap-2 text-ink/40 hover:text-ink hover:bg-concrete transition-all border-t border-border mt-1"
+                            className="w-full py-sm px-md flex items-center gap-2 text-ink hover:bg-concrete transition-all border-t border-border mt-1"
                             onClick={(e) => { e.stopPropagation(); setShowAddNew(true); }}
                             title="Crea nuovo preset"
                         >
@@ -188,7 +188,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                     
                     <div className="panel-scroll">
                         {presets.length === 0 ? (
-                            <div className="p-lg text-center opacity-40">
+                            <div className="p-lg text-center text-muted">
                                 <div className="font-mono text-xs">NESSUN PRESET</div>
                             </div>
                         ) : (

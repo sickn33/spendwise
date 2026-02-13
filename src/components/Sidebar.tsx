@@ -23,9 +23,9 @@ export function Sidebar({ currentPage, onNavigate, theme, onThemeToggle, onTrans
                         <div className="brand-name">SPENDWISE</div>
                     </div>
                     <div className="version-tag">
-                        <span>v1.0.0</span>
+                        <span className="text-muted">v1.0.0</span>
                         <div className="version-divider"></div>
-                        <span>STABLE</span>
+                        <span className="text-muted">STABLE</span>
                     </div>
                 </div>
 
@@ -71,7 +71,7 @@ export function Sidebar({ currentPage, onNavigate, theme, onThemeToggle, onTrans
                 >
                     <div className="flex items-center gap-sm">
                         {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-                        <span className="font-mono text-xs opacity-70">
+                        <span className="font-mono text-xs text-muted">
                             {theme === 'dark' ? 'MODO SCURO' : 'MODO CHIARO'}
                         </span>
                     </div>

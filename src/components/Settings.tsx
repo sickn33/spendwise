@@ -319,7 +319,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             <div className="page-header border-b pb-xl mb-xl">
                 <div>
                     <h1 className="font-display">IMPOSTAZIONI_SISTEMA</h1>
-                    <div className="flex items-center gap-sm opacity-50 font-mono text-[10px] uppercase tracking-[0.2em] mt-2">
+                    <div className="flex items-center gap-sm text-muted font-mono text-[10px] uppercase tracking-[0.2em] mt-2">
                         <span>CONTROL_PANEL</span>
                         <div className="w-8 h-px bg-border-structural"></div>
                         <span>v1.0.0_STABLE</span>
@@ -334,8 +334,8 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Import Section - Technical Spec Box */}
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">IMPORTAZIONE_DATI</h3>
-                            <div className="text-[10px] font-mono opacity-40">MODULE_01</div>
+                            <h2 className="card-title">IMPORTAZIONE_DATI</h2>
+                            <div className="text-[10px] font-mono text-muted">MODULE_01</div>
                         </div>
                         
                         <div 
@@ -373,7 +373,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Gmail Sync - Industrial Specs */}
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">GMAIL_SYNCHRONIZER</h3>
+                            <h2 className="card-title">GMAIL_SYNCHRONIZER</h2>
                             <div className={`px-2 py-0.5 font-mono text-[9px] uppercase border ${gmailToken && isGmailTokenValid(gmailToken) ? 'border-success text-success bg-success/5' : 'border-border-structural text-muted'}`}>
                                 {gmailToken && isGmailTokenValid(gmailToken) ? 'STATUS: ONLINE' : 'STATUS: OFFLINE'}
                             </div>
@@ -490,8 +490,8 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Export Section */}
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">DATA_EXTRACTION</h3>
-                            <div className="text-[10px] font-mono opacity-40">EXTRACT_v1</div>
+                            <h2 className="card-title">DATA_EXTRACTION</h2>
+                            <div className="text-[10px] font-mono text-muted">EXTRACT_v1</div>
                         </div>
                         <div className="space-y-sm">
                             <button
@@ -533,7 +533,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Automatic Backup Protocol - Industrial Style */}
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">AUTOMATIC_BACKUP_PROTOCOL</h3>
+                            <h2 className="card-title">AUTOMATIC_BACKUP_PROTOCOL</h2>
                             <div className={`px-2 py-0.5 font-mono text-[9px] uppercase border ${fileHandle ? (permissionStatus === 'granted' ? 'border-success text-success bg-success/5' : 'border-warning text-warning bg-warning/5') : 'border-border-structural text-muted'}`}>
                                 {fileHandle ? (permissionStatus === 'granted' ? 'STATUS: ACTIVE' : 'STATUS: PERMISSION_REQUIRED') : 'STATUS: INACTIVE'}
                             </div>
@@ -598,7 +598,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 )}
                             </div>
 
-                            <p className="font-mono text-[8px] text-muted uppercase leading-relaxed text-center opacity-60">
+                            <p className="font-mono text-[8px] text-muted uppercase leading-relaxed text-center">
                                 This configuration enables periodic background sync to local filesystem. User activation required for session restoration.
                             </p>
                         </div>
@@ -607,7 +607,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Storage Info */}
                     <div className="card">
                         <div className="card-header">
-                            <h3 className="card-title">MEMORY_&_PROTOCOLS</h3>
+                            <h2 className="card-title">MEMORY_&_PROTOCOLS</h2>
                         </div>
                         <div className="space-y-lg">
                             <div className="flex items-start gap-lg">
@@ -639,7 +639,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Danger Zone */}
                     <div className="card border-danger/30 bg-danger/[0.02]">
                         <div className="card-header border-danger/50 mb-xl">
-                            <h3 className="card-title text-danger">SYSTEM_OVERRIDE</h3>
+                            <h2 className="card-title text-danger">SYSTEM_OVERRIDE</h2>
                             <AlertTriangle size={14} className="text-danger opacity-50" />
                         </div>
                         <div>
