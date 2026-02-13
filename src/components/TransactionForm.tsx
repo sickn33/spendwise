@@ -152,15 +152,15 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Amount */}
                         <div>
-                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 IMPORTO
                             </label>
                             <div className="relative">
-                                <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono text-lg opacity-40">€</span>
+                                <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono text-lg text-muted/50">€</span>
                                 <input
                                     type="text"
                                     inputMode="decimal"
-                                    className="w-full bg-paper border border-border p-sm pl-8 font-mono text-xl focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:opacity-40"
+                                    className="w-full bg-paper border border-border p-sm pl-8 font-mono text-xl focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted/50"
                                     placeholder="0.00"
                                     value={amount}
                                     onChange={e => setAmount(e.target.value)}
@@ -172,12 +172,12 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Description */}
                         <div>
-                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 DESCRIZIONE
                             </label>
                             <input
                                 type="text"
-                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:opacity-40"
+                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted/50"
                                 placeholder="es. Spesa Esselunga"
                                 value={description}
                                 onChange={e => setDescription(e.target.value)}
@@ -188,7 +188,7 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Date */}
                         <div>
-                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 DATA
                             </label>
                             <input
@@ -202,7 +202,7 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Category */}
                         <div>
-                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 CATEGORIA
                             </label>
                             <button
@@ -217,7 +217,7 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
                                         <span className="uppercase">{selectedCategory.name}</span>
                                     </span>
                                 ) : (
-                                    <span className="opacity-40 uppercase">SELEZIONA_CATEGORIA</span>
+                                    <span className="text-muted uppercase">SELEZIONA_CATEGORIA</span>
                                 )}
                             </button>
 
@@ -246,12 +246,12 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Details (optional) */}
                         <div>
-                            <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">
+                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 NOTE (OPZIONALE)
                             </label>
                             <input
                                 type="text"
-                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:opacity-40"
+                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted"
                                 placeholder="..."
                                 value={details}
                                 onChange={e => setDetails(e.target.value)}

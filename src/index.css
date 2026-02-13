@@ -40,7 +40,7 @@
   --danger: #e30613;
   --warning: #ffd700;
 
-  --text-muted: #595959; /* Better contrast than #666666 */
+  --text-muted: #424242; /* Even darker for perfect contrast */
   --bg-glass: rgba(0, 0, 0, 0.08);
 }
 
@@ -2450,9 +2450,9 @@ select.input {
   align-items: center;
   gap: var(--space-xs);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  opacity: 0.5;
+  font-size: 0.8rem; /* Increased from 0.65rem */
+  text-align: right;
+  color: var(--text-muted);
 }
 
 .category-dot {

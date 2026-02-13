@@ -153,7 +153,7 @@ export const BudgetManager = memo(function BudgetManager() {
                                         <div className="text-tiny font-mono uppercase text-muted">MENSILE</div>
                                     </div>
                                 </div>
-                                <div className="flex gap-px opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-px text-muted/50 group-hover:opacity-100 transition-opacity">
                                     <button
                                         className="p-xs hover:bg-concrete text-ink"
                                         onClick={() => handleEdit(progress.budget)}
@@ -217,7 +217,7 @@ export const BudgetManager = memo(function BudgetManager() {
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
-                    <AlertTriangle size={32} className="text-muted mb-md opacity-50" />
+                    <AlertTriangle size={32} className="text-muted mb-md text-muted/50" />
                     <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_BUDGET_ATTIVO</h3>
                     <p className="text-muted text-sm max-w-xs mb-md">
                         Definisci i limiti di spesa per le categorie per monitorare i tuoi obiettivi finanziari.
@@ -249,7 +249,7 @@ export const BudgetManager = memo(function BudgetManager() {
 
                         <form onSubmit={handleSubmit} className="p-md space-y-md">
                             <div>
-                                <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">CATEGORIA</label>
+                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">CATEGORIA</label>
                                 <select
                                     className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink appearance-none rounded-none"
                                     value={formData.categoryId}
@@ -267,7 +267,7 @@ export const BudgetManager = memo(function BudgetManager() {
                             </div>
 
                             <div>
-                                <label className="text-tiny font-mono uppercase opacity-60 mb-xs block">IMPORTO_MENSILE (€)</label>
+                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">IMPORTO_MENSILE (€)</label>
                                 <input
                                     type="number"
                                     className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink"

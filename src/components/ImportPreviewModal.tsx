@@ -100,7 +100,7 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                         </thead>
                         <tbody>
                             {preview.items.slice(0, 50).map((item, idx) => (
-                                <tr key={idx} className={`border-b ${item.status === 'duplicate' ? 'opacity-50' : ''}`}>
+                                <tr key={idx} className={`border-b ${item.status === 'duplicate' ? 'text-muted' : ''}`}>
                                     <td className="p-sm">
                                         <span className={`inline-flex items-center gap-xs px-sm py-xs border-radius-sm font-xs ${getStatusBgClass(item.status)}`}>
                                             {getStatusIcon(item.status)}

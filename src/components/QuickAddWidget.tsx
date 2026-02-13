@@ -291,7 +291,7 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
                 <div className="p-lg space-y-lg">
                     {/* Name */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase opacity-60 mb-xs block">NOME</label>
+                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">NOME</label>
                         <input
                             type="text"
                             className="input w-full"
@@ -303,9 +303,9 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
 
                     {/* Amount */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase opacity-60 mb-xs block">IMPORTO</label>
+                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">IMPORTO</label>
                         <div className="relative">
-                            <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono opacity-40">€</span>
+                            <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono text-muted">€</span>
                             <input
                                 type="number"
                                 className="input w-full pl-8 font-mono"
@@ -319,7 +319,7 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
 
                     {/* Category */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase opacity-60 mb-xs block">CATEGORIA</label>
+                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">CATEGORIA</label>
                         <select
                             className="input w-full appearance-none rounded-none"
                             value={newPreset.categoryId}

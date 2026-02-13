@@ -186,7 +186,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                         {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO_KEYWORDS'}
                                     </div>
                                 </div>
-                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center transition-opacity group-hover:opacity-100">
                                     <button
                                         className="p-1.5 hover:bg-concrete/20 text-muted hover:text-ink transition-colors"
                                         onClick={() => openEditForm(cat)}
@@ -250,7 +250,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                         {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO_KEYWORDS'}
                                     </div>
                                 </div>
-                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center transition-opacity group-hover:opacity-100">
                                     <button
                                         className="p-1.5 hover:bg-concrete/20 text-muted hover:text-ink transition-colors"
                                         onClick={() => openEditForm(cat)}
@@ -286,7 +286,7 @@ export const CategoryManager = memo(function CategoryManager() {
 
             {/* Add/Edit Modal */}
             {showAddForm && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={() => setShowAddForm(false)}>
+                <div className="fixed inset-0 bg-paper/60 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={() => setShowAddForm(false)}>
                     <div 
                         className="bg-paper structural-border w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
                         onClick={e => e.stopPropagation()}

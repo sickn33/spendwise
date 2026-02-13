@@ -71,7 +71,7 @@ export function Sidebar({ currentPage, onNavigate, theme, onThemeToggle, onTrans
                 >
                     <div className="flex items-center gap-sm">
                         {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
-                        <span className="font-mono text-xs text-muted">
+                        <span className="font-mono text-[11px] text-muted font-bold">
                             {theme === 'dark' ? 'MODO SCURO' : 'MODO CHIARO'}
                         </span>
                     </div>

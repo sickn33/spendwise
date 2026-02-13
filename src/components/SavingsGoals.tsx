@@ -170,7 +170,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex gap-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-xs transition-opacity group-hover:opacity-100">
                                         <button
                                             className="p-1 hover:bg-concrete text-muted hover:text-ink transition-colors"
                                             onClick={() => handleEdit(goal)}
@@ -281,7 +281,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
-                    <Target size={32} className="text-muted mb-md opacity-50" />
+                    <Target size={32} className="text-muted mb-md text-muted" />
                     <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_ASSET_DEFINITO</h3>
                     <p className="text-muted text-sm max-w-xs mb-md">
                         Definisci il tuo primo obiettivo di risparmio per iniziare il tracking.

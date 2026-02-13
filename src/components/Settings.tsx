@@ -541,7 +541,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                         
                         <div className="space-y-lg">
                             <div className="flex items-start gap-lg p-md border border-border-structural bg-concrete/5">
-                                <div className={`p-sm flex-shrink-0 ${fileHandle ? 'bg-concrete' : 'bg-concrete/30 opacity-40'}`}>
+                                <div className={`p-sm flex-shrink-0 ${fileHandle ? 'bg-concrete' : 'bg-concrete/30 text-muted'}`}>
                                     <HardDrive size={18} />
                                 </div>
                                 <div className="min-w-0 flex-1">
@@ -640,7 +640,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     <div className="card border-danger/30 bg-danger/[0.02]">
                         <div className="card-header border-danger/50 mb-xl">
                             <h2 className="card-title text-danger">SYSTEM_OVERRIDE</h2>
-                            <AlertTriangle size={14} className="text-danger opacity-50" />
+                            <AlertTriangle size={32} className="text-muted mb-md text-muted/50" />
                         </div>
                         <div>
                             {showClearConfirm ? (

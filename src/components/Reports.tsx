@@ -222,7 +222,7 @@ export const Reports = memo(function Reports() {
     if (!reportData) {
         return (
             <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
-                <TrendingUp size={32} className="text-muted mb-md opacity-50" />
+                <TrendingUp size={32} className="text-muted mb-md text-muted" />
                 <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_DATO_ANALITICO</h3>
                 <p className="text-muted text-sm max-w-xs mb-md">
                     Registra le tue prime transazioni per generare i report.

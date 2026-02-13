@@ -328,7 +328,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                             ? `REGISTRO_TRANSAZIONI_CORRENTE`
                             : `ARCHIVIO_TRANSAZIONI_${format(selectedMonth, 'yyyy_MM').toUpperCase()}`}
                     </h2>
-                    <span className="font-mono opacity-60" style={{ fontSize: '0.8rem' }}>
+                    <span className="font-mono text-muted" style={{ fontSize: '0.8rem' }}>
                         {recentTransactions.length} RECORDS_COMMIT
                     </span>
                 </div>

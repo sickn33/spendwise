@@ -209,7 +209,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
             <div className="page-header">
                 <div>
                     <h1 className="page-title">REGISTRO_TRANSAZIONI_v1</h1>
-                    <p className="text-tiny font-mono opacity-60">
+                    <p className="text-tiny font-mono text-muted">
                         {filteredTransactions.length}_ENTRIES_LOADED
                     </p>
                 </div>
@@ -231,19 +231,19 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
             {/* Summary Grid */}
             <div className="grid-3 gap-md mb-lg">
                 <div className="structural-border p-md">
-                    <div className="text-tiny font-mono uppercase opacity-60 mb-xs">USCITE_TOTALI</div>
+                    <div className="text-tiny font-mono uppercase text-muted mb-xs">USCITE_TOTALI</div>
                     <div className="font-mono text-lg text-danger">
                         €{Math.abs(totalExpenses).toFixed(2)}
                     </div>
                 </div>
                 <div className="structural-border p-md">
-                    <div className="text-tiny font-mono uppercase opacity-60 mb-xs">ENTRATE_TOTALI</div>
+                    <div className="text-tiny font-mono uppercase text-muted mb-xs">ENTRATE_TOTALI</div>
                     <div className="font-mono text-lg text-success">
                         €{totalIncome.toFixed(2)}
                     </div>
                 </div>
                 <div className="structural-border p-md">
-                    <div className="text-tiny font-mono uppercase opacity-60 mb-xs">NET_FLOW</div>
+                    <div className="text-tiny font-mono uppercase text-muted mb-xs">NET_FLOW</div>
                     <div className={`font-mono text-lg ${totalFiltered >= 0 ? 'text-success' : 'text-danger'}`}>
                         {totalFiltered >= 0 ? '+' : ''}€{totalFiltered.toFixed(2)}
                     </div>
@@ -465,7 +465,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                             </div>
                                             <div className="transaction-info">
                                                 <div className="font-mono text-sm">{t.description}</div>
-                                                <div className="text-tiny font-mono opacity-60 uppercase">
+                                                <div className="text-tiny font-mono text-muted uppercase">
                                                     {category?.name}
                                                     {t.isRecurring && ' [R]'}
                                                 </div>
