@@ -1,413 +1,51 @@
-# SpendWise Improvements Walkthrough
-
-## Obiettivo
-
-Implementazione di tre aree di miglioramento per SpendWise:
-
-1. **Testing** - Infrastruttura di test con Vitest e React Testing Library
-2. **Comparazione Mese vs Mese** - Feature ultra-dettagliata con trend, insight e previsioni ML
-3. **Accessibilità** - Conformità WCAG 2.1 AA con supporto multi-lingua
-
----
-
-## 1. Testing Infrastructure ✅
-
-### File Creati/Modificati
-
-#### [vitest.config.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/vitest.config.ts)
-
-Configurazione Vitest con:
-
-- Ambiente `happy-dom` per simulazione DOM
-- Soglie di copertura al 70%
-- Reporter verbose e coverage V8
-
-#### [src/test/setup.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/test/setup.ts)
-
-Setup file con mock per:
-
-- IndexedDB
-- `matchMedia`
-- `ResizeObserver`
-- Canvas per Chart.js
-
-#### [src/services/analytics.test.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/services/analytics.test.ts)
-
-**14 test unitari** per il servizio analytics:
-
-- `getMonthlyStats` (4 test)
-- `getSpendingTrend` (2 test)
-- `getCategoryBreakdown` (2 test)
-- `getTopExpenses` (3 test)
-- `getDailyAverageSpending` (3 test)
-
-#### [package.json](file:///Users/nicco/Antigravity%20Projects/spendwise/package.json)
-
-Script aggiunti:
-
-```json
-"test": "vitest",
-"test:ui": "vitest --ui",
-"test:coverage": "vitest run --coverage"
-```
-
-### Risultati Test
-
-```
-✓ src/services/analytics.test.ts (14 tests) 8ms
-Test Files  1 passed (1)
-Tests       14 passed (14)
-```
-
----
-
-## 2. Month-vs-Month Comparison ✅
-
-### Tipi TypeScript Aggiunti
-
-#### [src/types/index.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/types/index.ts)
-
-Nuovi tipi (~80 righe):
-
-- `TrendDirection`, `CategoryTrend`, `InsightType`, `ImpactLevel`
-- `DeltaValue`, `DayPeak`
-- `SpendingVelocity` - analisi velocità di spesa
-- `CategoryComparison` - confronto dettagliato per categoria
-- `MonthlyInsight` - insight con i18n (IT/EN)
-- `MonthlyPrediction` - previsioni ML
-- `MonthlyComparisonData` - struttura dati completa
-
-### Servizio Comparison
-
-#### [src/services/comparison.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/services/comparison.ts)
-
-**~550 righe** di logica analytics:
-
-| Funzione                    | Descrizione                                     |
-| --------------------------- | ----------------------------------------------- |
-| `getSpendingVelocity()`     | Calcola €/giorno e proiezione fine mese         |
-| `getCategoryComparison()`   | Confronto dettagliato per categoria con ranking |
-| `generateMonthlyInsights()` | Genera insight intelligenti con i18n            |
-| `generatePrediction()`      | Previsioni ML basate su regressione lineare     |
-| `getMonthlyComparison()`    | Funzione principale che aggrega tutto           |
-
-### Componente UI
-
-#### [src/components/MonthComparison.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/MonthComparison.tsx)
-
-**~630 righe** con:
-
-```carousel
-### Summary Cards
-4 card con delta e trend:
-- Entrate (con variazione %)
-- Spese (con variazione %)
-- Bilancio netto
-- Velocità spesa (€/giorno)
-<!-- slide -->
-### Insights Section
-Card colorate per tipo di insight:
-- 🏆 Achievement (viola)
-- ⚠️ Warning (arancione)
-- ✅ Positive (verde)
-- 📊 Neutral (grigio)
-
-Supporto **IT/EN** con toggle lingua
-<!-- slide -->
-### Category Comparison Chart
-Grafico a barre orizzontali dual:
-- Mese precedente (grigio)
-- Mese corrente (viola)
-
-Top 8 categorie per spesa
-<!-- slide -->
-### Category Details Table
-Tabella completa con:
-- Ranking (con frecce up/down)
-- Importo corrente vs precedente
-- Delta € e %
-- Trend badge (📈📉🆕)
-<!-- slide -->
-### ML Prediction Card
-Previsioni prossimo mese:
-- Spese previste
-- Entrate previste
-- Affidabilità %
-- Fattori di rischio
-<!-- slide -->
-### Peak Day Cards
-Due card affiancate:
-- Giorno di picco mese corrente
-- Giorno di picco mese precedente
-
-Con importo e numero transazioni
-```
-
-### Navigazione
-
-#### [src/App.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/App.tsx)
-
-- Aggiunta pagina "Confronto" con icona `GitCompare`
-- Route `/comparison` funzionante
-
----
-
-## 3. Accessibility (a11y) ✅
-
-### CSS Accessibility
-
-#### [src/index.css](file:///Users/nicco/Antigravity%20Projects/spendwise/src/index.css)
-
-**~180 righe** di stili a11y aggiunti:
-
-| Feature                  | Descrizione                                 |
-| ------------------------ | ------------------------------------------- |
-| `.sr-only`               | Contenuto visibile solo a screen reader     |
-| `.skip-link`             | Skip link visibile su focus                 |
-| `:focus-visible`         | Outline migliorato per navigazione tastiera |
-| `.shortcuts-help`        | Modal scorciatoie tastiera                  |
-| `prefers-reduced-motion` | Disabilita animazioni per utenti sensibili  |
-| `prefers-contrast: high` | Supporto alto contrasto                     |
-| `.live-region`           | Regione per annunci screen reader           |
-
-### Keyboard Shortcuts
-
-| Tasto | Azione                |
-| ----- | --------------------- |
-| `N`   | Nuova transazione     |
-| `D`   | Dashboard             |
-| `T`   | Transazioni           |
-| `B`   | Budget                |
-| `C`   | Confronto mensile     |
-| `R`   | Report                |
-| `S`   | Impostazioni          |
-| `?`   | Mostra/nascondi aiuto |
-| `ESC` | Chiudi modal          |
-
-### Elementi A11y in App.tsx
-
-```tsx
-// Skip Link
-<a href="#main-content" className="skip-link">
-    Salta al contenuto principale
-</a>
-
-// ARIA Live Region
-<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-    {announcement}
-</div>
-
-// Main Content con tabIndex
-<main id="main-content" tabIndex={-1}>
-    {renderPage()}
-</main>
-```
-
----
-
-## Verifica
-
-### Build
-
-```
-✓ built in 4.46s
-PWA v1.2.0
-precache  10 entries (1819.26 KiB)
-```
-
-### Test
-
-```
-✓ src/services/analytics.test.ts (14 tests) 8ms
-Test Files  1 passed (1)
-Tests       14 passed (14)
-```
-
----
-
-## 4. Gmail Auto-Sync Isybank ✅
-
-### Obiettivo
-
-Automatizzare l'import delle transazioni dalle email Gmail inviate da `comunicazioni@isybank.com`, con deduplica e aggiornamento automatico delle viste.
-
-### File Creati/Modificati
-
-- `src/services/isybankEmailParser.ts` (NEW)  
-  Parser testo email Isybank: estrazione importo/esercente/data, gestione spese/rimborsi.
-- `src/services/isybankEmailParser.test.ts` (NEW)  
-  Test unitari parser (incluso template reale Isybank: `hai pagato ... il 03/02 alle ore ... da ...`).
-- `src/services/gmailSync.ts` (NEW)  
-  OAuth Google Identity, fetch Gmail API, decode body email, dedup hash, import Dexie.
-- `src/services/gmailSync.test.ts` (NEW)  
-  Test unitari utility sync (3 test).
-- `src/components/Settings.tsx` (MODIFIED)  
-  Nuova sezione "Sync automatico da Gmail" con:
-  - Client ID Google
-  - Mittente email configurabile
-  - Connect/Disconnect Gmail
-  - Sync manuale
-  - Auto-sync a intervallo
-  - Stato connessione + ultimo sync
-- `src/App.tsx` (MODIFIED)  
-  Refresh transazioni dopo import Gmail/manuale.
-- `.codex/scratchpad.md` (NEW)  
-  Tracciamento task e evidenza RED/GREEN/REFACTOR.
-
-### Evidenza Test
-
-```
-npx vitest run
-Test Files  3 passed (3)
-Tests       21 passed (21)
-```
-
-### Nota lint
-
-`npm run lint` fallisce su molte violazioni preesistenti (inclusa `.venv`), non legate alla feature Gmail.
-
----
-
-## 5. Fix Merchant Parsing + Anti-Duplicate Gmail ✅
-
-### Problema risolto
-
-- Alcune email Gmail venivano parse con merchant fallback `Transazione carta`.
-- Questo causava duplicati rispetto a operazioni già importate da Excel/manuale.
-
-### Interventi
-
-- `src/services/isybankEmailParser.ts`
-  - Pattern merchant ampliati:
-    - supporto `Esercente: ...`
-    - supporto formato subject breve `Pagamento carta ...`
-  - Sanitizzazione candidato merchant per scartare stringhe generiche.
-
-- `src/services/gmailSync.ts`
-  - Parsing basato su `Subject + Body + Snippet` (non solo body).
-  - Deduplica hard tramite tag `gmail-msg:<id>`.
-  - Deduplica soft tramite chiave `data+importo` quando merchant è generico o già equivalente.
-  - Nuova utility `cleanupLikelyGmailDuplicates()` per pulire i duplicati storici già importati.
-  - Cleanup esteso:
-    - elimina generic duplicate anche senza tag Gmail
-    - tolleranza drift data fino a 24h (timezone/serializzazione)
-  - Lettura contenuto reale email anche da MIME part con `attachmentId`
-    (`messages/{id}/attachments/{attachmentId}`), non solo da `body.data`.
-  - Durante la sync, se il messaggio Gmail era già stato importato con merchant generico,
-    ora viene tentato il re-parse e la riga viene:
-    - aggiornata con merchant corretto, oppure
-    - rimossa se esiste già controparte specifica.
-  - Cleanup duplicati esteso a nomi merchant "simili" tra fonti diverse (CSV vs Gmail):
-    - stessa cifra
-    - data entro 24h
-    - confronto token/normalizzazione (es. `PAYPAL *FLIXBUS` vs `Paypal *flixbus 30300137300`)
-    - viene tenuta la riga più affidabile (tipicamente CSV) e rimossa la copia Gmail.
-
-- `src/components/Settings.tsx`
-  - Nuovo bottone **Pulisci duplicati Gmail** nella sezione sync Gmail.
-  - Messaggio di esito con numero duplicati rimossi.
-  - Refresh automatico dashboard/lista dopo la pulizia.
-
-### Test aggiunti/aggiornati
-
-- `src/services/isybankEmailParser.test.ts`
-  - test `Esercente:` e `Pagamento carta ...`
-- `src/services/gmailSync.test.ts`
-  - test deduplica su merchant generico/specifico.
-  - test finder duplicati storici (`findLikelyDuplicateTransactionIds`).
-  - test casi estesi: senza tag Gmail + drift data.
-  - test estrazione body da `attachmentId`.
-
-### Evidenza
-
-```
-npx vitest run
-Test Files  3 passed (3)
-Tests       35 passed (35)
-```
-
-```
-npm run build
-✓ build produzione completata
-```
-
----
-
-## Riepilogo File Modificati
-
-| File                                 | Tipo     | Righe                |
-| ------------------------------------ | -------- | -------------------- |
-| `vitest.config.ts`                   | NEW      | 29                   |
-| `src/test/setup.ts`                  | NEW      | 47                   |
-| `src/services/analytics.test.ts`     | NEW      | 209                  |
-| `src/types/index.ts`                 | MODIFIED | +135                 |
-| `src/services/comparison.ts`         | NEW      | 550+                 |
-| `src/components/MonthComparison.tsx` | NEW      | 630+                 |
-| `src/App.tsx`                        | MODIFIED | +100                 |
-| `src/index.css`                      | MODIFIED | +180                 |
-| `tsconfig.app.json`                  | MODIFIED | +1                   |
-| `package.json`                       | MODIFIED | +10 (deps + scripts) |
-
----
-
-## Prossimi Passi Consigliati
-
-1. **Aumentare copertura test** - Aggiungere test per `comparison.ts` e componenti React
-2. **Test E2E con Playwright** - Verificare flussi utente completi
-3. **Lighthouse Audit** - Verificare score accessibilità (target 90+)
-4. **Verifica VoiceOver** - Test manuale con screen reader
-
----
-
-## 2026-02-12 - Ottimizzazione performance UI (scatti/lentezza)
-
-### Problema
-Interfaccia percepita lenta e a scatti durante ricerca/filtri transazioni e navigazione pagine con grafici.
-
-### Interventi applicati
-
-- `src/components/TransactionList.tsx`
-  - Aggiunto `useDeferredValue` per rendere la ricerca meno bloccante in digitazione.
-  - Indicizzazione memoizzata delle transazioni (`timestamp`, `dateKey`, testo normalizzato) per ridurre parsing/ricalcoli ripetuti.
-  - Ridotti passaggi multipli su array (totali ora in singolo `reduce`).
-
-- `src/components/Dashboard.tsx`
-  - Query mese selezionato fatta direttamente su range DB (`getTransactions({dateFrom, dateTo})`) invece di caricare tutto e filtrare lato UI.
-  - Trend 6 mesi calcolato in parallelo (`Promise.all`) invece che in serie.
-  - Dati/opzioni grafici memoizzati e animazioni disattivate per ridurre micro-jank.
-
-- `src/components/Reports.tsx`
-  - `loadReport` stabilizzato con `useCallback`.
-  - Dati/opzioni grafici memoizzati e animazioni disattivate.
-  - Lookup categorie ottimizzato con `Map`.
-
-- `src/components/MonthComparison.tsx`
-  - Dati/opzioni grafico memoizzati.
-  - Animazioni grafico disattivate.
-
-- `src/services/analytics.ts`
-  - `getSpendingTrend` ora parallelo (`Promise.all`) invece di loop asincrono seriale.
-  - `generateReportData` riusa le transazioni già caricate per `topExpenses` (evitata query duplicata).
-
-- `src/services/comparison.ts`
-  - Parallelizzazione delle chiamate principali (`getMonthlyComparison`, `getCategoryComparison`, `getSpendingVelocity`, `generatePrediction`) per ridurre tempo di attesa percepito.
-
-- `src/index.css`
-  - Sostituite varie `transition: all` con transition mirate (background/color/border/shadow/transform) per evitare ricalcoli/layout inutili.
-
-### Verifica
-
-```bash
-npx eslint src/components/TransactionList.tsx src/components/Dashboard.tsx src/components/Reports.tsx src/components/MonthComparison.tsx src/services/analytics.ts src/services/comparison.ts
-# OK
-```
-
-```bash
-npm run test -- --run
-# Test Files 3 passed, Tests 37 passed
-```
-
-```bash
-npm run build
-# Build produzione completata (Vite)
-```
+# Accessibility Improvement Walkthrough
+
+## Overview
+
+Successfully improved the accessibility of SpendWise through a three-phase initiative focused on WCAG compliance and legibility.
+
+## Phase 1: Structural Fixes
+
+- **Heading Hierarchy**: Corrected `H1` -> `H2` hierarchy in `Dashboard`, `Settings`, and other modules.
+- **Form Controls**: Added `id` and `aria-label` to form elements in `TransactionForm`.
+- **Keyboard Navigation**: Added "Salta al contenuto principale" (Skip to Content) for keyboard users.
+
+## Phase 2: Contrast & Legibility Deep Cleanup
+
+- **CSS Variable Hardening**: Darkened `--text-muted` (from `#6b7280` to `#424242`) and `--ink` (from `#1a1a24` to `#0a0a0f`) in Light Mode to ensure a WebAIM contrast score > 7.0 for small text.
+- **Universal Opacity Removal**: Replaced over 50 instances of `opacity-40` and `opacity-60` with solid accessible colors (`text-muted`). This ensures headers, labels, and metadata are legible against all background variants.
+- **Typography Standardisation**: Increased font weights and sizes (minimum 0.8rem) for critical metadata labels in the `Sidebar` and `Dashboard`.
+- **Interactive States**: Standardized hover-to-reveal patterns to ensure interactive elements are clearly visible during interaction while maintaining the minimalist aesthetic.
+
+## Phase 3: Strict TDD Contrast Refinement
+
+- **Test-Driven Compliance**: Implemented `src/Contrast.test.ts` to strictly enforce:
+  - No `opacity` properties allowed on text elements (nav items, metadata, placeholders).
+  - `--text-muted` must be darker than `#2c2c2c` (Light Mode).
+  - `--success` must be darker than `#00600f` (Light Mode).
+- **Variable Hardening**:
+  - Darkened `--text-muted` from `#424242` to `#2c2c2c`.
+  - Darkened `--success` from `#008f39` to `#00600f`.
+- **Opacity Removal**: Removed all text opacity rules from `index.css`, replacing them with solid colors to prevent "washed out" rendering on different backgrounds.
+
+## Verification Results
+
+- **Automated Tests**:
+  - `src/Accessibility.test.tsx`: Confirms correct hierarchy and standard CSS classes.
+  - `src/Contrast.test.ts`: Strictly enforces variable safety and opacity bans.
+- **Visual Verification**: Confirmed standard colors in light mode provide significantly better contrast.
+- **Accessibility Score**: Manual audit indicates compliance with WCAG 2.1 AA contrast requirements for all static text.
+
+## Files Modified
+
+- `src/index.css`: Core design system updates.
+- `src/Contrast.test.ts`: New verification suite.
+- `src/components/Dashboard.tsx`: Header hierarchy and contrast.
+- `src/components/Sidebar.tsx`: Legibility for version tags and footer.
+- `src/components/TransactionForm.tsx`: Full form audit.
+- `src/components/QuickAddWidget.tsx`: Modular cleanup.
+- `src/components/Settings.tsx`: Security and config labels.
+- `src/components/BudgetManager.tsx`: Empty state and progress labels.
+- `src/components/SavingsGoals.tsx`: Asset tracking legibility.
+- `src/components/Reports.tsx`: Chart legends and tabular data.
+- `src/components/TransactionList.tsx`: List item metadata.
