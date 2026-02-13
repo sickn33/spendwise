@@ -258,7 +258,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
             <div className="grid-2">
                 <div className="card">
                     <div className="card-header border-b pb-sm mb-xl">
-                        <h2 className="font-display" style={{ fontSize: '1rem' }}>DISTRIBUZIONE_CATEGORIA_v1</h2>
+                        <h2 className="font-display text-lg">DISTRIBUZIONE_CATEGORIA_v1</h2>
                     </div>
                     <div className="chart-center-container">
                         {categoryBreakdown.length > 0 ? (
@@ -300,7 +300,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                 {/* Trend Forecast Chart */}
                 <div className="card">
                     <div className="card-header border-b pb-sm mb-xl">
-                        <h2 className="font-display" style={{ fontSize: '1rem' }}>TREND_TEMPORALE_6M</h2>
+                        <h2 className="font-display text-lg">TREND_TEMPORALE_6M</h2>
                     </div>
                     <div className="chart-container" style={{ height: '260px' }}>
                         <Line data={lineData} options={{
@@ -314,7 +314,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                             animation: { duration: 0 }
                         } as never} />
                     </div>
-                    <div className="mt-xl font-mono text-muted text-right" style={{ fontSize: '0.65rem' }}>
+                    <div className="mt-xl font-mono text-muted text-right text-xs">
                         DATA_SOURCE: LOCAL_SQL_LEDGER
                     </div>
                 </div>
@@ -323,12 +323,12 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
             {/* Transaction Ledger */}
             <div className="card mt-2xl">
                 <div className="card-header border-b pb-sm mb-xl">
-                    <h2 className="font-display" style={{ fontSize: '1rem' }}>
+                    <h2 className="font-display text-lg">
                         {isCurrentMonth
                             ? `REGISTRO_TRANSAZIONI_CORRENTE`
                             : `ARCHIVIO_TRANSAZIONI_${format(selectedMonth, 'yyyy_MM').toUpperCase()}`}
                     </h2>
-                    <span className="font-mono text-muted" style={{ fontSize: '0.8rem' }}>
+                    <span className="font-mono text-muted text-sm">
                         {recentTransactions.length} RECORDS_COMMIT
                     </span>
                 </div>

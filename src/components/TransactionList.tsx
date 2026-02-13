@@ -439,7 +439,6 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                             <div style={{
                                 padding: 'var(--space-sm) var(--space-md)',
                                 background: 'var(--bg-glass)',
-                                fontSize: '0.85rem',
                                 fontWeight: 600,
                                 color: 'var(--text-muted)',
                                 position: 'sticky',
