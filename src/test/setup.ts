@@ -1,11 +1,49 @@
 // Test setup file for Vitest
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
 
 // Cleanup after each test
 afterEach(() => {
   cleanup();
+});
+
+function createStorageMock(): Storage {
+  const store = new Map<string, string>();
+
+  return {
+    get length() {
+      return store.size;
+    },
+    clear: vi.fn(() => store.clear()),
+    getItem: vi.fn((key: string) => store.get(key) ?? null),
+    key: vi.fn((index: number) => Array.from(store.keys())[index] ?? null),
+    removeItem: vi.fn((key: string) => {
+      store.delete(key);
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      store.set(key, String(value));
+    }),
+  };
+}
+
+Object.defineProperty(globalThis, 'localStorage', {
+  value: createStorageMock(),
+  writable: true,
+});
+
+Object.defineProperty(window, 'localStorage', {
+  value: globalThis.localStorage,
+  writable: true,
+});
+
+beforeEach(() => {
+  localStorage.clear();
+  vi.mocked(localStorage.getItem).mockClear();
+  vi.mocked(localStorage.setItem).mockClear();
+  vi.mocked(localStorage.removeItem).mockClear();
+  vi.mocked(localStorage.key).mockClear();
+  vi.mocked(localStorage.clear).mockClear();
 });
 
 // Polyfill TextEncoder for React 19

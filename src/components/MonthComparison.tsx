@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { getMonthlyComparison } from '../services/comparison';
-import type { MonthlyComparisonData, CategoryComparison, Language } from '../types';
+import type { MonthlyComparisonData, CategoryComparison } from '../types';
 import { Bar } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -11,7 +11,7 @@ import {
     Legend
 } from 'chart.js';
 import { format, subMonths, addMonths, isSameMonth } from 'date-fns';
-import { it as itLocale } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import {
     ChevronLeft,
     ChevronRight,
@@ -34,7 +34,6 @@ export const MonthComparison = memo(function MonthComparison() {
     const [data, setData] = useState<MonthlyComparisonData | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedMonth, setSelectedMonth] = useState(new Date());
-    const [language, setLanguage] = useState<Language>('it');
     const [generating, setGenerating] = useState(false);
 
     const loadComparison = useCallback(async () => {
@@ -52,10 +51,6 @@ export const MonthComparison = memo(function MonthComparison() {
     useEffect(() => {
         loadComparison();
     }, [loadComparison]);
-
-    const toggleLanguage = useCallback(() => {
-        setLanguage(l => l === 'it' ? 'en' : 'it');
-    }, []);
 
     const goToPreviousMonth = useCallback(() => {
         setSelectedMonth(prev => subMonths(prev, 1));
@@ -123,14 +118,14 @@ export const MonthComparison = memo(function MonthComparison() {
             // Title
             pdf.setFontSize(20);
             pdf.setTextColor(99, 102, 241);
-            pdf.text('SpendWise - Confronto Mensile', margin, y);
+            pdf.text('SpendWise - Monthly Comparison', margin, y);
             y += 12;
 
             // Months
             pdf.setFontSize(12);
             pdf.setTextColor(100, 100, 100);
             pdf.text(
-                `${format(subMonths(selectedMonth, 1), 'MMMM yyyy', { locale: itLocale })} vs ${format(selectedMonth, 'MMMM yyyy', { locale: itLocale })}`,
+                `${format(subMonths(selectedMonth, 1), 'MMMM yyyy', { locale: enUS })} vs ${format(selectedMonth, 'MMMM yyyy', { locale: enUS })}`,
                 margin, y
             );
             y += 20;
@@ -138,16 +133,16 @@ export const MonthComparison = memo(function MonthComparison() {
             // Summary
             pdf.setFontSize(14);
             pdf.setTextColor(30, 30, 30);
-            pdf.text('Riepilogo Variazioni', margin, y);
+            pdf.text('Change summary', margin, y);
             y += 10;
 
             pdf.setFontSize(10);
             pdf.setTextColor(60, 60, 60);
 
             const deltas = [
-                { label: 'Entrate', value: data.deltas.income },
-                { label: 'Spese', value: data.deltas.expenses },
-                { label: 'Bilancio', value: data.deltas.netChange }
+                { label: 'Income', value: data.deltas.income },
+                { label: 'Expenses', value: data.deltas.expenses },
+                { label: 'Budget', value: data.deltas.netChange }
             ];
 
             for (const d of deltas) {
@@ -163,7 +158,7 @@ export const MonthComparison = memo(function MonthComparison() {
             // Category comparison
             pdf.setFontSize(14);
             pdf.setTextColor(30, 30, 30);
-            pdf.text('Confronto Categorie', margin, y);
+            pdf.text('Category comparison', margin, y);
             y += 10;
 
             pdf.setFontSize(9);
@@ -183,9 +178,9 @@ export const MonthComparison = memo(function MonthComparison() {
             // Footer
             pdf.setFontSize(8);
             pdf.setTextColor(150, 150, 150);
-            pdf.text(`Generato il ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, margin, 290);
+            pdf.text(`Generated on ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, margin, 290);
 
-            pdf.save(`spendwise_confronto_${format(selectedMonth, 'yyyy-MM')}.pdf`);
+            pdf.save(`spendwise_comparison_${format(selectedMonth, 'yyyy-MM')}.pdf`);
         } catch (error) {
             console.error('Error generating PDF:', error);
         } finally {
@@ -198,7 +193,7 @@ export const MonthComparison = memo(function MonthComparison() {
         labels: data?.categoryComparison.slice(0, 8).map(c => c.category.name) ?? [],
         datasets: [
             {
-                label: format(subMonths(selectedMonth, 1), 'MMM', { locale: itLocale }),
+                label: format(subMonths(selectedMonth, 1), 'MMM', { locale: enUS }),
                 data: data?.categoryComparison.slice(0, 8).map(c => c.previous.amount) ?? [],
                 backgroundColor: 'rgba(158, 158, 158, 0.5)',
                 borderColor: 'rgba(158, 158, 158, 1)',
@@ -206,7 +201,7 @@ export const MonthComparison = memo(function MonthComparison() {
                 borderRadius: 4
             },
             {
-                label: format(selectedMonth, 'MMM', { locale: itLocale }),
+                label: format(selectedMonth, 'MMM', { locale: enUS }),
                 data: data?.categoryComparison.slice(0, 8).map(c => c.current.amount) ?? [],
                 backgroundColor: 'rgba(99, 102, 241, 0.7)',
                 borderColor: 'rgba(99, 102, 241, 1)',
@@ -254,15 +249,15 @@ export const MonthComparison = memo(function MonthComparison() {
         return (
             <div className="empty-state">
                 <div className="empty-state-icon">📊</div>
-                <div className="empty-state-title">Nessun dato disponibile</div>
-                <p>Aggiungi delle transazioni per vedere il confronto</p>
+                <div className="empty-state-title">No data available</div>
+                <p>Add transactions to view the comparison</p>
             </div>
         );
     }
 
     const isCurrentMonth = isSameMonth(selectedMonth, new Date());
-    const prevMonthName = format(subMonths(selectedMonth, 1), 'MMMM', { locale: itLocale });
-    const currentMonthName = format(selectedMonth, 'MMMM yyyy', { locale: itLocale });
+    const prevMonthName = format(subMonths(selectedMonth, 1), 'MMMM', { locale: enUS });
+    const currentMonthName = format(selectedMonth, 'MMMM yyyy', { locale: enUS });
 
     const getBalanceClass = () => {
         const balance = data.currentMonth.totalIncome - data.currentMonth.totalExpenses;
@@ -280,24 +275,15 @@ export const MonthComparison = memo(function MonthComparison() {
             {/* Header */}
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Confronto Mensile</h1>
+                    <h1 className="page-title">Monthly Comparison</h1>
                     <p className="page-subtitle">
-                        {prevMonthName} vs {format(selectedMonth, 'MMMM', { locale: itLocale })}
+                        {prevMonthName} vs {format(selectedMonth, 'MMMM', { locale: enUS })}
                     </p>
                 </div>
                 <div className="header-controls">
-                    {/* Language toggle */}
-                    <button
-                        className="btn btn-ghost"
-                        onClick={toggleLanguage}
-                        title={language === 'it' ? 'Switch to English' : 'Passa all\'italiano'}
-                    >
-                        {language === 'it' ? '🇮🇹' : '🇬🇧'}
-                    </button>
-
                     {/* Month navigation */}
                     <div className="month-nav">
-                        <button className="btn btn-ghost" onClick={goToPreviousMonth} aria-label="Mese precedente" title="Mese precedente">
+                        <button className="btn btn-ghost" onClick={goToPreviousMonth} aria-label="Previous month" title="Previous month">
                             <ChevronLeft size={20} />
                         </button>
                         <button
@@ -311,8 +297,8 @@ export const MonthComparison = memo(function MonthComparison() {
                             className="btn btn-ghost"
                             onClick={goToNextMonth}
                             disabled={isCurrentMonth}
-                            aria-label="Mese successivo"
-                            title="Mese successivo"
+                            aria-label="Next month"
+                            title="Next month"
                         >
                             <ChevronRight size={20} />
                         </button>
@@ -324,7 +310,7 @@ export const MonthComparison = memo(function MonthComparison() {
                         disabled={generating}
                     >
                         <Download size={16} />
-                        {generating ? 'Generazione...' : 'PDF'}
+                        {generating ? 'Generating...' : 'PDF'}
                     </button>
                 </div>
             </div>
@@ -335,7 +321,7 @@ export const MonthComparison = memo(function MonthComparison() {
                 <div className="card stat-card">
                     <div className="stat-label">
                         <TrendingUp size={16} />
-                        {language === 'it' ? 'Entrate' : 'Income'}
+                        Income
                     </div>
                     <div className="stat-value text-success">
                         {formatCurrency(data.currentMonth.totalIncome)}
@@ -353,7 +339,7 @@ export const MonthComparison = memo(function MonthComparison() {
                 <div className="card stat-card">
                     <div className="stat-label">
                         <TrendingDown size={16} />
-                        {language === 'it' ? 'Spese' : 'Expenses'}
+                        Expenses
                     </div>
                     <div className="stat-value text-danger">
                         {formatCurrency(data.currentMonth.totalExpenses)}
@@ -371,7 +357,7 @@ export const MonthComparison = memo(function MonthComparison() {
                 <div className="card stat-card">
                     <div className="stat-label">
                         <Target size={16} />
-                        {language === 'it' ? 'Bilancio' : 'Balance'}
+                        Balance
                     </div>
                     <div className={`stat-value ${getBalanceClass()}`}>
                         {(data.currentMonth.totalIncome - data.currentMonth.totalExpenses) >= 0 ? '+' : ''}
@@ -387,17 +373,17 @@ export const MonthComparison = memo(function MonthComparison() {
                 <div className="card stat-card">
                     <div className="stat-label">
                         <Zap size={16} />
-                        {language === 'it' ? 'Velocità' : 'Velocity'}
+                        Velocity
                     </div>
                     <div className="stat-value">
-                        €{data.metrics.spendingVelocity.currentPace.toFixed(0)}<span className="stat-unit">/giorno</span>
+                        €{data.metrics.spendingVelocity.currentPace.toFixed(0)}<span className="stat-unit">/day</span>
                     </div>
                     <div className={`stat-trend ${getVelocityTrendClass()}`}>
                         {data.metrics.spendingVelocity.currentPace <= data.metrics.spendingVelocity.previousPace
                             ? <ArrowDown size={14} />
                             : <ArrowUp size={14} />
                         }
-                        <span>vs €{data.metrics.spendingVelocity.previousPace.toFixed(0)}/g prec.</span>
+                        <span>vs €{data.metrics.spendingVelocity.previousPace.toFixed(0)}/day prev.</span>
                     </div>
                 </div>
             </div>
@@ -406,22 +392,22 @@ export const MonthComparison = memo(function MonthComparison() {
             {data.insights.length > 0 && (
                 <div className="card mt-lg">
                     <div className="card-header">
-                        <h3 className="card-title card-title-with-icon">
+                    <h3 className="card-title card-title-with-icon">
                             <Sparkles size={18} />
-                            {language === 'it' ? 'Insight' : 'Insights'}
-                        </h3>
-                    </div>
-                    <div className="insights-grid">
-                        {data.insights.map((insight, i) => (
-                            <div key={i} className={`insight-card ${insight.type}`}>
-                                <span className="insight-icon">{insight.icon}</span>
-                                <div className="insight-content">
-                                    <div className="insight-title">
-                                        {insight.title[language]}
-                                    </div>
-                                    <div className="insight-description">
-                                        {insight.description[language]}
-                                    </div>
+                            Insights
+                    </h3>
+                </div>
+                <div className="insights-grid">
+                    {data.insights.map((insight, i) => (
+                        <div key={i} className={`insight-card ${insight.type}`}>
+                            <span className="insight-icon">{insight.icon}</span>
+                            <div className="insight-content">
+                                <div className="insight-title">
+                                    {insight.title.en}
+                                </div>
+                                <div className="insight-description">
+                                    {insight.description.en}
+                                </div>
                                 </div>
                                 <span className={`impact-badge ${insight.impact}`}>
                                     {insight.impact.toUpperCase()}
@@ -436,7 +422,7 @@ export const MonthComparison = memo(function MonthComparison() {
             <div className="card mt-lg">
                 <div className="card-header">
                     <h3 className="card-title">
-                        {language === 'it' ? 'Confronto per Categoria' : 'Category Comparison'}
+                        Category Comparison Chart
                     </h3>
                 </div>
                 <div className="chart-container chart-container-lg">
@@ -448,7 +434,7 @@ export const MonthComparison = memo(function MonthComparison() {
             <div className="card mt-lg">
                 <div className="card-header">
                     <h3 className="card-title">
-                        {language === 'it' ? 'Dettaglio Categorie' : 'Category Details'}
+                        Category Comparison Table
                     </h3>
                 </div>
                 <div className="overflow-x-auto">
@@ -457,13 +443,13 @@ export const MonthComparison = memo(function MonthComparison() {
                             <tr>
                                 <th className="text-left">#</th>
                                 <th className="text-left">
-                                    {language === 'it' ? 'Categoria' : 'Category'}
+                                    Category
                                 </th>
                                 <th className="text-right">
-                                    {format(selectedMonth, 'MMM', { locale: itLocale })}
+                                    {format(selectedMonth, 'MMM', { locale: enUS })}
                                 </th>
                                 <th className="text-right">
-                                    {format(subMonths(selectedMonth, 1), 'MMM', { locale: itLocale })}
+                                    {format(subMonths(selectedMonth, 1), 'MMM', { locale: enUS })}
                                 </th>
                                 <th className="text-right">Δ</th>
                                 <th className="text-center">Trend</th>
@@ -518,14 +504,14 @@ export const MonthComparison = memo(function MonthComparison() {
                 <div className="card prediction-card">
                     <div className="card-header">
                         <h3 className="card-title card-title-with-icon">
-                            🔮 {language === 'it' ? 'Previsione Prossimo Mese' : 'Next Month Prediction'}
+                            🔮 Next Month Prediction
                             <span className="ml-badge">ML</span>
                         </h3>
                     </div>
                     <div className="prediction-grid">
                         <div>
                             <div className="prediction-label">
-                                {language === 'it' ? 'Spese Previste' : 'Predicted Expenses'}
+                                Predicted Expenses
                             </div>
                             <div className="prediction-value">
                                 {formatCurrency(data.prediction.predictedExpenses)}
@@ -533,7 +519,7 @@ export const MonthComparison = memo(function MonthComparison() {
                         </div>
                         <div>
                             <div className="prediction-label">
-                                {language === 'it' ? 'Entrate Previste' : 'Predicted Income'}
+                                Predicted Income
                             </div>
                             <div className="prediction-value text-success">
                                 {formatCurrency(data.prediction.predictedIncome)}
@@ -541,7 +527,7 @@ export const MonthComparison = memo(function MonthComparison() {
                         </div>
                         <div>
                             <div className="prediction-label">
-                                {language === 'it' ? 'Affidabilità' : 'Confidence'}
+                                Confidence
                             </div>
                             <div className={`prediction-value ${data.prediction.confidence > 0.7 ? 'text-success' : data.prediction.confidence > 0.5 ? 'text-warning' : 'text-danger'}`}>
                                 {(data.prediction.confidence * 100).toFixed(0)}%
@@ -551,11 +537,11 @@ export const MonthComparison = memo(function MonthComparison() {
                     {data.prediction.riskFactors.length > 0 && (
                         <div className="risk-factors">
                             <div className="risk-factors-label">
-                                {language === 'it' ? 'Fattori di rischio:' : 'Risk factors:'}
+                                Risk factors:
                             </div>
                             <ul className="risk-factors-list">
                                 {data.prediction.riskFactors.map((rf, i) => (
-                                    <li key={i}>{rf[language]}</li>
+                                    <li key={i}>{rf.en}</li>
                                 ))}
                             </ul>
                         </div>
@@ -568,25 +554,25 @@ export const MonthComparison = memo(function MonthComparison() {
                 <div className="card">
                     <div className="card-header">
                         <h3 className="card-title">
-                            📅 {language === 'it' ? 'Giorno di Picco' : 'Peak Day'} - {format(selectedMonth, 'MMM', { locale: itLocale })}
+                            📅 Peak Day - {format(selectedMonth, 'MMM', { locale: enUS })}
                         </h3>
                     </div>
                     <div className="peak-day-content">
                         {data.metrics.biggestExpenseDay.current ? (
                             <>
                                 <div className="peak-day-date">
-                                    {format(new Date(data.metrics.biggestExpenseDay.current.date), 'd MMMM', { locale: itLocale })}
+                                    {format(new Date(data.metrics.biggestExpenseDay.current.date), 'd MMMM', { locale: enUS })}
                                 </div>
                                 <div className="peak-day-amount">
                                     {formatCurrency(data.metrics.biggestExpenseDay.current.amount)}
                                 </div>
                                 <div className="peak-day-transactions">
-                                    {data.metrics.biggestExpenseDay.current.transactions} {language === 'it' ? 'transazioni' : 'transactions'}
+                                    {data.metrics.biggestExpenseDay.current.transactions} transactions
                                 </div>
                             </>
                         ) : (
                             <div className="text-muted">
-                                {language === 'it' ? 'Nessun dato' : 'No data'}
+                                No data
                             </div>
                         )}
                     </div>
@@ -595,25 +581,25 @@ export const MonthComparison = memo(function MonthComparison() {
                 <div className="card">
                     <div className="card-header">
                         <h3 className="card-title">
-                            📅 {language === 'it' ? 'Giorno di Picco' : 'Peak Day'} - {format(subMonths(selectedMonth, 1), 'MMM', { locale: itLocale })}
+                            📅 Peak Day - {format(subMonths(selectedMonth, 1), 'MMM', { locale: enUS })}
                         </h3>
                     </div>
                     <div className="peak-day-content">
                         {data.metrics.biggestExpenseDay.previous ? (
                             <>
                                 <div className="peak-day-date">
-                                    {format(new Date(data.metrics.biggestExpenseDay.previous.date), 'd MMMM', { locale: itLocale })}
+                                    {format(new Date(data.metrics.biggestExpenseDay.previous.date), 'd MMMM', { locale: enUS })}
                                 </div>
                                 <div className="peak-day-amount">
                                     {formatCurrency(data.metrics.biggestExpenseDay.previous.amount)}
                                 </div>
                                 <div className="peak-day-transactions">
-                                    {data.metrics.biggestExpenseDay.previous.transactions} {language === 'it' ? 'transazioni' : 'transactions'}
+                                    {data.metrics.biggestExpenseDay.previous.transactions} transactions
                                 </div>
                             </>
                         ) : (
                             <div className="text-muted">
-                                {language === 'it' ? 'Nessun dato' : 'No data'}
+                                No data
                             </div>
                         )}
                     </div>

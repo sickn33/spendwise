@@ -40,21 +40,21 @@ describe('TransactionList Component', () => {
     it('renders the technical header and load stats', async () => {
         render(<TransactionList />);
         
-        expect(await screen.findByText('REGISTRO_TRANSAZIONI_v1')).toBeInTheDocument();
+        expect(await screen.findByText('TRANSACTIONS LOG')).toBeInTheDocument();
         // Use regex for dynamic text
-        expect(screen.getByText(/_ENTRIES_LOADED/)).toBeInTheDocument();
+        expect(screen.getByText(/Entries loaded/)).toBeInTheDocument();
     });
 
     it('displays summary grid with technical labels', async () => {
         render(<TransactionList />);
         
         await waitFor(() => {
-            expect(screen.getByText('REGISTRO_TRANSAZIONI_v1')).toBeInTheDocument();
+            expect(screen.getByText('TRANSACTIONS LOG')).toBeInTheDocument();
         });
         
-        expect(screen.getAllByText('USCITE_TOTALI')[0]).toBeInTheDocument();
-        expect(screen.getAllByText('ENTRATE_TOTALI')[0]).toBeInTheDocument();
-        expect(screen.getAllByText('NET_FLOW')[0]).toBeInTheDocument();
+        expect(screen.getAllByText('TOTAL EXPENSES')[0]).toBeInTheDocument();
+        expect(screen.getAllByText('TOTAL INCOME')[0]).toBeInTheDocument();
+        expect(screen.getAllByText('NET FLOW')[0]).toBeInTheDocument();
         
         // Verify monospace amounts
         const amounts = screen.getAllByText(/€50\.00/);
@@ -85,11 +85,11 @@ describe('TransactionList Component', () => {
         });
         
         // Find delete button by label (first one is ID 2 because of sort desc)
-        const deleteButtons = screen.getAllByRole('button', { name: "Elimina" });
+        const deleteButtons = screen.getAllByRole('button', { name: "Delete" });
         fireEvent.click(deleteButtons[0]);
         
         // Wait for confirmation button to appear
-        const confirmButton = await screen.findByRole('button', { name: "Conferma eliminazione" });
+        const confirmButton = await screen.findByRole('button', { name: "Confirm deletion" });
         expect(confirmButton).toBeInTheDocument();
         
         // Click confirm

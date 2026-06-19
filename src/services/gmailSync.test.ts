@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildGmailSearchQuery,
+  resolveGmailSearchQuery,
+  syncCardTransactionsFromGmail,
   extractMessageBody,
   extractMessageBodyFromMessage,
   generateTransactionHash,
@@ -20,7 +22,36 @@ function toBase64Url(value: string): string {
 
 describe('gmailSync utilities', () => {
   it('builds query filtering by sender', () => {
-    expect(buildGmailSearchQuery('comunicazioni@isybank.com')).toBe('from:comunicazioni@isybank.com');
+    expect(buildGmailSearchQuery('alerts@example.com')).toBe('from:alerts@example.com');
+  });
+
+  it('uses a custom personal-mail query when configured', () => {
+    expect(resolveGmailSearchQuery({
+      senderEmail: 'alerts@example.com',
+      searchQuery: 'subject:card-payment newer_than:90d'
+    })).toBe('subject:card-payment newer_than:90d');
+  });
+
+  it('passes custom personal-mail query to Gmail list API', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ messages: [] })
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await syncCardTransactionsFromGmail({
+      accessToken: 'token-abc',
+      senderEmail: 'alerts@example.com',
+      searchQuery: 'subject:card-payment newer_than:90d',
+      maxResults: 7
+    });
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.searchParams.get('q')).toBe('subject:card-payment newer_than:90d');
+    expect(url.searchParams.get('maxResults')).toBe('7');
+
+    vi.unstubAllGlobals();
   });
 
   it('extracts plain text body from nested payload', () => {
@@ -54,14 +85,14 @@ describe('gmailSync utilities', () => {
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ data: toBase64Url('Esercente: Careggi Firenze Parche Vial') })
+      json: async () => ({ data: toBase64Url('Esercente: City Parking Terminal') })
     });
 
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await extractMessageBodyFromMessage('token-abc', 'msg-123', payload);
 
-    expect(result).toContain('Esercente: Careggi Firenze Parche Vial');
+    expect(result).toContain('Esercente: City Parking Terminal');
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(fetchMock.mock.calls[0]?.[0]).toContain('/messages/msg-123/attachments/att-1?');
 
@@ -80,7 +111,7 @@ describe('gmailSync utilities', () => {
     const date = new Date('2026-02-07T10:00:00.000Z');
     const key = buildDateAmountKey(date, -2.5);
     const existing = new Map([
-      [key, [{ description: 'Careggi Firenze Parche Vial', details: 'Pagamento POS parcheggio' }]]
+      [key, [{ description: 'City Parking Terminal', details: 'Parking POS payment' }]]
     ]);
 
     expect(isLikelyDuplicateByDateAmount(date, -2.5, 'Transazione carta', existing)).toBe(true);
@@ -119,7 +150,7 @@ describe('gmailSync utilities', () => {
   it('finds generic gmail duplicates when specific transaction exists on same day/amount', () => {
     const txs = [
       { id: 10, date: new Date('2026-02-07'), amount: -2.5, description: 'Transazione carta', tags: ['gmail'] },
-      { id: 11, date: new Date('2026-02-07'), amount: -2.5, description: 'CAREGGI FIRENZE PARCHE VIAL', tags: [] }
+      { id: 11, date: new Date('2026-02-07'), amount: -2.5, description: 'CITY PARKING TERMINAL', tags: [] }
     ];
 
     expect(findLikelyDuplicateTransactionIds(txs)).toEqual([10]);
@@ -128,7 +159,7 @@ describe('gmailSync utilities', () => {
   it('finds generic duplicates even without gmail tag when specific counterpart exists', () => {
     const txs = [
       { id: 30, date: new Date('2026-02-07'), amount: -2.5, description: 'Transazione carta', tags: [] },
-      { id: 31, date: new Date('2026-02-07'), amount: -2.5, description: 'CAREGGI FIRENZE PARCHE VIAL', tags: [] }
+      { id: 31, date: new Date('2026-02-07'), amount: -2.5, description: 'CITY PARKING TERMINAL', tags: [] }
     ];
 
     expect(findLikelyDuplicateTransactionIds(txs)).toEqual([30]);
@@ -154,8 +185,8 @@ describe('gmailSync utilities', () => {
 
   it('removes shorter gmail merchant when csv has richer but equivalent merchant name', () => {
     const txs = [
-      { id: 50, date: new Date('2026-02-07'), amount: -2.5, description: 'CAREGGI FIRENZE PARCHE', tags: ['gmail', 'gmail-msg:msg-50'] },
-      { id: 51, date: new Date('2026-02-07'), amount: -2.5, description: 'Careggi Firenze Parche Vial', tags: [] }
+      { id: 50, date: new Date('2026-02-07'), amount: -2.5, description: 'CITY PARKING', tags: ['gmail', 'gmail-msg:msg-50'] },
+      { id: 51, date: new Date('2026-02-07'), amount: -2.5, description: 'City Parking Terminal', tags: [] }
     ];
 
     expect(findLikelyDuplicateTransactionIds(txs)).toEqual([50]);
@@ -170,6 +201,28 @@ describe('gmailSync utilities', () => {
     expect(findLikelyDuplicateTransactionIds(txs)).toEqual([60]);
   });
 
+  it('removes real Card mail duplicate when XLSX has richer merchant details', () => {
+    const txs = [
+      {
+        id: 70,
+        date: new Date('2026-06-12T10:05:00.000Z'),
+        amount: -1.6,
+        description: 'ACME HEALTH CENTER',
+        tags: ['gmail', 'gmail-msg:msg-70']
+      },
+      {
+        id: 71,
+        date: new Date('2026-06-12T00:00:00.000Z'),
+        amount: -1.6,
+        description: 'Acme Health Center City',
+        details: 'Card payment on 12/06/2026 at 10:05 at Acme Health Center City',
+        tags: []
+      }
+    ];
+
+    expect(findLikelyDuplicateTransactionIds(txs)).toEqual([70]);
+  });
+
   it('sync dedupe skips generic merchant if same amount exists within one day', () => {
     const shouldSkip = hasLikelyExistingDuplicate(
       new Date('2026-02-07T22:30:00.000Z'),
@@ -179,7 +232,7 @@ describe('gmailSync utilities', () => {
         {
           date: new Date('2026-02-07T09:00:00.000Z'),
           amount: -2.5,
-          description: 'Careggi Firenze Parche Vial',
+          description: 'City Parking Terminal',
           details: 'CSV'
         }
       ]
@@ -199,6 +252,24 @@ describe('gmailSync utilities', () => {
           amount: -7.28,
           description: 'Paypal *flixbus 30300137300',
           details: 'CSV'
+        }
+      ]
+    );
+
+    expect(shouldSkip).toBe(true);
+  });
+
+  it('sync dedupe matches real Card mail merchant against XLSX merchant', () => {
+    const shouldSkip = hasLikelyExistingDuplicate(
+      new Date('2026-06-12T10:05:00.000Z'),
+      -1.6,
+      'ACME HEALTH CENTER',
+      [
+        {
+          date: new Date('2026-06-12T00:00:00.000Z'),
+          amount: -1.6,
+          description: 'Acme Health Center City',
+          details: 'Card payment on 12/06/2026 at 10:05 at Acme Health Center City'
         }
       ]
     );

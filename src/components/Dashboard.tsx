@@ -5,16 +5,17 @@ import type { Transaction, Category, MonthlyStats, ChartDataPoint } from '../typ
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
 import { format, startOfMonth, endOfMonth, subMonths, addMonths, eachMonthOfInterval, isAfter } from 'date-fns';
-import { it } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { TrendingUp, TrendingDown, CreditCard, PiggyBank, ChevronLeft, ChevronRight } from 'lucide-react';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
 interface DashboardProps {
     onAddTransaction: () => void;
+    refreshTrigger?: number;
 }
 
-export const Dashboard = memo(function Dashboard({ onAddTransaction }: DashboardProps) {
+export const Dashboard = memo(function Dashboard({ onAddTransaction, refreshTrigger = 0 }: DashboardProps) {
     const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
     const [monthlyStats, setMonthlyStats] = useState<MonthlyStats | null>(null);
     const [lastMonthStats, setLastMonthStats] = useState<MonthlyStats | null>(null);
@@ -65,7 +66,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
             setCategories(cats);
             setDailyAverage(avgDaily);
             setTrendData({
-                labels: months.map(month => format(month, 'MMM', { locale: it })),
+                labels: months.map(month => format(month, 'MMM', { locale: enUS })),
                 values: trendStats.map(stats => stats.totalExpenses)
             });
         } catch (error) {
@@ -77,7 +78,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
 
     useEffect(() => {
         loadDashboardData();
-    }, [loadDashboardData]);
+    }, [loadDashboardData, refreshTrigger]);
 
     const goToPreviousMonth = useCallback(() => {
         setSelectedMonth(prev => subMonths(prev, 1));
@@ -116,7 +117,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
     const lineData = useMemo(() => ({
         labels: trendData.labels,
         datasets: [{
-            label: 'Spese',
+            label: 'Expenses',
             data: trendData.values,
             borderColor: '#6366f1',
             backgroundColor: 'rgba(99, 102, 241, 0.1)',
@@ -167,26 +168,26 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
         <div>
             <div className="page-header border-b pb-xl mb-2xl">
                 <div>
-                    <h1 className="font-display">Pannello_Controllo_v1</h1>
+                    <h1 className="font-display">CONTROL PANEL</h1>
                     {/* Month Navigator */}
                     <div className="month-nav mt-md">
                         <button
                             className="btn btn-ghost btn-icon"
                             onClick={goToPreviousMonth}
-                            title="Mese precedente"
-                            aria-label="Mese precedente"
+                            title="Previous month"
+                            aria-label="Previous month"
                         >
                             <ChevronLeft size={18} strokeWidth={2.5} />
                         </button>
                         <span className="month-nav-label">
-                            {format(selectedMonth, 'yyyy_MMMM', { locale: it })}
+                            {format(selectedMonth, 'yyyy MMMM', { locale: enUS })}
                         </span>
                         <button
                             className="btn btn-ghost btn-icon"
                             onClick={goToNextMonth}
                             disabled={isCurrentMonth}
-                            title="Mese successivo"
-                            aria-label="Mese successivo"
+                            title="Next month"
+                            aria-label="Next month"
                         >
                             <ChevronRight size={18} strokeWidth={2.5} />
                         </button>
@@ -195,63 +196,63 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                                 className="btn btn-secondary system-reset-btn"
                                 onClick={goToCurrentMonth}
                             >
-                                RESET_TO_CURRENT
+                                Reset to current
                             </button>
                         )}
                     </div>
                 </div>
                 <button className="btn btn-primary" onClick={onAddTransaction}>
-                    AGGIUNGI_RECORD
+                    Add transaction
                 </button>
             </div>
 
-            {/* Stats Grid -> Data Ledger Style */}
+            {/* Stats Grid -> Date Ledger Style */}
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-label">
-                        <TrendingDown size={14} strokeWidth={2.5} /> SPESE_MENSILI
+                        <TrendingDown size={14} strokeWidth={2.5} /> MONTHLY EXPENSES
                     </div>
                     <div className="stat-value font-mono">
                         €{monthlyStats?.totalExpenses.toFixed(2) || '0.00'}
                     </div>
                     <div className={`stat-change font-mono ${expenseChange > 0 ? 'text-danger' : 'text-success'}`}>
-                        {expenseChange > 0 ? '▲' : '▼'} {Math.abs(expenseChange).toFixed(1)}% VS_PREC
+                        {expenseChange > 0 ? '▲' : '▼'} {Math.abs(expenseChange).toFixed(1)}% VS PREVIOUS
                     </div>
                 </div>
 
                 <div className="stat-card">
                     <div className="stat-label">
-                        <TrendingUp size={14} strokeWidth={2.5} /> ENTRATE_MENSILI
+                        <TrendingUp size={14} strokeWidth={2.5} /> MONTHLY INCOME
                     </div>
                     <div className="stat-value font-mono">
                         €{monthlyStats?.totalIncome.toFixed(2) || '0.00'}
                     </div>
                     <div className={`stat-change font-mono ${incomeChange >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {incomeChange >= 0 ? '▲' : '▼'} {Math.abs(incomeChange).toFixed(1)}% VS_PREC
+                        {incomeChange >= 0 ? '▲' : '▼'} {Math.abs(incomeChange).toFixed(1)}% VS PREVIOUS
                     </div>
                 </div>
 
                 <div className="stat-card">
                     <div className="stat-label">
-                        <PiggyBank size={14} strokeWidth={2.5} /> BILANCIO_NETTO
+                        <PiggyBank size={14} strokeWidth={2.5} /> NET BALANCE
                     </div>
                     <div className={`stat-value font-mono ${((monthlyStats?.totalIncome || 0) - (monthlyStats?.totalExpenses || 0)) >= 0 ? 'text-success' : 'text-danger'}`}>
                         €{((monthlyStats?.totalIncome || 0) - (monthlyStats?.totalExpenses || 0)).toFixed(2)}
                     </div>
                     <div className="stat-change font-mono text-muted">
-                        {monthlyStats?.transactionCount || 0} RECORDS_FOUND
+                        {monthlyStats?.transactionCount || 0} records found
                     </div>
                 </div>
 
                 <div className="stat-card border-none-right">
                     <div className="stat-label">
-                        <CreditCard size={14} strokeWidth={2.5} /> MEDIA_DIARIA
+                        <CreditCard size={14} strokeWidth={2.5} /> DAILY AVERAGE
                     </div>
                     <div className="stat-value font-mono">
                         €{dailyAverage.toFixed(2)}
                     </div>
                     <div className="stat-change font-mono text-muted">
-                        RANGE: 30_DAYS
+                        RANGE: 30 DAYS
                     </div>
                 </div>
             </div>
@@ -260,7 +261,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
             <div className="grid-2">
                 <div className="card">
                     <div className="card-header border-b pb-sm mb-xl">
-                        <h2 className="font-display text-lg">DISTRIBUZIONE_CATEGORIA_v1</h2>
+                        <h2 className="font-display text-lg">CATEGORY DISTRIBUTION</h2>
                     </div>
                     <div className="chart-center-container">
                         {categoryBreakdown.length > 0 ? (
@@ -281,7 +282,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                                 }} 
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full font-mono text-muted">NO_DATA</div>
+                            <div className="flex items-center justify-center h-full font-mono text-muted">NO DATA</div>
                         )}
                     </div>
                     {categoryBreakdown.length > 0 && (
@@ -302,7 +303,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                 {/* Trend Forecast Chart */}
                 <div className="card">
                     <div className="card-header border-b pb-sm mb-xl">
-                        <h2 className="font-display text-lg">TREND_TEMPORALE_6M</h2>
+                        <h2 className="font-display text-lg">6-MONTH TREND</h2>
                     </div>
                     <div className="chart-container" style={{ height: '260px' }}>
                         <Line data={lineData} options={{
@@ -317,7 +318,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                         } as never} />
                     </div>
                     <div className="mt-xl font-mono text-muted text-right text-xs">
-                        DATA_SOURCE: LOCAL_SQL_LEDGER
+                        DATA SOURCE: LOCAL SQL LEDGER
                     </div>
                 </div>
             </div>
@@ -327,11 +328,11 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                 <div className="card-header border-b pb-sm mb-xl">
                     <h2 className="font-display text-lg">
                         {isCurrentMonth
-                            ? `REGISTRO_TRANSAZIONI_CORRENTE`
-                            : `ARCHIVIO_TRANSAZIONI_${format(selectedMonth, 'yyyy_MM').toUpperCase()}`}
+                            ? `CURRENT TRANSACTION LOG`
+                            : `TRANSACTION ARCHIVE_${format(selectedMonth, 'yyyy_MM').toUpperCase()}`}
                     </h2>
                     <span className="font-mono text-muted text-sm">
-                        {recentTransactions.length} RECORDS_COMMIT
+                        {recentTransactions.length} records
                     </span>
                 </div>
                 <div className="transaction-list">
@@ -357,7 +358,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction }: Dashboard
                         })
                     ) : (
                         <div className="p-2xl text-center font-mono text-muted">
-                            NULL_SET: NO_TRANSACTIONS_FOUND
+                            NO TRANSACTIONS FOUND
                         </div>
                     )}
                 </div>

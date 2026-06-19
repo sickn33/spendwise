@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useDeferredValue, memo } from 'react';
 import { getTransactions, getCategories, deleteTransaction } from '../db/database';
 import type { Transaction, Category } from '../types';
 import { format, startOfMonth, subMonths, parseISO } from 'date-fns';
-import { it } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { Search, Filter, Trash2, Edit2, X, TrendingDown, ArrowUpDown, Calendar, DollarSign } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
 
@@ -208,18 +208,18 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
         <div>
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">REGISTRO_TRANSAZIONI_v1</h1>
+                    <h1 className="page-title">TRANSACTIONS LOG</h1>
                     <p className="text-tiny font-mono text-muted">
-                        {filteredTransactions.length}_ENTRIES_LOADED
+                        {filteredTransactions.length} Entries loaded
                     </p>
                 </div>
-                <button
+                    <button
                     className={`btn ${showFilters ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() => setShowFilters(!showFilters)}
-                    aria-label="Mostra filtri"
+                    aria-label="Show filters"
                 >
                     <Filter size={16} />
-                    Filtri
+                    Filters
                     {activeFiltersCount > 0 && (
                         <span className="badge badge-success" style={{ marginLeft: 'var(--space-sm)', minWidth: '20px' }}>
                             {activeFiltersCount}
@@ -231,19 +231,19 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
             {/* Summary Grid */}
             <div className="grid-3 gap-md mb-lg">
                 <div className="structural-border p-md">
-                    <div className="text-tiny font-mono uppercase text-muted mb-xs">USCITE_TOTALI</div>
+                    <div className="text-tiny font-mono uppercase text-muted mb-xs">TOTAL EXPENSES</div>
                     <div className="font-mono text-lg text-danger">
                         €{Math.abs(totalExpenses).toFixed(2)}
                     </div>
                 </div>
                 <div className="structural-border p-md">
-                    <div className="text-tiny font-mono uppercase text-muted mb-xs">ENTRATE_TOTALI</div>
+                    <div className="text-tiny font-mono uppercase text-muted mb-xs">TOTAL INCOME</div>
                     <div className="font-mono text-lg text-success">
                         €{totalIncome.toFixed(2)}
                     </div>
                 </div>
                 <div className="structural-border p-md">
-                    <div className="text-tiny font-mono uppercase text-muted mb-xs">NET_FLOW</div>
+                    <div className="text-tiny font-mono uppercase text-muted mb-xs">NET FLOW</div>
                     <div className={`font-mono text-lg ${totalFiltered >= 0 ? 'text-success' : 'text-danger'}`}>
                         {totalFiltered >= 0 ? '+' : ''}€{totalFiltered.toFixed(2)}
                     </div>
@@ -266,7 +266,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                     <input
                         type="text"
                         className="input"
-                        placeholder="Cerca per descrizione, dettagli o categoria..."
+                        placeholder="Search by description, details, or category..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         style={{ paddingLeft: '2.5rem' }}
@@ -276,7 +276,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                             className="btn btn-ghost btn-icon"
                             style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', width: 28, height: 28 }}
                             onClick={() => setSearchQuery('')}
-                            aria-label="Pulisci ricerca"
+                            aria-label="Clear search"
                         >
                             <X size={16} />
                         </button>
@@ -290,16 +290,16 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                             <div>
                                 <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
                                     <TrendingDown size={14} style={{ marginRight: '4px' }} />
-                                    Tipo
+                                    Type
                                 </label>
                                 <select
                                     className="input"
                                     value={transactionType}
                                     onChange={e => setTransactionType(e.target.value as typeof transactionType)}
                                 >
-                                    <option value="all">Tutte</option>
-                                    <option value="expense">Solo spese</option>
-                                    <option value="income">Solo entrate</option>
+                                    <option value="all">All</option>
+                                    <option value="expense">Expenses only</option>
+                                    <option value="income">Income only</option>
                                 </select>
                             </div>
 
@@ -307,30 +307,30 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                             <div>
                                 <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
                                     <Calendar size={14} style={{ marginRight: '4px' }} />
-                                    Periodo
+                                    Period
                                 </label>
                                 <select
                                     className="input"
                                     value={dateRange}
                                     onChange={e => setDateRange(e.target.value as typeof dateRange)}
                                 >
-                                    <option value="all">Tutte le date</option>
-                                    <option value="month">Questo mese</option>
-                                    <option value="3months">Ultimi 3 mesi</option>
-                                    <option value="year">Quest'anno</option>
-                                    <option value="custom">Personalizzato</option>
+                                    <option value="all">All dates</option>
+                                    <option value="month">This month</option>
+                                    <option value="3months">Last 3 months</option>
+                                    <option value="year">This year</option>
+                                    <option value="custom">Custom</option>
                                 </select>
                             </div>
 
                             {/* Category */}
                             <div>
-                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>Categoria</label>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>Category</label>
                                 <select
                                     className="input"
                                     value={selectedCategoryId || ''}
                                     onChange={e => setSelectedCategoryId(e.target.value ? Number(e.target.value) : null)}
                                 >
-                                    <option value="">Tutte le categorie</option>
+                                    <option value="">All categories</option>
                                     {categories.map(cat => (
                                         <option key={cat.id} value={cat.id}>
                                             {cat.icon} {cat.name}
@@ -343,7 +343,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                             <div>
                                 <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
                                     <DollarSign size={14} style={{ marginRight: '4px' }} />
-                                    Importo (€)
+                                    Amount (€)
                                 </label>
                                 <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
                                     <input
@@ -369,7 +369,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                             <div>
                                 <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
                                     <ArrowUpDown size={14} style={{ marginRight: '4px' }} />
-                                    Ordina per
+                                    Sort by
                                 </label>
                                 <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
                                     <select
@@ -378,8 +378,8 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                         onChange={e => setSortBy(e.target.value as typeof sortBy)}
                                         style={{ flex: 1 }}
                                     >
-                                        <option value="date">Data</option>
-                                        <option value="amount">Importo</option>
+                                        <option value="date">Date</option>
+                                        <option value="amount">Amount</option>
                                     </select>
                                     <button
                                         className="btn btn-secondary"
@@ -396,7 +396,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                         {dateRange === 'custom' && (
                             <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
                                 <div style={{ flex: 1 }}>
-                                    <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>Da</label>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>From</label>
                                     <input
                                         type="date"
                                         className="input"
@@ -405,7 +405,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                     />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>A</label>
+                                <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>To</label>
                                     <input
                                         type="date"
                                         className="input"
@@ -424,7 +424,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                 style={{ marginTop: 'var(--space-md)' }}
                             >
                                 <X size={16} />
-                                Resetta tutti i filtri
+                                Clear all filters
                             </button>
                         )}
                     </div>
@@ -446,9 +446,9 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                 display: 'flex',
                                 justifyContent: 'space-between'
                             }}>
-                                <span>{format(new Date(dateKey), "EEEE d MMMM yyyy", { locale: it })}</span>
+                                <span>{format(new Date(dateKey), "EEEE d MMMM yyyy", { locale: enUS })}</span>
                                 <span style={{ fontFeatureSettings: 'tnum' }}>
-                                    {txs.length} transazioni
+                                    {txs.length} transactions
                                 </span>
                             </div>
                             <div className="transaction-list">
@@ -477,7 +477,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                                     className="btn btn-ghost btn-icon structural-border"
                                                     style={{ width: 28, height: 28, borderRadius: 0 }}
                                                     onClick={() => setEditingTransaction(t)}
-                                                    aria-label="Modifica"
+                                                    aria-label="Edit"
                                                 >
                                                     <Edit2 size={12} />
                                                 </button>
@@ -486,7 +486,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                                         className="btn btn-danger btn-icon structural-border"
                                                         style={{ width: 28, height: 28, borderRadius: 0 }}
                                                         onClick={() => handleDelete(t.id!)}
-                                                        aria-label="Conferma eliminazione"
+                                                        aria-label="Confirm deletion"
                                                     >
                                                         <Trash2 size={12} />
                                                     </button>
@@ -495,7 +495,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                                                         className="btn btn-ghost btn-icon structural-border"
                                                         style={{ width: 28, height: 28, borderRadius: 0 }}
                                                         onClick={() => setDeleteConfirm(t.id!)}
-                                                        aria-label="Elimina"
+                                                        aria-label="Delete"
                                                     >
                                                         <Trash2 size={12} />
                                                     </button>
@@ -510,11 +510,11 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                 ) : (
                     <div className="empty-state">
                         <div className="empty-state-icon">🔍</div>
-                        <div className="empty-state-title">Nessuna transazione trovata</div>
-                        <p>Prova a modificare i filtri di ricerca</p>
+                        <div className="empty-state-title">No transactions found</div>
+                        <p>Try adjusting your search filters</p>
                         {activeFiltersCount > 0 && (
                             <button className="btn btn-secondary" onClick={clearAllFilters} style={{ marginTop: 'var(--space-md)' }}>
-                                Resetta filtri
+                                Clear filters
                             </button>
                         )}
                     </div>

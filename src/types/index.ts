@@ -59,7 +59,7 @@ export interface CategoryWithSubcategories extends Category {
 }
 
 // Import types
-export interface IsybankTransaction {
+export interface CardTransaction {
   Data: Date | string;
   Operazione: string;
   Dettagli: string;

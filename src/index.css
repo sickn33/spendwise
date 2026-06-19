@@ -179,6 +179,7 @@ h4 {
   padding: var(--space-2xl);
   min-height: 100vh;
   background: var(--bg-paper);
+  min-width: 0;
 }
 
 /* Logo */
@@ -280,7 +281,7 @@ h4 {
 /* Stats Sheets */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 0;
   border: 1px solid var(--border-structural);
   margin-bottom: var(--space-2xl);
@@ -767,7 +768,7 @@ select.input {
   }
 
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
 
   .form-row {
@@ -776,6 +777,11 @@ select.input {
 
   h1 {
     font-size: 1.5rem;
+  }
+
+  .app {
+    width: 100%;
+    overflow-x: clip;
   }
 }
 
@@ -2402,6 +2408,8 @@ select.input {
   background: var(--bg-paper);
   transition: background var(--transition-fast);
   cursor: pointer;
+  color: var(--text-ink);
+  font: inherit;
 }
 
 .preset-item:last-child {
@@ -2542,6 +2550,12 @@ select.input {
   transition: all var(--transition-base);
   border-radius: var(--radius-sm);
   gap: var(--space-sm);
+  width: calc(100% - var(--space-xs) * 2);
+  border: 0;
+  background: transparent;
+  color: var(--text-ink);
+  font: inherit;
+  text-align: left;
 }
 
 .preset-item-sidebar:hover {

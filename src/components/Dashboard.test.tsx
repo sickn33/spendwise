@@ -55,7 +55,7 @@ describe('Dashboard Component', () => {
 
     it('renders the technical dashboard title', async () => {
         render(<Dashboard onAddTransaction={() => {}} />);
-        expect(await screen.findByText(/PANNELLO_CONTROLLO_v1/i)).toBeInTheDocument();
+        expect(await screen.findByText(/CONTROL PANEL/i)).toBeInTheDocument();
     });
 
     it('displays monospaced stats correctly', async () => {
@@ -67,14 +67,14 @@ describe('Dashboard Component', () => {
             expect(screen.getByText(/€3000.00/)).toBeInTheDocument();
         });
 
-        expect(screen.getByText(/SPESE_MENSILI/)).toBeInTheDocument();
-        expect(screen.getByText(/ENTRATE_MENSILI/)).toBeInTheDocument();
+        expect(screen.getByText(/MONTHLY EXPENSES/)).toBeInTheDocument();
+        expect(screen.getByText(/MONTHLY INCOME/)).toBeInTheDocument();
     });
 
     it('handles month navigation correctly', async () => {
         render(<Dashboard onAddTransaction={() => {}} />);
         
-        const prevButton = await screen.findByTitle('Mese precedente');
+        const prevButton = await screen.findByTitle('Previous month');
         fireEvent.click(prevButton);
 
         // Verification of reloading data for previous month
@@ -87,7 +87,7 @@ describe('Dashboard Component', () => {
     it('renders the transaction ledger', async () => {
         render(<Dashboard onAddTransaction={() => {}} />);
         
-        expect(await screen.findByText(/REGISTRO_TRANSAZIONI_CORRENTE/)).toBeInTheDocument();
+        expect(await screen.findByText(/CURRENT TRANSACTION LOG/)).toBeInTheDocument();
         expect(screen.getByText('Pranzo')).toBeInTheDocument();
         // Matching across potential fragmentation and whitespace
         const amounts = screen.getAllByText(/€\s*25\.50/);
@@ -97,7 +97,7 @@ describe('Dashboard Component', () => {
     it('renders category breakdown indicators in technical style', async () => {
         render(<Dashboard onAddTransaction={() => {}} />);
         
-        expect(await screen.findByText(/DISTRIBUZIONE_CATEGORIA_v1/)).toBeInTheDocument();
+        expect(await screen.findByText(/CATEGORY DISTRIBUTION/)).toBeInTheDocument();
         const cats = screen.getAllByText(/CIBO/i);
         expect(cats.length).toBeGreaterThan(0);
         const totals = screen.getAllByText(/€\s*450\.00/);

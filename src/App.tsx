@@ -85,7 +85,7 @@ function App() {
         setTheme(newTheme);
         localStorage.setItem('spendwise-theme', newTheme);
         document.documentElement.setAttribute('data-theme', newTheme);
-        announce(`Tema cambiato a ${newTheme === 'dark' ? 'scuro' : 'chiaro'}`);
+        announce(`Theme changed to ${newTheme === 'dark' ? 'dark' : 'light'}`);
     }
 
     // Screen reader announcement helper
@@ -106,7 +106,7 @@ function App() {
                 case 'n':
                     e.preventDefault();
                     setShowTransactionForm(true);
-                    announce('Aperta finestra nuova transazione');
+                    announce('New transaction dialog opened');
                     break;
                 case 'd':
                     e.preventDefault();
@@ -116,7 +116,7 @@ function App() {
                 case 't':
                     e.preventDefault();
                     setCurrentPage('transactions');
-                    announce('Transazioni');
+                    announce('Transactions');
                     break;
                 case 'b':
                     e.preventDefault();
@@ -126,17 +126,17 @@ function App() {
                 case 'c':
                     e.preventDefault();
                     setCurrentPage('comparison');
-                    announce('Confronto mensile');
+                    announce('Monthly comparison');
                     break;
                 case 'r':
                     e.preventDefault();
                     setCurrentPage('reports');
-                    announce('Report');
+                    announce('Reports');
                     break;
                 case 's':
                     e.preventDefault();
                     setCurrentPage('settings');
-                    announce('Impostazioni');
+                    announce('Settings');
                     break;
                 case '?':
                     e.preventDefault();
@@ -145,7 +145,7 @@ function App() {
                 case 'escape':
                     if (showTransactionForm) {
                         setShowTransactionForm(false);
-                        announce('Finestra chiusa');
+                        announce('Dialog closed');
                     }
                     if (showShortcutsHelp) {
                         setShowShortcutsHelp(false);
@@ -183,7 +183,7 @@ function App() {
         const page = (() => {
             switch (currentPage) {
                 case 'dashboard':
-                    return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} />;
+                    return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} refreshTrigger={refreshTrigger} />;
                 case 'transactions':
                     return <TransactionList refreshTrigger={refreshTrigger} />;
                 case 'categories':
@@ -199,7 +199,7 @@ function App() {
                 case 'settings':
                     return <Settings onTransactionsImported={() => setRefreshTrigger(prev => prev + 1)} />;
                 default:
-                    return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} />;
+                    return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} refreshTrigger={refreshTrigger} />;
             }
         })();
         return <Suspense fallback={pageFallback}>{page}</Suspense>;
@@ -209,7 +209,7 @@ function App() {
         <div className="app">
             {/* Skip Link for keyboard navigation */}
             <a href="#main-content" className="skip-link">
-                Salta al contenuto principale
+                Skip to main content
             </a>
 
             {/* ARIA Live Region for screen reader announcements */}
@@ -240,7 +240,7 @@ function App() {
             <button
                 className="fab"
                 onClick={() => setShowTransactionForm(true)}
-                aria-label="Aggiungi transazione"
+                aria-label="Add transaction"
             >
                 <Plus size={24} />
             </button>
@@ -259,11 +259,11 @@ function App() {
                 <div className="shortcuts-help" role="dialog" aria-labelledby="shortcuts-title">
                     <div className="shortcuts-help-title" id="shortcuts-title">
                         <Keyboard size={18} />
-                        Scorciatoie da Tastiera
+                        Keyboard shortcuts
                     </div>
                     <div className="shortcuts-list">
                         <div className="shortcut-item">
-                            <span>Nuova transazione</span>
+                            <span>New transaction</span>
                             <span className="shortcut-key">N</span>
                         </div>
                         <div className="shortcut-item">
@@ -271,7 +271,7 @@ function App() {
                             <span className="shortcut-key">D</span>
                         </div>
                         <div className="shortcut-item">
-                            <span>Transazioni</span>
+                            <span>Transactions</span>
                             <span className="shortcut-key">T</span>
                         </div>
                         <div className="shortcut-item">
@@ -279,23 +279,23 @@ function App() {
                             <span className="shortcut-key">B</span>
                         </div>
                         <div className="shortcut-item">
-                            <span>Confronto</span>
+                            <span>Comparison</span>
                             <span className="shortcut-key">C</span>
                         </div>
                         <div className="shortcut-item">
-                            <span>Report</span>
+                            <span>Reports</span>
                             <span className="shortcut-key">R</span>
                         </div>
                         <div className="shortcut-item">
-                            <span>Impostazioni</span>
+                            <span>Settings</span>
                             <span className="shortcut-key">S</span>
                         </div>
                         <div className="shortcut-item">
-                            <span>Chiudi / Annulla</span>
+                            <span>Close / Cancel</span>
                             <span className="shortcut-key">ESC</span>
                         </div>
                         <div className="shortcut-item">
-                            <span>Mostra/nascondi aiuto</span>
+                            <span>Show/hide help</span>
                             <span className="shortcut-key">?</span>
                         </div>
                     </div>

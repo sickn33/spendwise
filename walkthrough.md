@@ -1,4 +1,4 @@
-# Accessibility Improvement Walkthrough
+# SpendWise Development Walkthrough
 
 ## Overview
 
@@ -33,6 +33,12 @@ Successfully improved the accessibility of SpendWise through a three-phase initi
 - **Muted Text Utility Fix**: Updated `.text-muted` to use `color: var(--text-muted)` instead of `opacity`-based reduction (fixes "Very low contrast" warnings in WAVE for common metadata/empty states).
 - **Icon-Only Button Labels**: Added explicit `aria-label` to Dashboard month navigation buttons ("Mese precedente", "Mese successivo") so the accessible name is not title-only.
 
+## Phase 5: Project Agent Initialization (Expert Brain)
+
+- **Skill Localization**: Localized 15 specialized skills (12 initial + 3 specialized for reporting/dashboards) from the global repository into `.agent/skills/`. This transforms the project into a high-signal "Agentic Project" with reduced noise and optimized performance for the specific tech stack (React, TypeScript, Vite, Vitest, IndexedDB, Chart.js).
+- **Tooling Consolidation**: Included skills for TDD, Systematic Debugging, UI/UX Pro Max, Frontend Design, KPI Dashboard Design, PDF Official, and XLSX Official to ensure high-quality execution of the "Technical Editorial Design" vision and robust data export capabilities.
+- **Workflow Automation**: Set up the project-agent-initializer to maintain consistency in future development cycles.
+
 ## Verification Results
 
 - **Automated Tests**:
@@ -40,6 +46,7 @@ Successfully improved the accessibility of SpendWise through a three-phase initi
   - `src/Contrast.test.ts`: Strictly enforces variable safety and opacity bans.
 - **Visual Verification**: Confirmed standard colors in light mode provide significantly better contrast.
 - **Accessibility Score**: Manual audit indicates compliance with WCAG 2.1 AA contrast requirements for all static text.
+- **Agent Intelligence**: The project now has a local repository of 15 specialized skills in `.agent/skills/`.
 
 ## Files Modified
 

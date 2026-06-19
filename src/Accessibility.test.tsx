@@ -64,8 +64,8 @@ describe('Accessibility Verification', () => {
             
             // Check major sections
             const headers = Array.from(h2s).map(h => h.textContent);
-            expect(headers).toContain('DISTRIBUZIONE_CATEGORIA_v1');
-            expect(headers).toContain('TREND_TEMPORALE_6M');
+            expect(headers).toContain('CATEGORY DISTRIBUTION');
+            expect(headers).toContain('6-MONTH TREND');
             
             // Should NOT have h3 (skipped levels)
             expect(h3s.length).toBe(0);
@@ -76,14 +76,14 @@ describe('Accessibility Verification', () => {
         render(<Dashboard onAddTransaction={() => {}} />);
 
         await waitFor(() => {
-            const prev = document.querySelector('button[title="Mese precedente"]');
-            const next = document.querySelector('button[title="Mese successivo"]');
+            const prev = document.querySelector('button[title="Previous month"]');
+            const next = document.querySelector('button[title="Next month"]');
 
             expect(prev).not.toBeNull();
             expect(next).not.toBeNull();
 
-            expect(prev?.getAttribute('aria-label')).toBe('Mese precedente');
-            expect(next?.getAttribute('aria-label')).toBe('Mese successivo');
+            expect(prev?.getAttribute('aria-label')).toBe('Previous month');
+            expect(next?.getAttribute('aria-label')).toBe('Next month');
         });
     });
 
@@ -107,9 +107,9 @@ describe('Accessibility Verification', () => {
             const h3s = document.querySelectorAll('h3');
 
             const headers = Array.from(h2s).map(h => h.textContent);
-            expect(headers).toContain('IMPORTAZIONE_DATI');
-            expect(headers).toContain('GMAIL_SYNCHRONIZER');
-            expect(headers).toContain('DATA_EXTRACTION');
+            expect(headers).toContain('DATA IMPORT');
+            expect(headers).toContain('GMAIL SYNCHRONIZER');
+            expect(headers).toContain('DATA EXPORT');
 
             // Should NOT have h3
             expect(h3s.length).toBe(0);

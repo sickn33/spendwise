@@ -121,9 +121,9 @@ export const SavingsGoals = memo(function SavingsGoals() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight">OBIETTIVI_DI_RISPARMIO</h1>
+                    <h1 className="text-xl font-bold tracking-tight">SAVINGS GOALS</h1>
                     <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
-                        TRACKING_ASSET_LIQUIDITA
+                        ASSET TRACKING
                     </p>
                 </div>
                 <button 
@@ -131,7 +131,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                     onClick={() => setShowForm(true)}
                 >
                     <Plus size={14} />
-                    NUOVO_ASSET
+                    NEW GOAL
                 </button>
             </div>
 
@@ -162,10 +162,10 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                                 <div className="flex items-center gap-xs text-xs font-mono text-muted uppercase">
                                                     <Calendar size={10} />
                                                     {daysLeft !== null && daysLeft > 0
-                                                        ? `${daysLeft}_GIORNI`
+                                                            ? `${daysLeft} DAYS`
                                                         : daysLeft === 0
-                                                            ? 'SCADE_OGGI'
-                                                            : 'SCADUTO'}
+                                                            ? 'TODAY'
+                                                            : 'OVERDUE'}
                                                 </div>
                                             )}
                                         </div>
@@ -174,14 +174,14 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                         <button
                                             className="p-1 hover:bg-concrete text-muted hover:text-ink transition-colors"
                                             onClick={() => handleEdit(goal)}
-                                            aria-label="MODIFICA"
+                                            aria-label="Edit"
                                         >
                                             <Edit2 size={14} />
                                         </button>
                                         <button
                                             className="p-1 hover:bg-concrete text-muted hover:text-danger transition-colors"
                                             onClick={() => handleDelete(goal.id!)}
-                                            aria-label="ELIMINA"
+                                            aria-label="Delete"
                                         >
                                             <Trash2 size={14} />
                                         </button>
@@ -190,13 +190,13 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
                                 <div className="grid grid-cols-2 gap-md mb-md">
                                     <div>
-                                        <div className="text-tiny font-mono uppercase text-muted mb-xs">RISPARMIATO</div>
+                                        <div className="text-tiny font-mono uppercase text-muted mb-xs">SAVED</div>
                                         <div className="text-lg font-mono font-bold" style={{ color: goal.color }}>
                                             €{goal.currentAmount.toFixed(2)}
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-tiny font-mono uppercase text-muted mb-xs">OBIETTIVO</div>
+                                        <div className="text-tiny font-mono uppercase text-muted mb-xs">TARGET</div>
                                         <div className="text-lg font-mono font-bold">
                                             €{goal.targetAmount.toFixed(2)}
                                         </div>
@@ -206,7 +206,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                 {/* Progress Bar */}
                                 <div className="mb-md">
                                     <div className="flex justify-between text-xs font-mono text-muted mb-1 uppercase">
-                                        <span>PROGRESSO</span>
+                                        <span>PROGRESS</span>
                                         <span>{percentage.toFixed(0)}%</span>
                                     </div>
                                     <div className="h-2 w-full bg-concrete overflow-hidden">
@@ -229,7 +229,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                     ) : (
                                         <div className="flex items-center gap-xs text-muted font-mono text-xs uppercase">
                                             <TrendingUp size={14} />
-                                            MANCANO_€{remaining.toFixed(2)}
+                                            REMAINING €{remaining.toFixed(2)}
                                         </div>
                                     )}
                                 </div>
@@ -240,7 +240,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                         <input
                                             type="number"
                                             className="w-full bg-concrete/20 border-b border-ink p-xs font-mono text-sm focus:outline-none mb-sm"
-                                            placeholder="IMPORTO..."
+                                            placeholder="Amount..."
                                             value={contributeAmount}
                                             onChange={e => setContributeAmount(e.target.value)}
                                             autoFocus
@@ -250,27 +250,27 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                                 className="btn btn-primary text-xs py-1"
                                                 onClick={() => handleContribute(goal.id!, false)}
                                             >
-                                                VERSA
+                                                ADD
                                             </button>
                                             <button
                                                 className="btn btn-secondary text-xs py-1"
                                                 onClick={() => handleContribute(goal.id!, true)}
                                             >
-                                                PRELEVA
+                                                WITHDRAW
                                             </button>
                                         </div>
                                         <button
                                             className="w-full text-center text-xs text-muted uppercase mt-xs hover:text-ink"
                                             onClick={() => { setShowContribute(null); setContributeAmount(''); }}
                                         >
-                                            ANNULLA
+                                            Cancel
                                         </button>
                                     </div>
                                 ) : (
                                     <button
                                         className="absolute bottom-md right-md btn btn-ghost btn-icon bg-paper hover:bg-concrete structural-border border-border shadow-none"
                                         onClick={() => setShowContribute(goal.id!)}
-                                        aria-label="GESTISCI_FONDI"
+                                        aria-label="MANAGE_FUNDS"
                                     >
                                         <PlusCircle size={16} />
                                     </button>
@@ -282,13 +282,13 @@ export const SavingsGoals = memo(function SavingsGoals() {
             ) : (
                 <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
                     <Target size={32} className="text-muted mb-md text-muted" />
-                    <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_ASSET_DEFINITO</h3>
+                    <h3 className="text-sm font-mono uppercase text-muted mb-xs">NO GOALS DEFINED</h3>
                     <p className="text-muted text-sm max-w-xs mb-md">
-                        Definisci il tuo primo obiettivo di risparmio per iniziare il tracking.
+                        Define your first savings goal to start tracking.
                     </p>
                     <button className="btn btn-primary text-xs uppercase tracking-wider" onClick={() => setShowForm(true)}>
                         <Plus size={14} className="mr-xs" />
-                        CREA_PRIMO_ASSET
+                        CREATE FIRST GOAL
                     </button>
                 </div>
             )}
@@ -299,12 +299,12 @@ export const SavingsGoals = memo(function SavingsGoals() {
                     <div className="w-full max-w-md bg-paper structural-border shadow-none" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between p-md border-b border-border">
                             <h2 className="text-sm font-mono uppercase tracking-wider">
-                                {editingGoal ? 'MODIFICA_ASSET' : 'NUOVO_ASSET'}
+                                {editingGoal ? 'EDIT GOAL' : 'NEW GOAL'}
                             </h2>
                             <button 
                                 className="btn btn-ghost btn-icon structural-border border-0" 
                                 onClick={resetForm}
-                                aria-label="CHIUDI"
+                                aria-label="CLOSE"
                             >
                                 <X size={20} />
                             </button>
@@ -312,11 +312,11 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
                         <form onSubmit={handleSubmit} className="p-lg space-y-md">
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">NOME_ASSET</label>
+                                <label className="text-tiny font-mono uppercase text-muted">GOAL NAME</label>
                                 <input
                                     type="text"
                                     className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
-                                    placeholder="NOME_ASSET"
+                                    placeholder="GOAL NAME"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     autoFocus
@@ -337,7 +337,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                     />
                                 </div>
                                 <div className="space-y-xs">
-                                    <label className="text-tiny font-mono uppercase text-muted">ATTUALE (€)</label>
+                                    <label className="text-tiny font-mono uppercase text-muted">CURRENT (€)</label>
                                     <input
                                         type="number"
                                         className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none"
@@ -361,7 +361,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                             </div>
 
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">ICONA_ASSET</label>
+                                <label className="text-tiny font-mono uppercase text-muted">ICON</label>
                                 <div className="flex flex-wrap gap-xs">
                                     {ICON_OPTIONS.map(icon => (
                                         <button
@@ -377,7 +377,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                             </div>
 
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">COLORE_ASSET</label>
+                                <label className="text-tiny font-mono uppercase text-muted">COLOR</label>
                                 <div className="flex flex-wrap gap-xs">
                                     {COLOR_OPTIONS.map(color => (
                                         <button
@@ -397,7 +397,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
                             <div className="pt-md flex justify-end gap-sm">
                                 <button type="button" className="btn btn-secondary text-xs uppercase tracking-wider" onClick={resetForm}>
-                                    ANNULLA
+                                    Cancel
                                 </button>
                                 <button
                                     type="submit"
@@ -405,7 +405,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                     disabled={!formData.name || !formData.targetAmount}
                                 >
                                     <Save size={14} />
-                                    {editingGoal ? 'SALVA_MODIFICHE' : 'CREA_ASSET'}
+                                    {editingGoal ? 'Save changes' : 'CREATE GOAL'}
                                 </button>
                             </div>
                         </form>

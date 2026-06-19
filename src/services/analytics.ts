@@ -115,9 +115,9 @@ export async function generateInsights(): Promise<string[]> {
         : 0;
 
     if (spendingChange > 0) {
-        insights.push(`📈 Le tue spese sono aumentate del ${spendingChangePercent}% rispetto al mese scorso.`);
+        insights.push(`📈 Your spending increased by ${spendingChangePercent}% compared to last month.`);
     } else if (spendingChange < 0) {
-        insights.push(`📉 Le tue spese sono diminuite del ${Math.abs(Number(spendingChangePercent))}% rispetto al mese scorso.`);
+        insights.push(`📉 Your spending decreased by ${Math.abs(Number(spendingChangePercent))}% compared to last month.`);
     }
 
     // Find biggest category
@@ -136,16 +136,16 @@ export async function generateInsights(): Promise<string[]> {
     if (biggestCatId > 0) {
         const category = categoryMap.get(biggestCatId);
         if (category) {
-            insights.push(`💰 La categoria "${category.name}" è la tua spesa maggiore questo mese (€${biggestAmount.toFixed(2)}).`);
+            insights.push(`💰 ${category.name} is your highest spending category this month (€${biggestAmount.toFixed(2)}).`);
         }
     }
 
     // Check income vs expenses
     const netChange = currentMonth.totalIncome - currentMonth.totalExpenses;
     if (netChange > 0) {
-        insights.push(`✅ Bilancio positivo questo mese: +€${netChange.toFixed(2)}.`);
+        insights.push(`✅ Positive balance this month: +€${netChange.toFixed(2)}.`);
     } else if (netChange < 0) {
-        insights.push(`⚠️ Stai spendendo più di quanto guadagni questo mese: -€${Math.abs(netChange).toFixed(2)}.`);
+        insights.push(`⚠️ You're spending more than you earn this month: -€${Math.abs(netChange).toFixed(2)}.`);
     }
 
     return insights;

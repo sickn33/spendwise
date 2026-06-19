@@ -90,7 +90,7 @@ export const BudgetManager = memo(function BudgetManager() {
     }, [formData, editingBudget, resetForm, loadData]);
 
     const handleDelete = useCallback(async (id: number) => {
-        if (confirm('Sei sicuro di voler eliminare questo budget?')) {
+        if (confirm('Are you sure you want to delete this budget?')) {
             await deleteBudget(id);
             loadData();
         }
@@ -122,9 +122,9 @@ export const BudgetManager = memo(function BudgetManager() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight">BUDGET_MANAGER</h1>
+                    <h1 className="text-xl font-bold tracking-tight">BUDGET MANAGER</h1>
                     <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
-                        CONTROLLO_LIMITI_SPESA
+                        BUDGET CONTROL
                     </p>
                 </div>
                 <button 
@@ -132,7 +132,7 @@ export const BudgetManager = memo(function BudgetManager() {
                     onClick={() => setShowForm(true)}
                 >
                     <Plus size={16} />
-                    NUOVO_BUDGET
+                    NEW BUDGET
                 </button>
             </div>
 
@@ -150,21 +150,21 @@ export const BudgetManager = memo(function BudgetManager() {
                                     <span className="text-xl">{progress.category?.icon}</span>
                                     <div>
                                         <div className="font-bold tracking-tight">{progress.category?.name}</div>
-                                        <div className="text-tiny font-mono uppercase text-muted">MENSILE</div>
+                                        <div className="text-tiny font-mono uppercase text-muted">MONTHLY</div>
                                     </div>
                                 </div>
                                 <div className="flex gap-px text-muted/50 group-hover:opacity-100 transition-opacity">
                                     <button
                                         className="p-xs hover:bg-concrete text-ink"
                                         onClick={() => handleEdit(progress.budget)}
-                                        title="Modifica"
+                                        title="Edit"
                                     >
                                         <Edit2 size={14} />
                                     </button>
                                     <button
                                         className="p-xs hover:bg-concrete text-ink hover:text-danger"
                                         onClick={() => handleDelete(progress.budget.id!)}
-                                        title="Elimina"
+                                        title="Delete"
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -174,7 +174,7 @@ export const BudgetManager = memo(function BudgetManager() {
                             {/* Data Grid */}
                             <div className="grid grid-cols-2 gap-sm mb-md border-t border-b border-border py-sm border-dashed">
                                 <div>
-                                    <span className="text-tiny font-mono uppercase text-muted block mb-1">SPESO</span>
+                                    <span className="text-tiny font-mono uppercase text-muted block mb-1"> SPENT</span>
                                     <div className={`text-lg font-mono font-bold ${progress.isOverBudget ? 'text-danger' : ''}`}>
                                         €{progress.spent.toFixed(2)}
                                     </div>
@@ -207,7 +207,7 @@ export const BudgetManager = memo(function BudgetManager() {
                                 ) : (
                                     <div className="text-muted flex items-center gap-xs">
                                         <TrendingUp size={14} />
-                                        <span>RIMANENTE: €{progress.remaining.toFixed(0)}</span>
+                                        <span>REMAINING: €{progress.remaining.toFixed(0)}</span>
                                     </div>
                                 )}
                                 <div className="text-ink">{progress.percentage.toFixed(0)}%</div>
@@ -218,15 +218,15 @@ export const BudgetManager = memo(function BudgetManager() {
             ) : (
                 <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
                     <AlertTriangle size={32} className="text-muted mb-md text-muted/50" />
-                    <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_BUDGET_ATTIVO</h3>
+                    <h3 className="text-sm font-mono uppercase text-muted mb-xs">NO ACTIVE BUDGET</h3>
                     <p className="text-muted text-sm max-w-xs mb-md">
-                        Definisci i limiti di spesa per le categorie per monitorare i tuoi obiettivi finanziari.
+                        Set spending limits by category to monitor your goals.
                     </p>
                     <button 
                         className="btn btn-primary text-xs uppercase tracking-wider" 
                         onClick={() => setShowForm(true)}
                     >
-                        INIZIA_CONFIGURAZIONE
+                        START SETUP
                     </button>
                 </div>
             )}
@@ -237,7 +237,7 @@ export const BudgetManager = memo(function BudgetManager() {
                     <div className="w-full max-w-sm bg-paper structural-border shadow-none" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between p-md border-b border-border">
                             <h2 className="text-sm font-mono uppercase tracking-wider">
-                                {editingBudget ? 'MODIFICA_BUDGET' : 'NUOVO_BUDGET'}
+                                {editingBudget ? 'EDIT BUDGET' : 'NEW BUDGET'}
                             </h2>
                             <button 
                                 className="btn btn-ghost btn-icon structural-border border-0" 
@@ -249,14 +249,14 @@ export const BudgetManager = memo(function BudgetManager() {
 
                         <form onSubmit={handleSubmit} className="p-md space-y-md">
                             <div>
-                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">CATEGORIA</label>
+                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">CATEGORY</label>
                                 <select
                                     className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink appearance-none rounded-none"
                                     value={formData.categoryId}
                                     onChange={e => setFormData({ ...formData, categoryId: parseInt(e.target.value) })}
                                     disabled={!!editingBudget}
                                 >
-                                    <option value={0}>SELEZIONA...</option>
+                                    <option value={0}>SELECT CATEGORY...</option>
                                     {(editingBudget ? categories : categoriesWithoutBudget)
                                         .filter(c => !c.isIncome)
                                         .map(c => (
@@ -267,7 +267,7 @@ export const BudgetManager = memo(function BudgetManager() {
                             </div>
 
                             <div>
-                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">IMPORTO_MENSILE (€)</label>
+                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">MONTHLY BUDGET (€)</label>
                                 <input
                                     type="number"
                                     className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink"
@@ -281,14 +281,14 @@ export const BudgetManager = memo(function BudgetManager() {
 
                             <div className="pt-md border-t border-border flex justify-end gap-sm">
                                 <button type="button" className="btn btn-secondary text-xs uppercase tracking-wider" onClick={resetForm}>
-                                    ANNULLA
+                                    CANCEL
                                 </button>
                                 <button
                                     type="submit"
                                     className="btn btn-primary text-xs uppercase tracking-wider"
                                     disabled={!formData.categoryId || !formData.amount}
                                 >
-                                    {editingBudget ? 'SALVA_MODIFICHE' : 'CREA_BUDGET'}
+                                    {editingBudget ? 'SAVE CHANGES' : 'CREATE BUDGET'}
                                 </button>
                             </div>
                         </form>

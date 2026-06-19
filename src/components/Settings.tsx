@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, memo } from 'react';
-import { importIsybankExcel, previewIsybankExcel, type ImportPreviewResult } from '../services/importer';
+import { importCardExcel, previewCardExcel, type ImportPreviewResult } from '../services/importer';
 import { getTransactions, getCategories, clearAllTransactions } from '../db/database';
 import { exportToExcel, exportToCSV } from '../services/importer';
 import { ImportPreviewModal } from './ImportPreviewModal';
@@ -11,7 +11,7 @@ import {
     clearGmailToken,
     isGmailTokenValid,
     requestGmailAccessToken,
-    syncIsybankTransactionsFromGmail,
+    syncCardTransactionsFromGmail,
     cleanupLikelyGmailDuplicates,
     type GmailAccessToken,
     type GmailSyncSettings
@@ -52,12 +52,6 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     const [gmailSyncing, setGmailSyncing] = useState(false);
     const [gmailCleaning, setGmailCleaning] = useState(false);
     const [gmailResult, setGmailResult] = useState<{ success: boolean; message: string } | null>(null);
-    // lastGmailSyncAt is only written to, never read in new UI (except for conditional that was removed or could be kept if wanted)
-    // Actually I should keep it if I want to show last sync time.
-    // In the refactored JSX I removed the "Ultima sync" text or I didn't verify if I kept it.
-    // Let's check refactored JSX.
-    // I see in my previous edit I removed line 471 "Ultima sync...".
-    // So I can remove the state if unused.
     const { 
         fileHandle, 
         permissionStatus, 
@@ -70,8 +64,8 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     async function handleFileSelect(file: File) {
-        if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-            setImportResult({ success: false, message: 'Per favore seleziona un file Excel (.xlsx o .xls)' });
+        if (!file.name.endsWith('.xlsx')) {
+            setImportResult({ success: false, message: 'Please select an Excel file (.xlsx)' });
             return;
         }
 
@@ -80,7 +74,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
 
         try {
             // Use preview instead of direct import
-            const previewResult = await previewIsybankExcel(file);
+            const previewResult = await previewCardExcel(file);
             
             if (previewResult.success) {
                 setPreview(previewResult);
@@ -88,13 +82,13 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             } else {
                 setImportResult({
                     success: false,
-                    message: `Errore: ${previewResult.errors.join(', ')}`
+                    message: `Error: ${previewResult.errors.join(', ')}`
                 });
             }
         } catch (err) {
             setImportResult({
                 success: false,
-                message: `Errore durante l'analisi: ${err instanceof Error ? err.message : 'Errore sconosciuto'}`
+                message: `Error while parsing: ${err instanceof Error ? err.message : 'Unknown error'}`
             });
         } finally {
             setImporting(false);
@@ -106,12 +100,12 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
         
         setImporting(true);
         try {
-            const result = await importIsybankExcel(pendingFile);
+            const result = await importCardExcel(pendingFile);
             
             if (result.success) {
                 setImportResult({
                     success: true,
-                    message: `Importate ${result.imported} transazioni. ${result.skipped} duplicate saltate.${updateExisting && result.updated > 0 ? ` ${result.updated} aggiornate.` : ''}`
+                    message: `Imported ${result.imported} transactions. ${result.skipped} duplicate(s) skipped.${updateExisting && result.updated > 0 ? ` ${result.updated} updated.` : ''}`
                 });
                 if (result.imported > 0) {
                     onTransactionsImported?.();
@@ -119,13 +113,13 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             } else {
                 setImportResult({
                     success: false,
-                    message: `Errore: ${result.errors.join(', ')}`
+                    message: `Error: ${result.errors.join(', ')}`
                 });
             }
         } catch (err) {
             setImportResult({
                 success: false,
-                message: `Errore durante l'import: ${err instanceof Error ? err.message : 'Errore sconosciuto'}`
+                message: `Error during import: ${err instanceof Error ? err.message : 'Unknown error'}`
             });
         } finally {
             setImporting(false);
@@ -138,7 +132,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
         setExporting(true);
         try {
             const transactions = await getTransactions();
-            exportToExcel(transactions, `spendwise_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+            await exportToExcel(transactions, `spendwise_export_${new Date().toISOString().split('T')[0]}.xlsx`);
         } catch (error) {
             console.error('Export error:', error);
         } finally {
@@ -192,10 +186,10 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
         try {
             await clearAllTransactions();
             setShowClearConfirm(false);
-            setImportResult({ success: true, message: 'Tutte le transazioni sono state eliminate.' });
+            setImportResult({ success: true, message: 'All transactions have been removed.' });
             onTransactionsImported?.();
         } catch {
-            setImportResult({ success: false, message: 'Errore durante l\'eliminazione.' });
+            setImportResult({ success: false, message: 'Error during deletion.' });
         } finally {
             setClearing(false);
         }
@@ -219,16 +213,17 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             clearGmailToken();
             setGmailToken(null);
             if (!silent) {
-                setGmailResult({ success: false, message: "Sessione Gmail scaduta. Riconnetti l'account." });
+                setGmailResult({ success: false, message: "Gmail session expired. Reconnect the account." });
             }
             return;
         }
 
         setGmailSyncing(true);
         try {
-            const result = await syncIsybankTransactionsFromGmail({
+            const result = await syncCardTransactionsFromGmail({
                 accessToken: gmailToken.accessToken,
                 senderEmail: gmailSettings.senderEmail,
+                searchQuery: gmailSettings.searchQuery,
                 maxResults: gmailSettings.maxResults
             });
 
@@ -240,17 +235,17 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             localStorage.setItem(LAST_GMAIL_SYNC_KEY, syncedAt);
 
             const message = result.errors.length > 0
-                ? `Sync completata: ${result.imported} importate, ${result.updated} aggiornate, ${result.removed} rimosse, ${result.skipped} saltate, ${result.errors.length} errori.`
-                : `Sync completata: ${result.imported} importate, ${result.updated} aggiornate, ${result.removed} rimosse, ${result.skipped} duplicate/saltate.`;
+                ? `Sync completed: ${result.imported} imported, ${result.updated} updated, ${result.removed} removed, ${result.skipped} skipped, ${result.errors.length} errors.`
+                : `Sync completed: ${result.imported} imported, ${result.updated} updated, ${result.removed} removed, ${result.skipped} duplicates skipped.`;
 
             setGmailResult({ success: result.errors.length === 0, message });
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Errore durante la sincronizzazione Gmail';
+            const message = error instanceof Error ? error.message : 'Error during Gmail sync';
             setGmailResult({ success: false, message });
         } finally {
             setGmailSyncing(false);
         }
-    }, [gmailSettings.maxResults, gmailSettings.senderEmail, gmailToken, onTransactionsImported]);
+    }, [gmailSettings.maxResults, gmailSettings.searchQuery, gmailSettings.senderEmail, gmailToken, onTransactionsImported]);
 
     async function handleConnectGmail() {
         setGmailSyncing(true);
@@ -258,9 +253,9 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             const token = await requestGmailAccessToken(gmailSettings.googleClientId);
             setGmailToken(token);
             saveGmailToken(token);
-            setGmailResult({ success: true, message: 'Gmail collegato con successo.' });
+            setGmailResult({ success: true, message: 'Gmail connected successfully.' });
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Connessione Gmail fallita';
+            const message = error instanceof Error ? error.message : 'Gmail connection failed';
             setGmailResult({ success: false, message });
         } finally {
             setGmailSyncing(false);
@@ -270,7 +265,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     function handleDisconnectGmail() {
         clearGmailToken();
         setGmailToken(null);
-        setGmailResult({ success: true, message: 'Account Gmail scollegato.' });
+        setGmailResult({ success: true, message: 'Gmail account disconnected.' });
     }
 
     async function handleCleanupGmailDuplicates() {
@@ -282,10 +277,10 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             }
             setGmailResult({
                 success: true,
-                message: `Pulizia completata: ${result.removed} duplicati rimossi su ${result.scanned} transazioni.`
+                message: `Cleanup completed:  transactions.`
             });
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Errore durante la pulizia duplicati';
+            const message = error instanceof Error ? error.message : 'Error during duplicate cleanup';
             setGmailResult({ success: false, message });
         } finally {
             setGmailCleaning(false);
@@ -298,7 +293,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
 
         clearGmailToken();
         setGmailToken(null);
-        setGmailResult({ success: false, message: "Sessione Gmail scaduta. Riconnetti l'account." });
+        setGmailResult({ success: false, message: "Gmail session expired. Reconnect the account." });
     }, [gmailToken]);
 
     useEffect(() => {
@@ -318,9 +313,9 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             {/* Page Header - Industrial Style */}
             <div className="page-header border-b pb-xl mb-xl">
                 <div>
-                    <h1 className="font-display">IMPOSTAZIONI_SISTEMA</h1>
+                    <h1 className="font-display">SYSTEM SETTINGS</h1>
                     <div className="flex items-center gap-sm text-muted font-mono text-[10px] uppercase tracking-[0.2em] mt-2">
-                        <span>CONTROL_PANEL</span>
+                        <span>CONTROL PANEL</span>
                         <div className="w-8 h-px bg-border-structural"></div>
                         <span>v1.0.0_STABLE</span>
                     </div>
@@ -334,8 +329,8 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Import Section - Technical Spec Box */}
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">IMPORTAZIONE_DATI</h2>
-                            <div className="text-[10px] font-mono text-muted">MODULE_01</div>
+                            <h2 className="card-title">DATA IMPORT</h2>
+                            <div className="text-[10px] font-mono text-muted">MODULE 01</div>
                         </div>
                         
                         <div 
@@ -348,7 +343,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 <input
                                     ref={fileInputRef}
                                     type="file"
-                                    accept=".xlsx,.xls"
+                                    accept=".xlsx"
                                     className="hidden"
                                     onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                                 />
@@ -356,7 +351,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     <Upload size={20} />
                                 </div>
                                 <div className="text-center">
-                                    <p className="font-mono text-xs font-bold uppercase tracking-wider">IMPORTA_XLS_ISYBANK</p>
+                                    <p className="font-mono text-xs font-bold uppercase tracking-wider">IMPORT XLS (CARD)</p>
                                     <p className="font-mono text-[9px] text-muted mt-2 uppercase tracking-[0.1em]">
                                         {importing ? 'STATUS: PROCESSING...' : 'STATUS: READY_FOR_INPUT'}
                                     </p>
@@ -373,7 +368,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Gmail Sync - Industrial Specs */}
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">GMAIL_SYNCHRONIZER</h2>
+                            <h2 className="card-title">GMAIL SYNCHRONIZER</h2>
                             <div className={`px-2 py-0.5 font-mono text-[9px] uppercase border ${gmailToken && isGmailTokenValid(gmailToken) ? 'border-success text-success bg-success/5' : 'border-border-structural text-muted'}`}>
                                 {gmailToken && isGmailTokenValid(gmailToken) ? 'STATUS: ONLINE' : 'STATUS: OFFLINE'}
                             </div>
@@ -382,7 +377,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                         <div className="space-y-lg">
                             <div className="grid gap-md">
                                 <div className="input-group">
-                                    <label htmlFor="gmail-client-id" className="input-label">CLIENT_ID_GMAIL</label>
+                                    <label htmlFor="gmail-client-id" className="input-label">GOOGLE CLIENT ID</label>
                                     <input
                                         id="gmail-client-id"
                                         type="text"
@@ -394,7 +389,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 </div>
                                 
                                 <div className="input-group">
-                                    <label htmlFor="gmail-sender-email" className="input-label">BANCA_SENDER_EMAIL</label>
+                                    <label htmlFor="gmail-sender-email" className="input-label">BANK SENDER EMAIL</label>
                                     <input
                                         id="gmail-sender-email"
                                         type="email"
@@ -404,9 +399,21 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     />
                                 </div>
 
+                                <div className="input-group">
+                                    <label htmlFor="gmail-search-query" className="input-label">PERSONAL MAIL QUERY</label>
+                                    <input
+                                        id="gmail-search-query"
+                                        type="text"
+                                        className="input font-mono text-xs"
+                                        placeholder="from:alerts@example.com OR subject:card-payment"
+                                        value={gmailSettings.searchQuery}
+                                        onChange={e => updateGmailSettings({ searchQuery: e.target.value })}
+                                    />
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-md">
                                     <div className="input-group">
-                                        <label htmlFor="gmail-max-results" className="input-label">MAX_RECORDS</label>
+                                        <label htmlFor="gmail-max-results" className="input-label">MAX RECORDS</label>
                                         <input
                                             id="gmail-max-results"
                                             type="number"
@@ -416,7 +423,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                         />
                                     </div>
                                     <div className="input-group">
-                                        <label htmlFor="gmail-polling" className="input-label">POLLING_LATENCY_(M)</label>
+                                        <label htmlFor="gmail-polling" className="input-label">POLLING INTERVAL (M)</label>
                                         <input
                                             id="gmail-polling"
                                             type="number"
@@ -438,7 +445,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     checked={gmailSettings.autoSync}
                                     onChange={e => updateGmailSettings({ autoSync: e.target.checked })}
                                 />
-                                <span className="font-mono text-[10px] uppercase tracking-wider text-muted group-hover:text-ink">ENABLE_AUTO_SYNC_DAEMON</span>
+                                <span className="font-mono text-[10px] uppercase tracking-wider text-muted group-hover:text-ink">ENABLE AUTO SYNC DAEMON</span>
                             </label>
 
                             <div className="grid grid-cols-2 gap-sm">
@@ -456,7 +463,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     disabled={!gmailToken || !isGmailTokenValid(gmailToken)}
                                 >
                                     <RefreshCcw size={14} className={gmailSyncing ? 'animate-spin' : ''} />
-                                    {gmailSyncing ? 'SYNCING...' : 'RUN_MANUAL_SYNC'}
+                                    {gmailSyncing ? 'SYNCING...' : 'RUN MANUAL SYNC'}
                                 </button>
                                 <button
                                     className="btn btn-ghost text-[10px] text-danger hover:bg-danger/5"
@@ -464,7 +471,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     disabled={!gmailToken}
                                 >
                                     <Link2Off size={14} />
-                                    TERMINATE_SESSION
+                                    TERMINATE SESSION
                                 </button>
                                 <button
                                     className="btn btn-ghost text-[10px] col-span-2 border-border-structural"
@@ -472,7 +479,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     disabled={gmailSyncing || gmailCleaning}
                                 >
                                     <Trash2 size={14} />
-                                    PURGE_DUPLICATE_RECORDS
+                                    REMOVE DUPLICATE RECORDS
                                 </button>
                             </div>
                             
@@ -490,8 +497,8 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Export Section */}
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">DATA_EXTRACTION</h2>
-                            <div className="text-[10px] font-mono text-muted">EXTRACT_v1</div>
+                            <h2 className="card-title">DATA EXPORT</h2>
+                            <div className="text-[10px] font-mono text-muted">EXPORT MODULE</div>
                         </div>
                         <div className="space-y-sm">
                             <button
@@ -501,7 +508,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                             >
                                 <div className="flex items-center gap-md">
                                     <FileSpreadsheet size={16} className="text-muted" />
-                                    <span className="font-mono text-xs uppercase font-bold">EXPORT_SPEC_XLSX</span>
+                                    <span className="font-mono text-xs uppercase font-bold">EXPORT XLSX</span>
                                 </div>
                                 <Download size={14} className="opacity-0 group-hover:opacity-100" />
                             </button>
@@ -512,7 +519,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                             >
                                 <div className="flex items-center gap-md">
                                     <FileSpreadsheet size={16} className="text-muted" />
-                                    <span className="font-mono text-xs uppercase font-bold">EXPORT_LEDGER_CSV</span>
+                                    <span className="font-mono text-xs uppercase font-bold">EXPORT CSV</span>
                                 </div>
                                 <Download size={14} className="opacity-0 group-hover:opacity-100" />
                             </button>
@@ -523,7 +530,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                             >
                                 <div className="flex items-center gap-md">
                                     <FileJson size={16} className="text-muted" />
-                                    <span className="font-mono text-xs uppercase font-bold">SYSTEM_BACKUP_JSON</span>
+                                    <span className="font-mono text-xs uppercase font-bold">SYSTEM BACKUP JSON</span>
                                 </div>
                                 <Download size={14} className="opacity-0 group-hover:opacity-100" />
                             </button>
@@ -533,7 +540,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Automatic Backup Protocol - Industrial Style */}
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">AUTOMATIC_BACKUP_PROTOCOL</h2>
+                            <h2 className="card-title">AUTOMATIC BACKUP</h2>
                             <div className={`px-2 py-0.5 font-mono text-[9px] uppercase border ${fileHandle ? (permissionStatus === 'granted' ? 'border-success text-success bg-success/5' : 'border-warning text-warning bg-warning/5') : 'border-border-structural text-muted'}`}>
                                 {fileHandle ? (permissionStatus === 'granted' ? 'STATUS: ACTIVE' : 'STATUS: PERMISSION_REQUIRED') : 'STATUS: INACTIVE'}
                             </div>
@@ -545,9 +552,9 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     <HardDrive size={18} />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">LOCAL_FILE_POINTER</div>
+                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">LOCAL FILE TARGET</div>
                                     <div className="font-mono text-[9px] text-muted truncate uppercase tracking-tight">
-                                        {fileHandle ? `TARGET: ${fileHandle.name}` : 'TARGET: NOT_CONFIGURED'}
+                                        {fileHandle ? `TARGET: ${fileHandle.name}` : 'TARGET: NOT CONFIGURED'}
                                     </div>
                                 </div>
                             </div>
@@ -565,7 +572,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                         onClick={connectBackup}
                                     >
                                         <Database size={14} />
-                                        INITIALIZE_BACKUP_FILE
+                                        SET UP BACKUP FILE
                                     </button>
                                 ) : (
                                     <>
@@ -575,7 +582,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                                 onClick={requestPermission}
                                             >
                                                 <Shield size={14} />
-                                                RESTORE_ACCESS_PERMISSION
+                                                RESTORE ACCESS PERMISSION
                                             </button>
                                         )}
                                         <div className="grid grid-cols-2 gap-sm">
@@ -584,14 +591,14 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                                 onClick={connectBackup}
                                             >
                                                 <RefreshCcw size={14} />
-                                                CHANGE_FILE
+                                                CHANGE FILE
                                             </button>
                                             <button
                                                 className="btn btn-ghost text-[10px] border-danger/30 text-danger hover:bg-danger/10"
                                                 onClick={disconnectBackup}
                                             >
                                                 <Link2Off size={14} />
-                                                TERMINATE_LINK
+                                                DISCONNECT FILE
                                             </button>
                                         </div>
                                     </>
@@ -607,7 +614,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Storage Info */}
                     <div className="card">
                         <div className="card-header">
-                            <h2 className="card-title">MEMORY_&_PROTOCOLS</h2>
+                            <h2 className="card-title">STORAGE & PROTOCOLS</h2>
                         </div>
                         <div className="space-y-lg">
                             <div className="flex items-start gap-lg">
@@ -615,9 +622,9 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     <Database size={18} />
                                 </div>
                                 <div>
-                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">LOCAL_INDEXEDDB_LEDGER</div>
+                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">LOCAL INDEXEDDB STORAGE</div>
                                     <div className="font-sans text-xs text-muted leading-relaxed uppercase">
-                                        Data Persistance: Local Environment Only. No Cloud Transmission.
+                                        Date Persistance: Local Environment Only. No Cloud Transmission.
                                     </div>
                                 </div>
                             </div>
@@ -627,7 +634,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     <Shield size={18} />
                                 </div>
                                 <div>
-                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">SECURITY_PROTOCOL_P1</div>
+                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">SECURITY PROTOCOL</div>
                                     <div className="font-sans text-xs text-muted leading-relaxed uppercase">
                                         Privacy Guarantee: Offline-First Architecture. Zero External Telemetry.
                                     </div>
@@ -639,7 +646,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     {/* Danger Zone */}
                     <div className="card border-danger/30 bg-danger/[0.02]">
                         <div className="card-header border-danger/50 mb-xl">
-                            <h2 className="card-title text-danger">SYSTEM_OVERRIDE</h2>
+                            <h2 className="card-title text-danger">SYSTEM RESET</h2>
                             <AlertTriangle size={32} className="text-muted mb-md text-muted/50" />
                         </div>
                         <div>
@@ -657,13 +664,13 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                             onClick={handleClearData}
                                             disabled={clearing}
                                         >
-                                            {clearing ? 'EXECUTING...' : 'CONFIRM_DESTRUCTION'}
+                                            {clearing ? 'EXECUTING...' : 'CONFIRM DESTRUCTION'}
                                         </button>
                                         <button
                                             className="btn btn-secondary flex-1 text-[10px]"
                                             onClick={() => setShowClearConfirm(false)}
                                         >
-                                            ABORT_MISSION
+                                            CANCEL
                                         </button>
                                     </div>
                                 </div>
@@ -674,7 +681,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 >
                                     <div className="flex items-center gap-md">
                                         <Trash2 size={16} />
-                                        <span className="font-mono text-xs uppercase font-bold">RESET_SYSTEM_DATABASE</span>
+                                        <span className="font-mono text-xs uppercase font-bold">CLEAR ALL DATA</span>
                                     </div>
                                     <Shield size={14} className="opacity-0 group-hover:opacity-100" />
                                 </button>

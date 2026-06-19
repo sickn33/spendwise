@@ -1,4 +1,4 @@
-export interface ParsedIsybankEmailText {
+export interface ParsedCardEmailText {
   amount: number;
   merchant: string;
   date: Date;
@@ -21,11 +21,11 @@ const AMOUNT_PATTERNS = [
 ];
 
 const MERCHANT_PATTERNS = [
-  /presso\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /esercente\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /a favore di\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /da\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|\.|$))/i,
-  /(?:pagamento|spesa|acquisto)\s+carta\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:di|da|il|in data|alle|ore|,|\.|$))/i
+  /presso\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|$))/i,
+  /esercente\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|$))/i,
+  /a favore di\s*:?\s*([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|$))/i,
+  /da\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s*(?:il|in data|alle|ore|con carta|con la carta|su carta|,|$))/i,
+  /(?:pagamento|spesa|acquisto)\s+carta\s+([a-z0-9à-ÿ&' .\-/*#]{2,100}?)(?=\s+(?:di|da|il|in data|alle|ore|,|$))/i
 ];
 
 const GENERIC_MERCHANT_WORDS = new Set([
@@ -35,7 +35,7 @@ const GENERIC_MERCHANT_WORDS = new Set([
   'OPERAZIONE',
   'SPESA',
   'ACQUISTO',
-  'ISYBANK',
+  'CARD',
   'EUR',
   'EURO'
 ]);
@@ -84,13 +84,13 @@ function extractMerchant(text: string): string {
     if (cleaned) return cleaned;
   }
 
-  return 'Transazione carta';
+  return 'Card transaction';
 }
 
 function sanitizeMerchantCandidate(candidate: string): string | null {
   let normalized = candidate
     .replace(/^[\s:;,-]+/, '')
-    .replace(/[\s:;,-]+$/, '')
+    .replace(/[\s:;,.-]+$/, '')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -111,7 +111,7 @@ function sanitizeMerchantCandidate(candidate: string): string | null {
 
 function extractDate(text: string, fallbackDate: Date): Date {
   const dateMatch = text.match(
-    /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?:\s*(?:alle(?:\s+ore)?|ore)?\s*(\d{1,2}):(\d{2}))?/i
+    /(\d{1,2})[/.](\d{1,2})(?:[/.](\d{2,4}))?(?:\s*(?:alle(?:\s+ore)?|ore)?\s*(\d{1,2}):(\d{2}))?/i
   );
 
   if (!dateMatch) return fallbackDate;
@@ -137,7 +137,7 @@ function isIncomeNotification(text: string): boolean {
   return INCOME_KEYWORDS.some(keyword => lower.includes(keyword));
 }
 
-export function parseIsybankEmailText(text: string, fallbackDate: Date): ParsedIsybankEmailText | null {
+export function parseCardEmailText(text: string, fallbackDate: Date): ParsedCardEmailText | null {
   const normalizedText = normalizeText(text);
   const amount = extractAmount(normalizedText);
 

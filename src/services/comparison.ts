@@ -28,7 +28,7 @@ import {
 
 // Day names in Italian and English
 const DAY_NAMES = {
-    it: ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'],
+    it: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
     en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 };
 
@@ -245,17 +245,17 @@ export async function getCategoryComparison(targetMonth: Date): Promise<Category
         let insight: { it: string; en: string } | undefined;
         if (trend === 'increased' && deltaAmount > 50) {
             insight = {
-                it: `Hai speso €${deltaAmount.toFixed(0)} in più rispetto al mese scorso`,
+                it: `You spent €${deltaAmount.toFixed(0)} more than last month`,
                 en: `You spent €${deltaAmount.toFixed(0)} more compared to last month`
             };
         } else if (trend === 'decreased' && Math.abs(deltaAmount) > 50) {
             insight = {
-                it: `Hai risparmiato €${Math.abs(deltaAmount).toFixed(0)} rispetto al mese scorso`,
+                it: `You saved €${Math.abs(deltaAmount).toFixed(0)} compared to last month`,
                 en: `You saved €${Math.abs(deltaAmount).toFixed(0)} compared to last month`
             };
         } else if (trend === 'new') {
             insight = {
-                it: `Nuova categoria questo mese (€${currentAmount.toFixed(0)})`,
+                it: `New category this month (€${currentAmount.toFixed(0)})`,
                 en: `New category this month (€${currentAmount.toFixed(0)})`
             };
         }
@@ -324,11 +324,11 @@ export async function generateMonthlyInsights(
             type: 'achievement',
             icon: '🏆',
             title: {
-                it: 'Ottimo lavoro!',
+                it: 'Great job!',
                 en: 'Great job!'
             },
             description: {
-                it: `Hai ridotto le spese del ${Math.abs(expensesDelta.percentage).toFixed(1)}% rispetto al mese scorso. Continua così!`,
+                it: `You reduced spending by ${Math.abs(expensesDelta.percentage).toFixed(1)}% compared to last month. Keep it up!`,
                 en: `You reduced expenses by ${Math.abs(expensesDelta.percentage).toFixed(1)}% compared to last month. Keep it up!`
             },
             impact: 'high',
@@ -339,11 +339,11 @@ export async function generateMonthlyInsights(
             type: 'warning',
             icon: '⚠️',
             title: {
-                it: 'Attenzione alle spese',
+                it: 'Watch your spending',
                 en: 'Watch your spending'
             },
             description: {
-                it: `Le spese sono aumentate del ${expensesDelta.percentage.toFixed(1)}% (+€${expensesDelta.amount.toFixed(0)}) rispetto al mese scorso.`,
+                it: `Spending increased by ${expensesDelta.percentage.toFixed(1)}% (+€${expensesDelta.amount.toFixed(0)}) compared to last month.`,
                 en: `Expenses increased by ${expensesDelta.percentage.toFixed(1)}% (+€${expensesDelta.amount.toFixed(0)}) compared to last month.`
             },
             impact: 'high',
@@ -362,11 +362,11 @@ export async function generateMonthlyInsights(
             type: 'warning',
             icon: '📈',
             title: {
-                it: `${topIncreased.category.name} in aumento`,
+                it: `${topIncreased.category.name} increased`,
                 en: `${topIncreased.category.name} rising`
             },
             description: {
-                it: `Spesa aumentata del ${topIncreased.delta.percentage.toFixed(0)}% (+€${topIncreased.delta.amount.toFixed(0)}). ${topIncreased.current.transactionCount} transazioni vs ${topIncreased.previous.transactionCount} del mese scorso.`,
+                it: `${topIncreased.category.name} spending increased by ${topIncreased.delta.percentage.toFixed(0)}% (+€${topIncreased.delta.amount.toFixed(0)}). ${topIncreased.current.transactionCount} transactions vs ${topIncreased.previous.transactionCount} last month.`,
                 en: `Spending increased by ${topIncreased.delta.percentage.toFixed(0)}% (+€${topIncreased.delta.amount.toFixed(0)}). ${topIncreased.current.transactionCount} transactions vs ${topIncreased.previous.transactionCount} last month.`
             },
             impact: topIncreased.delta.amount > 100 ? 'high' : 'medium',
@@ -386,11 +386,11 @@ export async function generateMonthlyInsights(
             type: 'positive',
             icon: '📉',
             title: {
-                it: `${topDecreased.category.name} in calo`,
+                it: `${topDecreased.category.name} decreased`,
                 en: `${topDecreased.category.name} down`
             },
             description: {
-                it: `Hai risparmiato €${Math.abs(topDecreased.delta.amount).toFixed(0)} (${Math.abs(topDecreased.delta.percentage).toFixed(0)}% in meno) su ${topDecreased.category.name}.`,
+                it: `You saved €${Math.abs(topDecreased.delta.amount).toFixed(0)} (${Math.abs(topDecreased.delta.percentage).toFixed(0)}% less) on ${topDecreased.category.name}.`,
                 en: `You saved €${Math.abs(topDecreased.delta.amount).toFixed(0)} (${Math.abs(topDecreased.delta.percentage).toFixed(0)}% less) on ${topDecreased.category.name}.`
             },
             impact: 'medium',
@@ -407,11 +407,11 @@ export async function generateMonthlyInsights(
                 type: 'positive',
                 icon: '🎯',
                 title: {
-                    it: 'Proiezione fine mese',
+                it: 'End of month projection',
                     en: 'End of month projection'
                 },
                 description: {
-                    it: `A questo ritmo (€${velocity.currentPace.toFixed(0)}/giorno), spenderai €${velocity.projectedTotal.toFixed(0)} a fine mese. ${projectionDiff < 0 ? `€${Math.abs(projectionDiff).toFixed(0)} in meno` : 'In linea con'} il mese scorso.`,
+                it: `At this pace (€${velocity.currentPace.toFixed(0)}/day), you'll spend €${velocity.projectedTotal.toFixed(0)} by month end. ${projectionDiff < 0 ? `€${Math.abs(projectionDiff).toFixed(0)} less` : 'In line with'} last month.`,
                     en: `At this pace (€${velocity.currentPace.toFixed(0)}/day), you'll spend €${velocity.projectedTotal.toFixed(0)} by month end. ${projectionDiff < 0 ? `€${Math.abs(projectionDiff).toFixed(0)} less than` : 'In line with'} last month.`
                 },
                 impact: 'low',
@@ -422,11 +422,11 @@ export async function generateMonthlyInsights(
                 type: 'warning',
                 icon: '🚨',
                 title: {
-                    it: 'Proiezione sopra budget',
+                it: 'Projection over budget',
                     en: 'Projection over budget'
                 },
                 description: {
-                    it: `A questo ritmo spenderai €${velocity.projectedTotal.toFixed(0)} a fine mese, €${projectionDiff.toFixed(0)} in più del mese scorso.`,
+                it: `At this pace you'll spend €${velocity.projectedTotal.toFixed(0)} by month end, €${projectionDiff.toFixed(0)} more than last month.`,
                     en: `At this pace you'll spend €${velocity.projectedTotal.toFixed(0)} by month end, €${projectionDiff.toFixed(0)} more than last month.`
                 },
                 impact: 'high',
@@ -442,11 +442,11 @@ export async function generateMonthlyInsights(
             type: 'neutral',
             icon: '🆕',
             title: {
-                it: `${newCategories.length} nuova categoria`,
+                it: `${newCategories.length} new categories`,
                 en: `${newCategories.length} new category`
             },
             description: {
-                it: `Nuove spese in: ${newCategories.map(c => c.category.name).join(', ')} (totale €${newCategories.reduce((s, c) => s + c.current.amount, 0).toFixed(0)})`,
+                it: `New spending in: ${newCategories.map(c => c.category.name).join(', ')} (total €${newCategories.reduce((s, c) => s + c.current.amount, 0).toFixed(0)})`,
                 en: `New spending in: ${newCategories.map(c => c.category.name).join(', ')} (total €${newCategories.reduce((s, c) => s + c.current.amount, 0).toFixed(0)})`
             },
             impact: 'low'
@@ -460,11 +460,11 @@ export async function generateMonthlyInsights(
             type: 'neutral',
             icon: '📊',
             title: {
-                it: 'Categoria principale',
+                it: 'Top category',
                 en: 'Top category'
             },
             description: {
-                it: `${topCurrent.category.name} ${topCurrent.category.icon} resta la tua spesa #1 (€${topCurrent.current.amount.toFixed(0)}, ${topCurrent.current.percentage.toFixed(0)}% del totale)`,
+                it: `${topCurrent.category.name} ${topCurrent.category.icon} remains your #1 expense (€${topCurrent.current.amount.toFixed(0)}, ${topCurrent.current.percentage.toFixed(0)}% of total)`,
                 en: `${topCurrent.category.name} ${topCurrent.category.icon} remains your #1 expense (€${topCurrent.current.amount.toFixed(0)}, ${topCurrent.current.percentage.toFixed(0)}% of total)`
             },
             impact: 'low',
@@ -525,13 +525,13 @@ export async function generatePrediction(monthsBack: number = 6): Promise<Monthl
     const riskFactors: Array<{ it: string; en: string }> = [];
     if (trendFactor > 1.1) {
         riskFactors.push({
-            it: 'Trend di spesa in aumento negli ultimi mesi',
+                it: 'Spending trend has been increasing in recent months',
             en: 'Spending trend increasing in recent months'
         });
     }
     if (coefficientOfVariation > 0.3) {
         riskFactors.push({
-            it: 'Alta variabilità nelle spese mensili',
+                it: 'High variability in monthly spending',
             en: 'High variability in monthly expenses'
         });
     }

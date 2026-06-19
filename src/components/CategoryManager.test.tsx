@@ -26,11 +26,11 @@ describe('CategoryManager Component', () => {
         render(<CategoryManager />);
         
         await waitFor(() => {
-            expect(screen.getByText('GESTIONE_CATEGORIE')).toBeInTheDocument();
+            expect(screen.getByText('CATEGORY MANAGEMENT')).toBeInTheDocument();
         });
 
-        expect(screen.getByText('CATEGORIE_SPESE')).toBeInTheDocument();
-        expect(screen.getByText('CATEGORIE_ENTRATE')).toBeInTheDocument();
+        expect(screen.getByText('EXPENSE CATEGORIES')).toBeInTheDocument();
+        expect(screen.getByText('INCOME CATEGORIES')).toBeInTheDocument();
         
         // stylistic checks
         expect(screen.getByText('Spesa')).toBeInTheDocument();
@@ -41,13 +41,13 @@ describe('CategoryManager Component', () => {
         render(<CategoryManager />);
         
         await waitFor(() => {
-            expect(screen.getByText('GESTIONE_CATEGORIE')).toBeInTheDocument();
+            expect(screen.getByText('CATEGORY MANAGEMENT')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText(/NUOVA_CATEGORIA/i));
+        fireEvent.click(screen.getByText(/NEW CATEGORY/i));
         
-        // Modal header should be NUOVA_CATEGORIA when adding
-        expect(screen.getByRole('heading', { name: 'NUOVA_CATEGORIA' })).toBeInTheDocument();
-        expect(screen.getByPlaceholderText('NOME_CATEGORIA')).toBeInTheDocument();
+        // Modal header should be NEW CATEGORY when adding
+        expect(screen.getByRole('heading', { name: 'NEW CATEGORY' })).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('CATEGORY NAME')).toBeInTheDocument();
     });
 });

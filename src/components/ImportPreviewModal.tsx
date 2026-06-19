@@ -22,9 +22,9 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
 
     const getStatusLabel = (status: ImportPreviewItem['status']) => {
         switch (status) {
-            case 'new': return 'Nuova';
-            case 'duplicate': return 'Duplicata';
-            case 'modified': return 'Modificata';
+            case 'new': return 'New';
+            case 'duplicate': return 'Duplicate';
+            case 'modified': return 'Updated';
         }
     };
 
@@ -39,13 +39,13 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
     return (
         <div className="modal-overlay" onClick={onCancel}>
             <div className="modal max-w-700 max-h-80vh" onClick={e => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2 className="modal-title">Anteprima Import</h2>
+            <div className="modal-header">
+                    <h2 className="modal-title">Import Preview</h2>
                     <button 
                         className="btn-icon" 
                         onClick={onCancel}
-                        title="Chiudi"
-                        aria-label="Chiudi"
+                        title="Close"
+                        aria-label="Close"
                     >
                         <X size={20} />
                     </button>
@@ -57,7 +57,7 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                         <div className="font-xl font-semibold text-success">
                             {preview.newCount}
                         </div>
-                        <div className="font-sm text-muted">Nuove</div>
+                        <div className="font-sm text-muted">New</div>
                     </div>
                     <div className="summary-box bg-glass">
                         <div className="font-xl font-semibold text-muted">
@@ -69,7 +69,7 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                         <div className="font-xl font-semibold text-warning">
                             {preview.modifiedCount}
                         </div>
-                        <div className="font-sm text-muted">Modificate</div>
+                        <div className="font-sm text-muted">Updated</div>
                     </div>
                 </div>
 
@@ -83,7 +83,7 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                             onChange={e => setUpdateExisting(e.target.checked)}
                         />
                         <RefreshCw size={16} className="text-warning" />
-                        <span>Aggiorna transazioni modificate ({preview.modifiedCount})</span>
+                        <span>Update modified transactions ({preview.modifiedCount})</span>
                     </label>
                 )}
 
@@ -92,10 +92,10 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="border-b">
-                                <th className="p-sm text-left">Stato</th>
-                                <th className="p-sm text-left">Data</th>
-                                <th className="p-sm text-left">Descrizione</th>
-                                <th className="p-sm text-right">Importo</th>
+                                <th className="p-sm text-left">Status</th>
+                                <th className="p-sm text-left">Date</th>
+                                <th className="p-sm text-left">Description</th>
+                                <th className="p-sm text-right">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -108,7 +108,7 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                                         </span>
                                     </td>
                                     <td className="p-sm font-sm">
-                                        {item.date.toLocaleDateString('it-IT')}
+                                        {item.date.toLocaleDateString('en-US')}
                                     </td>
                                     <td className="p-sm font-sm text-ellipsis max-w-200">
                                         {item.description}
@@ -122,7 +122,7 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                     </table>
                     {preview.items.length > 50 && (
                         <p className="text-muted text-center mt-md">
-                            ...e altre {preview.items.length - 50} transazioni
+                            ...and {preview.items.length - 50} more transactions
                         </p>
                     )}
                 </div>
@@ -130,14 +130,14 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                 {/* Actions */}
                 <div className="flex gap-md justify-end">
                     <button className="btn btn-secondary" onClick={onCancel} disabled={importing}>
-                        Annulla
+                        Cancel
                     </button>
                     <button 
                         className="btn btn-primary" 
                         onClick={() => onConfirm(updateExisting)}
                         disabled={importing || preview.newCount === 0 && (!updateExisting || preview.modifiedCount === 0)}
                     >
-                        {importing ? 'Importazione...' : `Importa ${preview.newCount} transazioni`}
+                        {importing ? 'Importing...' : `Import ${preview.newCount} transactions`}
                     </button>
                 </div>
             </div>

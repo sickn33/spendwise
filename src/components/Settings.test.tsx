@@ -7,8 +7,8 @@ expect.extend(matchers);
 
 // Mock dependencies
 vi.mock('../services/importer', () => ({
-    importIsybankExcel: vi.fn(),
-    previewIsybankExcel: vi.fn(),
+    importCardExcel: vi.fn(),
+    previewCardExcel: vi.fn(),
     exportToExcel: vi.fn(),
     exportToCSV: vi.fn()
 }));
@@ -16,6 +16,7 @@ vi.mock('../services/importer', () => ({
 vi.mock('../services/gmailSync', () => ({
     loadGmailSyncSettings: vi.fn().mockReturnValue({
         senderEmail: 'bank@example.com',
+        searchQuery: '',
         maxResults: 25,
         pollingMinutes: 10,
         autoSync: false,
@@ -47,23 +48,24 @@ describe('Settings Component', () => {
         render(<Settings />);
         
         await waitFor(() => {
-            expect(screen.getByText('IMPOSTAZIONI_SISTEMA')).toBeInTheDocument();
+            expect(screen.getByText('SYSTEM SETTINGS')).toBeInTheDocument();
         });
 
         // Check for technical version tag (sub-header)
-        expect(screen.getByText('CONTROL_PANEL')).toBeInTheDocument();
+        expect(screen.getByText('CONTROL PANEL')).toBeInTheDocument();
         expect(screen.getByText('v1.0.0_STABLE')).toBeInTheDocument();
 
         // Check sections
-        expect(screen.getByText('IMPORTAZIONE_DATI')).toBeInTheDocument();
-        expect(screen.getByText('GMAIL_SYNCHRONIZER')).toBeInTheDocument();
-        expect(screen.getByText('DATA_EXTRACTION')).toBeInTheDocument();
-        expect(screen.getByText('SYSTEM_OVERRIDE')).toBeInTheDocument();
+        expect(screen.getByText('DATA IMPORT')).toBeInTheDocument();
+        expect(screen.getByText('GMAIL SYNCHRONIZER')).toBeInTheDocument();
+        expect(screen.getByText('DATA EXPORT')).toBeInTheDocument();
+        expect(screen.getByText('SYSTEM RESET')).toBeInTheDocument();
         
         // Check for specific labels that should use mono font
-        expect(screen.getByText('CLIENT_ID_GMAIL')).toBeInTheDocument();
-        expect(screen.getByText('BANCA_SENDER_EMAIL')).toBeInTheDocument();
-        expect(screen.getByText('MAX_RECORDS')).toBeInTheDocument();
+        expect(screen.getByText('GOOGLE CLIENT ID')).toBeInTheDocument();
+        expect(screen.getByText('BANK SENDER EMAIL')).toBeInTheDocument();
+        expect(screen.getByText('PERSONAL MAIL QUERY')).toBeInTheDocument();
+        expect(screen.getByText('MAX RECORDS')).toBeInTheDocument();
         
         // Check for specific functional labels
         expect(screen.getByText('STATUS: READY_FOR_INPUT')).toBeInTheDocument();

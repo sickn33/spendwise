@@ -24,11 +24,11 @@ describe('Sidebar Component', () => {
             />
         );
 
-        expect(screen.getByText('Riepilogo')).toBeInTheDocument();
-        expect(screen.getByText('Registro')).toBeInTheDocument();
-        expect(screen.getByText('Report')).toBeInTheDocument();
-        expect(screen.getByText('Categorie')).toBeInTheDocument();
-        expect(screen.getByText('Configurazione')).toBeInTheDocument();
+        expect(screen.getByText('Dashboard')).toBeInTheDocument();
+        expect(screen.getByText('Transactions')).toBeInTheDocument();
+        expect(screen.getByText('Reports')).toBeInTheDocument();
+        expect(screen.getByText('Categories')).toBeInTheDocument();
+        expect(screen.getByText('Settings')).toBeInTheDocument();
     });
 
     it('highlights the active page', () => {
@@ -42,12 +42,12 @@ describe('Sidebar Component', () => {
             />
         );
 
-        // Find the button that contains 'Registro'
-        const activeItem = screen.getByText('Registro').closest('button');
+        // Find the button that contains 'Transactions'
+        const activeItem = screen.getByText('Transactions').closest('button');
         // Check for specific active class
         expect(activeItem?.className).toContain('active');
         
-        const inactiveItem = screen.getByText('Riepilogo').closest('button');
+        const inactiveItem = screen.getByText('Dashboard').closest('button');
         expect(inactiveItem?.className).not.toContain('active');
     });
 
@@ -78,7 +78,7 @@ describe('Sidebar Component', () => {
             />
         );
 
-        fireEvent.click(screen.getByText('Registro'));
+        fireEvent.click(screen.getByText('Transactions'));
         expect(handleNavigate).toHaveBeenCalledWith('transactions');
     });
 
@@ -94,7 +94,7 @@ describe('Sidebar Component', () => {
             />
         );
 
-        fireEvent.click(screen.getByText('MODO SCURO'));
+        fireEvent.click(screen.getByText('DARK MODE'));
         expect(handleThemeToggle).toHaveBeenCalled();
     });
 });

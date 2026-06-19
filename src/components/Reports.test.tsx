@@ -35,23 +35,23 @@ describe('Reports Component', () => {
         render(<Reports />);
         
         await waitFor(() => {
-            expect(screen.getByText('REPORT_MENSILE')).toBeInTheDocument();
+            expect(screen.getByText('MONTHLY REPORT')).toBeInTheDocument();
         });
 
         // Check for structural grid layout
         expect(screen.getByTestId('doughnut-chart')).toBeInTheDocument();
         // Check for new technical labels
-        expect(screen.getByText('SPESE_PER_CATEGORIA')).toBeInTheDocument();
+        expect(screen.getByText('EXPENSES BY CATEGORY')).toBeInTheDocument();
     });
 
     it('renders date filters with utility style', async () => {
         render(<Reports />);
         
         await waitFor(() => {
-            expect(screen.getByText('REPORT_MENSILE')).toBeInTheDocument();
+            expect(screen.getByText('MONTHLY REPORT')).toBeInTheDocument();
             // Check for select element
             expect(screen.getByRole('combobox')).toBeInTheDocument();
-            expect(screen.getByText('MESE_CORRENTE')).toBeInTheDocument();
+            expect(screen.getByText('Current month')).toBeInTheDocument();
         });
     });
 });

@@ -33,13 +33,13 @@ describe('TransactionForm Component', () => {
         render(<TransactionForm onClose={() => {}} onSave={() => {}} />);
         
         await waitFor(() => {
-            expect(screen.getByText('NUOVA_TRANSAZIONE')).toBeInTheDocument();
+            expect(screen.getByText('NEW TRANSACTION')).toBeInTheDocument();
         });
 
         // Check for technical labels
-        expect(screen.getByText('IMPORTO')).toBeInTheDocument();
-        expect(screen.getByText('DESCRIZIONE')).toBeInTheDocument();
-        expect(screen.getByText('DATA')).toBeInTheDocument();
+        expect(screen.getByText('Amount')).toBeInTheDocument();
+        expect(screen.getByText('Description')).toBeInTheDocument();
+        expect(screen.getByText('Date')).toBeInTheDocument();
         
         // Check for structural styling
         const modal = screen.getByRole('dialog');
@@ -50,11 +50,11 @@ describe('TransactionForm Component', () => {
         render(<TransactionForm onClose={() => {}} onSave={() => {}} />);
         
         await waitFor(() => {
-            expect(screen.getByText('USCITA')).toBeInTheDocument();
+            expect(screen.getByText('Expense')).toBeInTheDocument();
         });
         
-        const incomeBtn = screen.getByText('ENTRATA');
-        const expenseBtn = screen.getByText('USCITA');
+        const incomeBtn = screen.getByText('Income');
+        const expenseBtn = screen.getByText('Expense');
         
         fireEvent.click(incomeBtn);
         expect(incomeBtn).toHaveClass('bg-ink');
@@ -66,19 +66,19 @@ describe('TransactionForm Component', () => {
         const onSave = vi.fn();
         render(<TransactionForm onClose={() => {}} onSave={onSave} />);
         
-        await waitFor(() => screen.getByText('NUOVA_TRANSAZIONE'));
+        await waitFor(() => screen.getByText('NEW TRANSACTION'));
         
         // Fill form
         fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '50.00' } });
-        fireEvent.change(screen.getByPlaceholderText('es. Spesa Esselunga'), { target: { value: 'Spesa Esselunga' } });
+        fireEvent.change(screen.getByPlaceholderText('e.g. Grocery shopping'), { target: { value: 'Spesa Esselunga' } });
         
         // Select category
-        const categoryBtn = screen.getByTitle('Seleziona categoria');
+        const categoryBtn = screen.getByTitle('Select category');
         fireEvent.click(categoryBtn);
         fireEvent.click(screen.getByText('Alimentari'));
         
         // Submit
-        const saveBtn = screen.getByText('SALVA_DATI');
+        const saveBtn = screen.getByText('SAVE');
         fireEvent.click(saveBtn);
         
         await waitFor(() => {

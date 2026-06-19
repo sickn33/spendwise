@@ -32,11 +32,11 @@ export function Sidebar({ currentPage, onNavigate, theme, onThemeToggle, onTrans
                 {/* Navigation */}
                 <nav className="sidebar-nav">
                     {[
-                        { id: 'dashboard', label: 'Riepilogo', icon: LayoutDashboard },
-                        { id: 'transactions', label: 'Registro', icon: List },
-                        { id: 'reports', label: 'Report', icon: FileText },
-                        { id: 'categories', label: 'Categorie', icon: Tag },
-                        { id: 'settings', label: 'Configurazione', icon: SettingsIcon },
+                        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                        { id: 'transactions', label: 'Transactions', icon: List },
+                        { id: 'reports', label: 'Reports', icon: FileText },
+                        { id: 'categories', label: 'Categories', icon: Tag },
+                        { id: 'settings', label: 'Settings', icon: SettingsIcon },
                     ].map((item) => {
                         const isActive = currentPage === item.id;
                         const Icon = item.icon;
@@ -72,7 +72,7 @@ export function Sidebar({ currentPage, onNavigate, theme, onThemeToggle, onTrans
                     <div className="flex items-center gap-sm">
                         {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
                         <span className="font-mono text-[11px] text-muted font-bold">
-                            {theme === 'dark' ? 'MODO SCURO' : 'MODO CHIARO'}
+                            {theme === 'dark' ? 'DARK MODE' : 'LIGHT MODE'}
                         </span>
                     </div>
                     <div className={`w-2 h-2 border border-ink ${theme === 'dark' ? 'bg-ink' : 'bg-paper'}`}></div>

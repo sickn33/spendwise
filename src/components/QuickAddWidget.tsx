@@ -40,7 +40,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
             await addTransaction({
                 date: new Date(),
                 description: preset.name,
-                details: 'Aggiunta rapida',
+                details: 'Quick add',
                 amount: -preset.amount,
                 currency: 'EUR',
                 categoryId: preset.categoryId,
@@ -81,11 +81,16 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
     }
 
     const getCategoryById = (id: number) => categories.find(c => c.id === id);
+    const getPresetLabel = (preset: QuickAddPreset, category?: Category) =>
+        `Add ${preset.name} expense, ${category?.name ?? 'uncategorized'}, ${preset.amount.toFixed(2)} euros`;
 
     if (variant === 'sidebar') {
         return (
             <div className={`quick-add-sidebar ${isOpen ? 'is-open' : ''}`}>
-                <div 
+                <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    aria-controls="quick-add-sidebar-presets"
                     className="panel-header py-xs px-md flex items-center justify-between cursor-pointer hover:bg-concrete/50 transition-colors"
                     onClick={() => setIsOpen(!isOpen)}
                 >
@@ -94,21 +99,30 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                             size={14} 
                             className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
                         />
-                        <span className="panel-title">AGGIUNTA RAPIDA</span>
+                        <span className="panel-title">QUICK ADD</span>
                     </div>
                     {isOpen && (
-                        <button
+                        <span
+                            role="button"
+                            tabIndex={0}
+                            aria-label={isEditing ? "Done editing presets" : "Edit presets"}
                             className={`p-1 hover:bg-concrete rounded-sm transition-colors ${isEditing ? 'text-ink' : 'text-muted'}`}
                             onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
-                            title={isEditing ? "Fine modifica" : "Modifica preset"}
+                            onKeyDown={(e) => {
+                                if (e.key !== 'Enter' && e.key !== ' ') return;
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsEditing(!isEditing);
+                            }}
+                            title={isEditing ? "Done editing" : "Edit preset"}
                         >
                             <Settings size={12} />
-                        </button>
+                        </span>
                     )}
-                </div>
+                </button>
 
                 {isOpen && (
-                    <div className="flex flex-col animate-slideDown">
+                    <div id="quick-add-sidebar-presets" className="flex flex-col animate-slideDown">
                         <div className="flex flex-col">
                             {presets.map(preset => {
                                 const category = getCategoryById(preset.categoryId);
@@ -116,9 +130,11 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
 
                                 return (
                                     <div key={preset.id} className="relative group">
-                                        <div
+                                        <button
+                                            type="button"
                                             className={`preset-item-sidebar ${isSuccess ? 'success' : ''}`}
                                             onClick={() => handleQuickAdd(preset)}
+                                            aria-label={getPresetLabel(preset, category)}
                                         >
                                             <div className="flex items-center gap-sm flex-1 min-w-0">
                                                 <span className="text-lg">
@@ -133,13 +149,14 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                                                 </div>
                                             </div>
                                             <span className="text-xs font-mono font-bold">-€{preset.amount.toFixed(0)}</span>
-                                        </div>
+                                        </button>
 
                                         {isEditing && (
                                             <button
                                                 className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-paper shadow-sm border border-border text-danger hover:bg-danger hover:text-white transition-all z-10 rounded-sm"
                                                 onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id!); }}
-                                                title="Elimina preset"
+                                                aria-label={`Delete ${preset.name} preset`}
+                                                title="Delete preset"
                                             >
                                                 <Trash2 size={12} />
                                             </button>
@@ -150,12 +167,14 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                         </div>
 
                         <button
+                            type="button"
                             className="w-full py-sm px-md flex items-center gap-2 text-ink hover:bg-concrete transition-all border-t border-border mt-1"
                             onClick={(e) => { e.stopPropagation(); setShowAddNew(true); }}
-                            title="Crea nuovo preset"
+                            aria-label="Create new preset"
+                            title="Create new preset"
                         >
                             <Plus size={12} />
-                            <span className="text-[10px] font-mono uppercase tracking-wider">NUOVO PRESET</span>
+                            <span className="text-[10px] font-mono uppercase tracking-wider">NEW PRESET</span>
                         </button>
                     </div>
                 )}
@@ -176,11 +195,11 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
             <div className="quick-add-container">
                 <div className={`quick-add-panel ${isExpanded ? 'open' : 'closed'}`}>
                     <div className="panel-header">
-                        <span className="panel-title">AGGIUNTA RAPIDA</span>
+                        <span className="panel-title">QUICK ADD</span>
                         <button
                             className={`btn-xs-icon ${isEditing ? 'text-ink' : 'text-muted'}`}
                             onClick={() => setIsEditing(!isEditing)}
-                            title={isEditing ? "Fine modifica" : "Modifica preset"}
+                            title={isEditing ? "Done editing" : "Edit preset"}
                         >
                             <Settings size={14} />
                         </button>
@@ -189,7 +208,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                     <div className="panel-scroll">
                         {presets.length === 0 ? (
                             <div className="p-lg text-center text-muted">
-                                <div className="font-mono text-xs">NESSUN PRESET</div>
+                                <div className="font-mono text-xs">NO PRESETS</div>
                             </div>
                         ) : (
                             <div className="flex flex-col">
@@ -199,9 +218,11 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
 
                                     return (
                                         <div key={preset.id} className="relative group">
-                                            <div
+                                            <button
+                                                type="button"
                                                 className={`preset-item ${isSuccess ? 'bg-concrete' : ''}`}
                                                 onClick={() => handleQuickAdd(preset)}
+                                                aria-label={getPresetLabel(preset, category)}
                                             >
                                                 <div className="preset-content">
                                                     <span className="preset-icon">
@@ -221,13 +242,14 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                                                 <span className="preset-amount">
                                                     -€{preset.amount.toFixed(2)}
                                                 </span>
-                                            </div>
+                                            </button>
 
                                             {isEditing && (
                                                 <button
                                                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-paper shadow-sm border border-border text-danger hover:bg-danger hover:text-white transition-all z-10 rounded-sm"
                                                     onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id!); }}
-                                                    title="Elimina preset"
+                                                    aria-label={`Delete ${preset.name} preset`}
+                                                    title="Delete preset"
                                                 >
                                                     <Trash2 size={14} />
                                                 </button>
@@ -242,17 +264,20 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                     <button
                         className="add-preset-btn"
                         onClick={() => setShowAddNew(true)}
-                        title="Crea nuovo preset"
+                        aria-label="Create new preset"
+                        title="Create new preset"
                     >
                         <Plus size={14} />
-                        <span>CREA NUOVO PRESET</span>
+                        <span>Create new preset</span>
                     </button>
                 </div>
 
                 <button
                     className={`fab-toggle ${isExpanded ? 'active' : ''}`}
                     onClick={() => setIsExpanded(!isExpanded)}
-                    title={isExpanded ? "Chiudi pannello" : "Apertura rapida"}
+                    aria-label={isExpanded ? 'Close quick add panel' : 'Open quick add panel'}
+                    aria-expanded={isExpanded}
+                    title={isExpanded ? 'Close panel' : 'Open quick add'}
                 >
                     <Plus size={24} />
                 </button>
@@ -282,8 +307,8 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
         <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-[60] flex items-center justify-center p-md modal-overlay" onClick={onClose}>
             <div className="modal-condensed" onClick={e => e.stopPropagation()}>
                 <div className="panel-header">
-                    <h2 className="text-sm font-mono uppercase tracking-wider m-0">NUOVO_PRESET</h2>
-                    <button className="text-ink/50 hover:text-ink" onClick={onClose} title="Chiudi">
+                    <h2 className="text-sm font-mono uppercase tracking-wider m-0">NEW PRESET</h2>
+                    <button className="text-ink/50 hover:text-ink" onClick={onClose} aria-label="Close" title="Close">
                         <X size={20} />
                     </button>
                 </div>
@@ -291,11 +316,11 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
                 <div className="p-lg space-y-lg">
                     {/* Name */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">NOME</label>
+                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">NAME</label>
                         <input
                             type="text"
                             className="input w-full"
-                            placeholder="es. Caffè"
+                            placeholder="e.g. Coffee"
                             value={newPreset.name}
                             onChange={e => setNewPreset({ ...newPreset, name: e.target.value })}
                         />
@@ -303,7 +328,7 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
 
                     {/* Amount */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">IMPORTO</label>
+                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">AMOUNT</label>
                         <div className="relative">
                             <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono text-muted">€</span>
                             <input
@@ -319,14 +344,14 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
 
                     {/* Category */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">CATEGORIA</label>
+                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">CATEGORY</label>
                         <select
                             className="input w-full appearance-none rounded-none"
                             value={newPreset.categoryId}
                             onChange={e => setNewPreset({ ...newPreset, categoryId: parseInt(e.target.value) })}
-                            title="Seleziona categoria"
+                            title="Select category"
                         >
-                            <option value={0}>SELEZIONA...</option>
+                            <option value={0}>SELECT...</option>
                             {categories.filter((c: Category) => !c.isIncome).map((c: Category) => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
@@ -339,14 +364,14 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
                         className="btn btn-secondary text-xs" 
                         onClick={onClose}
                     >
-                        ANNULLA
+                        Cancel
                     </button>
                     <button
                         className="btn btn-primary text-xs flex items-center gap-2"
                         onClick={onSave}
                         disabled={!newPreset.name || !newPreset.amount || !newPreset.categoryId}
                     >
-                        <span>SALVA</span>
+                        <span>SAVE</span>
                         <ArrowRight size={12} />
                     </button>
                 </div>

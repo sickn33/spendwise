@@ -1,7 +1,7 @@
 import { bulkAddTransactions, db } from '../db/database';
 import type { Transaction } from '../types';
 import { classifyTransaction } from './classifier';
-import { parseIsybankEmailText } from './isybankEmailParser';
+import { parseCardEmailText } from './cardEmailParser';
 
 const GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
@@ -11,6 +11,7 @@ const GMAIL_SETTINGS_STORAGE_KEY = 'spendwise-gmail-settings';
 export interface GmailSyncSettings {
   googleClientId: string;
   senderEmail: string;
+  searchQuery: string;
   maxResults: number;
   autoSync: boolean;
   pollingMinutes: number;
@@ -120,7 +121,8 @@ const GENERIC_MERCHANT_NAMES = new Set([
 
 export const DEFAULT_GMAIL_SYNC_SETTINGS: GmailSyncSettings = {
   googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '',
-  senderEmail: 'comunicazioni@isybank.com',
+  senderEmail: 'alerts@example.com',
+  searchQuery: '',
   maxResults: 25,
   autoSync: false,
   pollingMinutes: 10
@@ -135,6 +137,7 @@ export function loadGmailSyncSettings(): GmailSyncSettings {
     return {
       googleClientId: parsed.googleClientId ?? DEFAULT_GMAIL_SYNC_SETTINGS.googleClientId,
       senderEmail: parsed.senderEmail ?? DEFAULT_GMAIL_SYNC_SETTINGS.senderEmail,
+      searchQuery: parsed.searchQuery ?? DEFAULT_GMAIL_SYNC_SETTINGS.searchQuery,
       maxResults: parsed.maxResults ?? DEFAULT_GMAIL_SYNC_SETTINGS.maxResults,
       autoSync: parsed.autoSync ?? DEFAULT_GMAIL_SYNC_SETTINGS.autoSync,
       pollingMinutes: parsed.pollingMinutes ?? DEFAULT_GMAIL_SYNC_SETTINGS.pollingMinutes
@@ -176,6 +179,11 @@ export function isGmailTokenValid(token: GmailAccessToken | null): boolean {
 
 export function buildGmailSearchQuery(senderEmail: string): string {
   return `from:${senderEmail.trim().toLowerCase()}`;
+}
+
+export function resolveGmailSearchQuery(settings: Pick<GmailSyncSettings, 'senderEmail' | 'searchQuery'>): string {
+  const customQuery = settings.searchQuery.trim();
+  return customQuery || buildGmailSearchQuery(settings.senderEmail);
 }
 
 export function generateTransactionHash(
@@ -656,12 +664,16 @@ export async function requestGmailAccessToken(clientId: string): Promise<GmailAc
   });
 }
 
-export async function syncIsybankTransactionsFromGmail(options: {
+export async function syncCardTransactionsFromGmail(options: {
   accessToken: string;
   senderEmail: string;
+  searchQuery?: string;
   maxResults?: number;
 }): Promise<GmailSyncResult> {
-  const query = buildGmailSearchQuery(options.senderEmail);
+  const query = resolveGmailSearchQuery({
+    senderEmail: options.senderEmail,
+    searchQuery: options.searchQuery ?? ''
+  });
   const maxResults = options.maxResults ?? 25;
 
   const listResponse = await gmailGet<GmailMessageListResponse>(options.accessToken, 'messages', {
@@ -730,7 +742,7 @@ export async function syncIsybankTransactionsFromGmail(options: {
       const subject = getHeaderValue(detail.payload, 'Subject');
       const bodyText = await extractMessageBodyFromMessage(options.accessToken, detail.id, detail.payload);
       const sourceText = [subject, bodyText, detail.snippet].filter(Boolean).join(' | ');
-      const parsed = parseIsybankEmailText(sourceText, fallbackDate);
+      const parsed = parseCardEmailText(sourceText, fallbackDate);
 
       const existingForMessage = existingByMessageId.get(detail.id) ?? [];
       if (existingForMessage.length > 0) {
@@ -818,13 +830,13 @@ export async function syncIsybankTransactionsFromGmail(options: {
         categoryId: classification.categoryId,
         subcategoryId: undefined,
         isRecurring: false,
-        tags: ['gmail', 'isybank', `gmail-msg:${detail.id}`],
-        account: 'Carta Isybank (email)',
+        tags: ['gmail', 'bank-card', `gmail-msg:${detail.id}`],
+        account: 'Payment card (email)',
         isContabilized: false
       });
     } catch (error) {
       errors.push(
-        `Messaggio ${messageRef.id}: ${error instanceof Error ? error.message : 'Errore sconosciuto'}`
+        `Message ${messageRef.id}: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }

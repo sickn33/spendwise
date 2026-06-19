@@ -71,7 +71,7 @@ export const CategoryManager = memo(function CategoryManager() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         if (!formName.trim()) {
-            setError('Il nome della categoria è obbligatorio');
+            setError('Category name is required');
             return;
         }
 
@@ -108,7 +108,7 @@ export const CategoryManager = memo(function CategoryManager() {
             setEditingCategory(null);
             loadCategories();
         } catch (err) {
-            setError('Errore durante il salvataggio');
+            setError('Error while saving');
             console.error('Error saving category:', err);
         } finally {
             setSaving(false);
@@ -121,7 +121,7 @@ export const CategoryManager = memo(function CategoryManager() {
             setDeleteConfirm(null);
             loadCategories();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Errore durante l\'eliminazione');
+            setError(err instanceof Error ? err.message : 'Error during deletion');
         }
     }
 
@@ -140,9 +140,9 @@ export const CategoryManager = memo(function CategoryManager() {
         <div className="space-y-xl max-w-4xl mx-auto">
             <div className="flex items-center justify-between pb-md border-b border-border">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight">GESTIONE_CATEGORIE</h1>
+                    <h1 className="text-xl font-bold tracking-tight">CATEGORY MANAGEMENT</h1>
                     <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
-                        SYSTEM_CONFIGURATION_V1.0
+                        SYSTEM CONFIGURATION
                     </p>
                 </div>
                 <button 
@@ -150,7 +150,7 @@ export const CategoryManager = memo(function CategoryManager() {
                     onClick={openAddForm}
                 >
                     <Plus size={16} className="mr-xs" />
-                    NUOVA_CATEGORIA
+                    NEW CATEGORY
                 </button>
             </div>
 
@@ -159,7 +159,7 @@ export const CategoryManager = memo(function CategoryManager() {
                 <div className="space-y-md">
                     <div className="flex items-center justify-between border-l-2 border-primary pl-2">
                         <h3 className="text-xs font-mono uppercase text-muted">
-                            CATEGORIE_SPESE
+                            EXPENSE CATEGORIES
                         </h3>
                         <span className="text-tiny font-mono text-muted">
                             COUNT: {expenseCategories.length}
@@ -183,14 +183,14 @@ export const CategoryManager = memo(function CategoryManager() {
                                         {cat.name}
                                     </div>
                                     <div className="text-tiny text-muted truncate">
-                                        {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO_KEYWORDS'}
+                                        {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO KEYWORDS'}
                                     </div>
                                 </div>
                                 <div className="flex items-center transition-opacity group-hover:opacity-100">
                                     <button
                                         className="p-1.5 hover:bg-concrete/20 text-muted hover:text-ink transition-colors"
                                         onClick={() => openEditForm(cat)}
-                                        title="MODIFICA"
+                                        title="Edit"
                                     >
                                         <Edit2 size={14} />
                                     </button>
@@ -199,7 +199,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                             <button
                                                 className="p-1.5 bg-danger text-white transition-colors"
                                                 onClick={() => handleDelete(cat.id!)}
-                                                title="CONFERMA"
+                                                title="Confirm"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -207,7 +207,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                             <button
                                                 className="p-1.5 hover:bg-danger/10 text-muted hover:text-danger transition-colors"
                                                 onClick={() => setDeleteConfirm(cat.id!)}
-                                                title="ELIMINA"
+                                                title="Delete"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -223,7 +223,7 @@ export const CategoryManager = memo(function CategoryManager() {
                 <div className="space-y-md">
                     <div className="flex items-center justify-between border-l-2 border-success pl-2">
                         <h3 className="text-xs font-mono uppercase text-muted">
-                            CATEGORIE_ENTRATE
+                            INCOME CATEGORIES
                         </h3>
                         <span className="text-tiny font-mono text-muted">
                             COUNT: {incomeCategories.length}
@@ -247,14 +247,14 @@ export const CategoryManager = memo(function CategoryManager() {
                                         {cat.name}
                                     </div>
                                     <div className="text-tiny text-muted truncate">
-                                        {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO_KEYWORDS'}
+                                        {cat.keywords.length > 0 ? cat.keywords.join(', ') : 'NO KEYWORDS'}
                                     </div>
                                 </div>
                                 <div className="flex items-center transition-opacity group-hover:opacity-100">
                                     <button
                                         className="p-1.5 hover:bg-concrete/20 text-muted hover:text-ink transition-colors"
                                         onClick={() => openEditForm(cat)}
-                                        title="MODIFICA"
+                                        title="Edit"
                                     >
                                         <Edit2 size={14} />
                                     </button>
@@ -263,7 +263,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                             <button
                                                 className="p-1.5 bg-danger text-white transition-colors"
                                                 onClick={() => handleDelete(cat.id!)}
-                                                title="CONFERMA"
+                                                title="Confirm"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -271,7 +271,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                             <button
                                                 className="p-1.5 hover:bg-danger/10 text-muted hover:text-danger transition-colors"
                                                 onClick={() => setDeleteConfirm(cat.id!)}
-                                                title="ELIMINA"
+                                                title="Delete"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -293,7 +293,7 @@ export const CategoryManager = memo(function CategoryManager() {
                     >
                         <div className="flex items-center justify-between p-md border-b border-border bg-subtle">
                             <h2 className="text-sm font-mono font-bold uppercase tracking-wider">
-                                {editingCategory ? 'CONFIGURAZIONE_CATEGORIA' : 'NUOVA_CATEGORIA'}
+                                {editingCategory ? 'EDIT CATEGORY' : 'NEW CATEGORY'}
                             </h2>
                             <button 
                                 className="text-muted hover:text-ink transition-colors"
@@ -311,11 +311,11 @@ export const CategoryManager = memo(function CategoryManager() {
                             )}
 
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">NOME_CATEGORIA</label>
+                                <label className="text-tiny font-mono uppercase text-muted">CATEGORY NAME</label>
                                 <input
                                     type="text"
                                     className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
-                                    placeholder="NOME_CATEGORIA"
+                                    placeholder="CATEGORY NAME"
                                     value={formName}
                                     onChange={e => setFormName(e.target.value)}
                                     required
@@ -324,7 +324,7 @@ export const CategoryManager = memo(function CategoryManager() {
 
                             <div className="grid grid-cols-2 gap-md">
                                 <div className="space-y-xs">
-                                    <label className="text-tiny font-mono uppercase text-muted">ICONA_ASSET</label>
+                                    <label className="text-tiny font-mono uppercase text-muted">ICON</label>
                                     <div className="h-32 overflow-y-auto border border-border p-xs bg-concrete/10 grid grid-cols-5 gap-xs">
                                         {EMOJI_OPTIONS.map(emoji => (
                                             <button
@@ -340,7 +340,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                 </div>
 
                                 <div className="space-y-xs">
-                                    <label className="text-tiny font-mono uppercase text-muted">COLORE_IDENTIFICATIVO</label>
+                                    <label className="text-tiny font-mono uppercase text-muted">ID COLOR</label>
                                     <div className="h-32 overflow-y-auto border border-border p-xs bg-concrete/10 grid grid-cols-4 gap-xs content-start">
                                         {COLOR_OPTIONS.map(color => (
                                             <button
@@ -356,16 +356,16 @@ export const CategoryManager = memo(function CategoryManager() {
                             </div>
 
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">KEYWORDS_AUTOMAZIONE</label>
+                                <label className="text-tiny font-mono uppercase text-muted">AUTOMATION KEYWORDS</label>
                                 <input
                                     type="text"
                                     className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
-                                    placeholder="ES: AMAZON, PAYPAL, STRIPE"
+                                    placeholder="E.g. AMAZON, PAYPAL, STRIPE"
                                     value={formKeywords}
                                     onChange={e => setFormKeywords(e.target.value)}
                                 />
                                 <p className="text-[10px] text-muted font-mono mt-1">
-                                    SEPARATED_BY_COMMA
+                                    Comma separated
                                 </p>
                             </div>
 
@@ -379,7 +379,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                     checked={formIsIncome}
                                     onChange={e => setFormIsIncome(e.target.checked)}
                                 />
-                                <span className="text-xs font-mono uppercase text-muted group-hover:text-ink transition-colors">IS_INCOME_SOURCE</span>
+                                <span className="text-xs font-mono uppercase text-muted group-hover:text-ink transition-colors">IS INCOME CATEGORY</span>
                             </label>
 
                             <div className="flex gap-sm pt-md border-t border-border">
@@ -388,7 +388,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                     className="btn btn-secondary flex-1 text-xs uppercase"
                                     onClick={() => setShowAddForm(false)}
                                 >
-                                    ANNULLA
+                                    Cancel
                                 </button>
                                 <button 
                                     type="submit" 
@@ -396,7 +396,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                     disabled={saving}
                                 >
                                     <Save size={16} className="mr-xs" />
-                                    {saving ? 'SAVING...' : 'SALVA_CONFIGURAZIONE'}
+                                    {saving ? 'SAVING...' : 'SAVE CATEGORY'}
                                 </button>
                             </div>
                         </form>

@@ -5,7 +5,7 @@ import { db, getCategories } from '../db/database';
 interface ClassificationResult {
     categoryId: number;
     confidence: number;
-    method: 'keyword' | 'merchant' | 'isybank' | 'default';
+    method: 'keyword' | 'merchant' | 'bank-card' | 'default';
 }
 
 // Store merchant -> category mappings for learning
@@ -35,7 +35,7 @@ export async function classifyTransaction(
     description: string,
     details: string,
     amount: number,
-    isybankCategory?: string
+    cardCategory?: string
 ): Promise<ClassificationResult> {
     const categories = await getCategories();
     const searchText = normalizeText(`${description} ${details}`);
@@ -47,15 +47,15 @@ export async function classifyTransaction(
         return { categoryId, confidence: 0.9, method: 'merchant' };
     }
 
-    // 2. Try to match Isybank category directly
-    if (isybankCategory) {
+    // 2. Try to match Card category directly
+    if (cardCategory) {
         const matchedCategory = categories.find(
-            c => c.name.toLowerCase() === isybankCategory.toLowerCase()
+            c => c.name.toLowerCase() === cardCategory.toLowerCase()
         );
         if (matchedCategory?.id) {
             // Cache this merchant for future use
             merchantCache.set(merchant, matchedCategory.id);
-            return { categoryId: matchedCategory.id, confidence: 1.0, method: 'isybank' };
+            return { categoryId: matchedCategory.id, confidence: 1.0, method: 'bank-card' };
         }
     }
 
@@ -85,10 +85,10 @@ export async function classifyTransaction(
         };
     }
 
-    // 4. Default to income or expense based on amount
+// 4. Default to income or expense based on amount
     const defaultCategory = categories.find(c =>
-        amount > 0 ? c.name === 'Bonifici ricevuti' : c.name === 'Altre uscite'
-    );
+        amount > 0 ? c.name === 'Incoming transfers' : c.name === 'Other expenses'
+    ) ?? categories.find(c => c.isDefault && c.isIncome === (amount > 0));
 
     return {
         categoryId: defaultCategory?.id || 1,

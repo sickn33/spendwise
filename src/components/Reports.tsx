@@ -5,7 +5,7 @@ import type { ReportData, Category } from '../types';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
-import { it } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -67,14 +67,14 @@ export const Reports = memo(function Reports() {
             // Title
             pdf.setFontSize(24);
             pdf.setTextColor(99, 102, 241);
-            pdf.text('SpendWise Report', margin, y);
+            pdf.text('SpendWise Reports', margin, y);
             y += 15;
 
             // Date range
             pdf.setFontSize(12);
             pdf.setTextColor(100, 100, 100);
             pdf.text(
-                `${format(reportData.dateRange.from, 'd MMM yyyy', { locale: it })} - ${format(reportData.dateRange.to, 'd MMM yyyy', { locale: it })}`,
+                `${format(reportData.dateRange.from, 'd MMM yyyy', { locale: enUS })} - ${format(reportData.dateRange.to, 'd MMM yyyy', { locale: enUS })}`,
                 margin, y
             );
             y += 20;
@@ -82,22 +82,22 @@ export const Reports = memo(function Reports() {
             // Summary
             pdf.setFontSize(16);
             pdf.setTextColor(30, 30, 30);
-            pdf.text('Riepilogo', margin, y);
+            pdf.text('Summary', margin, y);
             y += 10;
 
             pdf.setFontSize(12);
             pdf.setTextColor(60, 60, 60);
-            pdf.text(`Totale Entrate: €${reportData.totalIncome.toFixed(2)}`, margin, y);
+            pdf.text(`Total Income: €${reportData.totalIncome.toFixed(2)}`, margin, y);
             y += 8;
-            pdf.text(`Totale Spese: €${reportData.totalExpenses.toFixed(2)}`, margin, y);
+            pdf.text(`Total Expenses: €${reportData.totalExpenses.toFixed(2)}`, margin, y);
             y += 8;
-            pdf.text(`Bilancio: €${reportData.netChange.toFixed(2)}`, margin, y);
+            pdf.text(`Budget: €${reportData.netChange.toFixed(2)}`, margin, y);
             y += 20;
 
             // Category breakdown
             pdf.setFontSize(16);
             pdf.setTextColor(30, 30, 30);
-            pdf.text('Spese per Categoria', margin, y);
+            pdf.text('Expenses by Category', margin, y);
             y += 10;
 
             pdf.setFontSize(10);
@@ -120,7 +120,7 @@ export const Reports = memo(function Reports() {
             y += 10;
             pdf.setFontSize(16);
             pdf.setTextColor(30, 30, 30);
-            pdf.text('Top 10 Spese', margin, y);
+            pdf.text('Top 10 Expenses', margin, y);
             y += 10;
 
             pdf.setFontSize(10);
@@ -142,7 +142,7 @@ export const Reports = memo(function Reports() {
             // Footer
             pdf.setFontSize(8);
             pdf.setTextColor(150, 150, 150);
-            pdf.text(`Generato il ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, margin, 290);
+            pdf.text(`Generated on ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, margin, 290);
 
             // Save
             pdf.save(`spendwise_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
@@ -171,7 +171,7 @@ export const Reports = memo(function Reports() {
     const barData = useMemo(() => ({
         labels: reportData?.monthlyTrend.map(d => d.date) ?? [],
         datasets: [{
-            label: 'Spese',
+            label: 'Expenses',
             data: reportData?.monthlyTrend.map(d => d.value) ?? [],
             backgroundColor: 'rgba(99, 102, 241, 0.8)',
             borderRadius: 8
@@ -221,14 +221,14 @@ export const Reports = memo(function Reports() {
 
     if (!reportData) {
         return (
-            <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
-                <TrendingUp size={32} className="text-muted mb-md text-muted" />
-                <h3 className="text-sm font-mono uppercase text-muted mb-xs">NESSUN_DATO_ANALITICO</h3>
-                <p className="text-muted text-sm max-w-xs mb-md">
-                    Registra le tue prime transazioni per generare i report.
-                </p>
-            </div>
-        );
+                <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
+                    <TrendingUp size={32} className="text-muted mb-md text-muted" />
+                    <h3 className="text-sm font-mono uppercase text-muted mb-xs">NO_ANALYTICS_DATA</h3>
+                    <p className="text-muted text-sm max-w-xs mb-md">
+                        Add your first transactions to generate reports.
+                    </p>
+                </div>
+            );
     }
 
     return (
@@ -236,9 +236,9 @@ export const Reports = memo(function Reports() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight">REPORT_MENSILE</h1>
+                    <h1 className="text-xl font-bold tracking-tight">MONTHLY REPORT</h1>
                     <p className="text-xs font-mono text-muted uppercase tracking-wider mt-1">
-                        ANALISI_FINANZIARIA
+                        FINANCIAL ANALYSIS
                     </p>
                 </div>
                 <div className="flex items-center gap-sm">
@@ -247,11 +247,11 @@ export const Reports = memo(function Reports() {
                         style={{ backgroundImage: 'none' }}
                         value={dateRange}
                         onChange={handleDateRangeChange}
-                        aria-label="SELEZIONA_PERIODO"
+                        aria-label="Select period"
                     >
-                        <option value="month">MESE_CORRENTE</option>
-                        <option value="3months">TRIMESTRE</option>
-                        <option value="year">ANNO_CORRENTE</option>
+                        <option value="month">Current month</option>
+                        <option value="3months">Last 3 months</option>
+                        <option value="year">Current year</option>
                     </select>
                     <button
                         className="btn btn-primary flex items-center gap-xs text-xs uppercase tracking-wider"
@@ -259,7 +259,7 @@ export const Reports = memo(function Reports() {
                         disabled={generating}
                     >
                         <Download size={14} />
-                        {generating ? 'GENERAZIONE...' : 'EXPORT_PDF'}
+                        {generating ? 'Generating...' : 'Export PDF'}
                     </button>
                 </div>
             </div>
@@ -269,7 +269,7 @@ export const Reports = memo(function Reports() {
                 <div className="bg-paper structural-border p-md">
                     <div className="flex items-center gap-xs text-tiny font-mono uppercase text-muted mb-xs">
                         <TrendingUp size={14} />
-                        ENTRATE
+                        INCOME
                     </div>
                     <div className="text-2xl font-mono font-bold tracking-tight text-success">
                         €{reportData.totalIncome.toFixed(2)}
@@ -279,7 +279,7 @@ export const Reports = memo(function Reports() {
                 <div className="bg-paper structural-border p-md">
                     <div className="flex items-center gap-xs text-tiny font-mono uppercase text-muted mb-xs">
                         <TrendingDown size={14} />
-                        USCITE
+                        EXPENSES
                     </div>
                     <div className="text-2xl font-mono font-bold tracking-tight text-danger">
                         €{reportData.totalExpenses.toFixed(2)}
@@ -289,7 +289,7 @@ export const Reports = memo(function Reports() {
                 <div className="bg-paper structural-border p-md">
                     <div className="flex items-center gap-xs text-tiny font-mono uppercase text-muted mb-xs">
                         <DollarSign size={14} />
-                        NETTO
+                        NET
                     </div>
                     <div className={`text-2xl font-mono font-bold tracking-tight ${reportData.netChange >= 0 ? 'text-success' : 'text-danger'}`}>
                         {reportData.netChange >= 0 ? '+' : ''}€{reportData.netChange.toFixed(2)}
@@ -300,7 +300,7 @@ export const Reports = memo(function Reports() {
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-md">
                 <div className="bg-paper structural-border p-md">
-                    <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">SPESE_PER_CATEGORIA</h3>
+                    <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">EXPENSES BY CATEGORY</h3>
                     <div className="h-[280px] w-full">
                         <Doughnut
                             data={doughnutData}
@@ -310,7 +310,7 @@ export const Reports = memo(function Reports() {
                 </div>
 
                 <div className="bg-paper structural-border p-md">
-                    <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">TREND_TEMPORALE</h3>
+                    <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">MONTHLY TREND</h3>
                     <div className="h-[280px] w-full">
                         <Bar data={barData} options={barOptions as never} />
                     </div>
@@ -318,16 +318,16 @@ export const Reports = memo(function Reports() {
             </div>
 
             {/* Category Breakdown Table */}
-            <div className="bg-paper structural-border overflow-hidden">
+                <div className="bg-paper structural-border overflow-hidden">
                 <div className="p-md border-b border-border">
-                    <h3 className="text-xs font-mono uppercase text-muted tracking-wider">DETTAGLIO_CATEGORIE</h3>
+                    <h3 className="text-xs font-mono uppercase text-muted tracking-wider">CATEGORY DETAILS</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-concrete/20">
                             <tr>
-                                <th className="text-left p-sm text-tiny font-mono uppercase text-muted font-normal">CATEGORIA</th>
-                                <th className="text-right p-sm text-tiny font-mono uppercase text-muted font-normal">IMPORTO</th>
+                                <th className="text-left p-sm text-tiny font-mono uppercase text-muted font-normal">CATEGORY</th>
+                                <th className="text-right p-sm text-tiny font-mono uppercase text-muted font-normal">AMOUNT</th>
                                 <th className="text-right p-sm text-tiny font-mono uppercase text-muted font-normal">%</th>
                                 <th className="text-right p-sm text-tiny font-mono uppercase text-muted font-normal">TX</th>
                             </tr>
@@ -360,7 +360,7 @@ export const Reports = memo(function Reports() {
             {/* Top Expenses */}
             <div className="bg-paper structural-border overflow-hidden">
                 <div className="p-md border-b border-border">
-                    <h3 className="text-xs font-mono uppercase text-muted tracking-wider">TOP_10_USCITE</h3>
+                    <h3 className="text-xs font-mono uppercase text-muted tracking-wider">TOP 10 EXPENSES</h3>
                 </div>
                 <div className="divide-y divide-border">
                     {reportData.topExpenses.map((t, i) => {
@@ -372,7 +372,7 @@ export const Reports = memo(function Reports() {
                                     <div className="flex flex-col">
                                         <span className="font-medium text-sm">{t.description}</span>
                                         <span className="text-xs text-muted">
-                                            {format(new Date(t.date), 'd MMM', { locale: it })} • {category?.name}
+                                            {format(new Date(t.date), 'd MMM', { locale: enUS })} • {category?.name}
                                         </span>
                                     </div>
                                 </div>

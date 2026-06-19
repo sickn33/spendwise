@@ -27,12 +27,12 @@ describe('SavingsGoals Component', () => {
         render(<SavingsGoals />);
         
         await waitFor(() => {
-            expect(screen.getByText('OBIETTIVI_DI_RISPARMIO')).toBeInTheDocument();
+            expect(screen.getByText('SAVINGS GOALS')).toBeInTheDocument();
         });
 
         // Check for technical labels
-        expect(screen.getByText('RISPARMIATO')).toBeInTheDocument();
-        expect(screen.getByText('OBIETTIVO')).toBeInTheDocument();
+        expect(screen.getByText('SAVED')).toBeInTheDocument();
+        expect(screen.getByText('TARGET')).toBeInTheDocument();
         
         // Check for amounts with mono font (should be present at least once)
         const amountElements = screen.getAllByText(/€500\.00/);
@@ -44,12 +44,12 @@ describe('SavingsGoals Component', () => {
         render(<SavingsGoals />);
         
         await waitFor(() => {
-            expect(screen.getByText('OBIETTIVI_DI_RISPARMIO')).toBeInTheDocument();
+            expect(screen.getByText('SAVINGS GOALS')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText(/NUOVO_ASSET/i));
+        fireEvent.click(screen.getByText(/NEW GOAL/i));
 
-        expect(screen.getByRole('heading', { name: /NUOVO_ASSET/i })).toBeInTheDocument();
-        expect(screen.getByPlaceholderText('NOME_ASSET')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /NEW GOAL/i })).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('GOAL NAME')).toBeInTheDocument();
     });
 });

@@ -31,7 +31,7 @@ describe('QuickAddWidget Component', () => {
     it('renders as a sidebar variant in closed state by default', async () => {
         render(<QuickAddWidget onTransactionAdded={() => {}} variant="sidebar" />);
         
-        expect(screen.getByText('AGGIUNTA RAPIDA')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /quick add/i })).toBeInTheDocument();
         // Presets should NOT be visible initially in sidebar variant
         expect(screen.queryByText('Caffè')).not.toBeInTheDocument();
     });
@@ -39,12 +39,12 @@ describe('QuickAddWidget Component', () => {
     it('expands sidebar dropdown to show list of presets', async () => {
         render(<QuickAddWidget onTransactionAdded={() => {}} variant="sidebar" />);
         
-        const header = screen.getByText('AGGIUNTA RAPIDA');
+        const header = screen.getByRole('button', { name: /quick add/i });
         fireEvent.click(header);
         
         await waitFor(() => {
-            expect(screen.getByText('Caffè')).toBeInTheDocument();
-            expect(screen.getByText('NUOVO PRESET')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: /add caffè expense/i })).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: /create new preset/i })).toBeInTheDocument();
         });
     });
 
@@ -53,10 +53,10 @@ describe('QuickAddWidget Component', () => {
         render(<QuickAddWidget onTransactionAdded={onTransactionAdded} variant="sidebar" />);
         
         // Expand
-        fireEvent.click(screen.getByText('AGGIUNTA RAPIDA'));
+        fireEvent.click(screen.getByRole('button', { name: /quick add/i }));
         
         // Click preset
-        const preset = await screen.findByText('Caffè');
+        const preset = await screen.findByRole('button', { name: /add caffè expense/i });
         fireEvent.click(preset);
         
         await waitFor(() => {

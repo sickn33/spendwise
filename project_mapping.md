@@ -80,15 +80,15 @@ spendwise/
 
 | Componente          | File                                                                                                           | Size | Descrizione                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------- | ---- | -------------------------------------- |
-| **TransactionList** | [TransactionList.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/TransactionList.tsx) | 25KB | Lista transazioni con filtri e ricerca |
-| **CategoryManager** | [CategoryManager.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/CategoryManager.tsx) | 22KB | Gestione categorie spese               |
-| **SavingsGoals**    | [SavingsGoals.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/SavingsGoals.tsx)       | 20KB | Obiettivi di risparmio                 |
-| **Dashboard**       | [Dashboard.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/Dashboard.tsx)             | 18KB | Dashboard con charts                   |
-| **Reports**         | [Reports.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/Reports.tsx)                 | 16KB | Report e analytics                     |
-| **TransactionForm** | [TransactionForm.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/TransactionForm.tsx) | 14KB | Form nuova transazione                 |
-| **BudgetManager**   | [BudgetManager.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/BudgetManager.tsx)     | 13KB | Gestione budget                        |
-| **Settings**        | [Settings.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/Settings.tsx)               | 13KB | Impostazioni app                       |
-| **QuickAddWidget**  | [QuickAddWidget.tsx](file:///Users/nicco/Antigravity%20Projects/spendwise/src/components/QuickAddWidget.tsx)   | 11KB | Widget quick-add                       |
+| **TransactionList** | [TransactionList.tsx](src/components/TransactionList.tsx) | 25KB | Lista transazioni con filtri e ricerca |
+| **CategoryManager** | [CategoryManager.tsx](src/components/CategoryManager.tsx) | 22KB | Gestione categorie spese               |
+| **SavingsGoals**    | [SavingsGoals.tsx](src/components/SavingsGoals.tsx)       | 20KB | Obiettivi di risparmio                 |
+| **Dashboard**       | [Dashboard.tsx](src/components/Dashboard.tsx)             | 18KB | Dashboard con charts                   |
+| **Reports**         | [Reports.tsx](src/components/Reports.tsx)                 | 16KB | Report e analytics                     |
+| **TransactionForm** | [TransactionForm.tsx](src/components/TransactionForm.tsx) | 14KB | Form nuova transazione                 |
+| **BudgetManager**   | [BudgetManager.tsx](src/components/BudgetManager.tsx)     | 13KB | Gestione budget                        |
+| **Settings**        | [Settings.tsx](src/components/Settings.tsx)               | 13KB | Impostazioni app                       |
+| **QuickAddWidget**  | [QuickAddWidget.tsx](src/components/QuickAddWidget.tsx)   | 11KB | Widget quick-add                       |
 
 ---
 
@@ -96,16 +96,16 @@ spendwise/
 
 | Servizio       | File                                                                                             | Descrizione                   |
 | -------------- | ------------------------------------------------------------------------------------------------ | ----------------------------- |
-| **Analytics**  | [analytics.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/services/analytics.ts)   | Calcoli statistiche e trends  |
-| **Importer**   | [importer.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/services/importer.ts)     | Import/Export CSV, Excel, PDF |
-| **Classifier** | [classifier.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/services/classifier.ts) | ML categorization transazioni |
+| **Analytics**  | [analytics.ts](src/services/analytics.ts)   | Calcoli statistiche e trends  |
+| **Importer**   | [importer.ts](src/services/importer.ts)     | Import/Export CSV, Excel, PDF |
+| **Classifier** | [classifier.ts](src/services/classifier.ts) | ML categorization transazioni |
 
 ---
 
 ## 🗄️ Database
 
 - **Engine**: IndexedDB via [Dexie.js](https://dexie.org/)
-- **Config**: [database.ts](file:///Users/nicco/Antigravity%20Projects/spendwise/src/db/database.ts)
+- **Config**: [database.ts](src/db/database.ts)
 - **Storage**: 100% locale (nessun server)
 
 ---
@@ -121,7 +121,7 @@ graph LR
     Deploy --> Live["sickn33.github.io/spendwise"]
 ```
 
-**Workflow**: [deploy.yml](file:///Users/nicco/Antigravity%20Projects/spendwise/.github/workflows/deploy.yml)
+**Workflow**: [deploy.yml](.github/workflows/deploy.yml)
 
 ---
 

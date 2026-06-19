@@ -45,7 +45,7 @@ describe('BudgetManager Component', () => {
         expect(card).toBeInTheDocument();
         
         // Check for technical labels
-        expect(screen.getByText('SPESO')).toBeInTheDocument();
+        expect(screen.getByText('SPENT')).toBeInTheDocument();
         expect(screen.getByText('BUDGET')).toBeInTheDocument();
     });
 
@@ -63,7 +63,7 @@ describe('BudgetManager Component', () => {
         render(<BudgetManager />);
         
         await waitFor(() => {
-            expect(screen.getByText('NESSUN_BUDGET_ATTIVO')).toBeInTheDocument();
+            expect(screen.getByText('NO ACTIVE BUDGET')).toBeInTheDocument();
         });
     });
 });
