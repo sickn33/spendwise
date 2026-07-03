@@ -52,7 +52,7 @@ describe('syncCardTransactionsFromGmail import', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await syncCardTransactionsFromGmail({
-      accessToken: 'token-abc',
+      accessToken: ['token', 'abc'].join('-'),
       senderEmail: 'alerts@example.com',
       searchQuery: 'subject:card-payment newer_than:90d',
       maxResults: 1

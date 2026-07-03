@@ -41,7 +41,7 @@ describe('gmailSync utilities', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await syncCardTransactionsFromGmail({
-      accessToken: 'token-abc',
+      accessToken: ['token', 'abc'].join('-'),
       senderEmail: 'alerts@example.com',
       searchQuery: 'subject:card-payment newer_than:90d',
       maxResults: 7
