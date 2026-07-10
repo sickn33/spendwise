@@ -56,7 +56,7 @@ describe('Settings Component', () => {
 
         // Check for technical version tag (sub-header)
         expect(screen.getByText('CONTROL PANEL')).toBeInTheDocument();
-        expect(screen.getByText('v1.0.0_STABLE')).toBeInTheDocument();
+        expect(screen.getByText('v1.0.1_STABLE')).toBeInTheDocument();
 
         // Check sections
         expect(screen.getByText('DATA IMPORT')).toBeInTheDocument();

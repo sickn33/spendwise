@@ -68,7 +68,7 @@ describe('Sidebar Component', () => {
             />
         );
         expect(screen.getByText('SPENDWISE')).toBeInTheDocument();
-        expect(screen.getByText('v1.0.0')).toBeInTheDocument();
+        expect(screen.getByText('v1.0.1')).toBeInTheDocument();
         expect(screen.getByText('STABLE')).toBeInTheDocument();
     });
 

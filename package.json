@@ -1,7 +1,7 @@
 {
   "name": "spendwise",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "packageManager": "npm@11.17.0",
   "engines": {
     "node": ">=20.19"
@@ -16,12 +16,16 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:privacy": "node --test scripts/check-privacy.test.mjs",
+    "check:privacy": "node scripts/check-privacy.mjs",
+    "setup:hooks": "node scripts/install-git-hooks.mjs",
+    "prepare": "npm run setup:hooks",
     "typecheck:e2e": "tsc -p tsconfig.e2e.json",
     "test:e2e": "npm run build && playwright test",
     "test:e2e:ci": "playwright test",
     "test:e2e:headed": "npm run build && playwright test --headed",
     "verify:build": "node scripts/verify-build.mjs",
-    "check": "npm run lint && npm run test:coverage && npm run build && npm run verify:build",
+    "check": "npm run check:privacy && npm run test:privacy && npm run lint && npm run test:coverage && npm run build && npm run verify:build",
     "check:all": "npm run check && npm run typecheck:e2e && npm run test:e2e:ci"
   },
   "dependencies": {

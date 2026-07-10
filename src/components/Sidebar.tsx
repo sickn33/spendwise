@@ -35,7 +35,7 @@ export function Sidebar({ currentPage, onNavigate, hrefFor = page => `?page=${pa
                         <div className="brand-name">SPENDWISE</div>
                     </div>
                     <div className="version-tag">
-                        <span className="text-muted">v1.0.0</span>
+                        <span className="text-muted">v1.0.1</span>
                         <div className="version-divider"></div>
                         <span className="text-muted">STABLE</span>
                     </div>

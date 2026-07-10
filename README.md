@@ -31,6 +31,13 @@ npm ci
 npm run dev
 ```
 
+`npm ci` enables the repository's privacy commit hooks unless a custom `core.hooksPath`
+already exists, in which case it prints integration instructions without replacing it. The
+hooks reject real e-mail addresses in staged filenames, text and visible binary strings, and
+commit messages or Git ref names. They require the effective Git author, committer, and annotated-tag identity
+to use GitHub `noreply`, including environment and `--author` overrides. The pre-push hook and
+CI inspect every new commit tree plus its message and metadata before publication or deploy.
+
 The development URL is normally `http://localhost:5173/spendwise/`.
 
 ## Quality gates
@@ -38,6 +45,8 @@ The development URL is normally `http://localhost:5173/spendwise/`.
 ```bash
 npm run test:run       # unit and integration tests
 npm run test:coverage  # enforced 70% global thresholds
+npm run check:privacy  # rejects real e-mails in tracked publishable files
+npm run test:privacy   # verifies identity, history, filename, log, and tag defenses
 npm run lint
 npm run build
 npm run verify:build   # verifies HTML and manifest assets exist

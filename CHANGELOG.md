@@ -2,6 +2,15 @@
 
 All notable changes to SpendWise are documented here.
 
+## 1.0.1 — 2026-07-10
+
+### Privacy
+
+- Add versioned commit and push hooks that block real e-mail addresses in staged files, commit
+  trees, messages, and annotated tags.
+- Require effective author, committer, and tagger metadata to use GitHub `noreply` addresses.
+- Redact rejected addresses from privacy-gate output so logs cannot leak them.
+
 ## 1.0.0 — 2026-07-10
 
 First formal public release.

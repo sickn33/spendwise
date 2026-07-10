@@ -358,7 +358,7 @@ export const Settings = memo(function Settings({ onTransactionsImported, onBacku
                     <div className="flex items-center gap-sm text-muted font-mono text-[10px] uppercase tracking-[0.2em] mt-2">
                         <span>CONTROL PANEL</span>
                         <div className="w-8 h-px bg-border-structural"></div>
-                        <span>v1.0.0_STABLE</span>
+                        <span>v1.0.1_STABLE</span>
                     </div>
                 </div>
             </div>
