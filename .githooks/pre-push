@@ -12,10 +12,14 @@ while read -r local_ref local_oid remote_ref remote_oid; do
   fi
 
   node scripts/check-privacy.mjs --check-ref-name "$local_ref"
+  node scripts/check-privacy.mjs --check-ref-name "$remote_ref"
 
   case "$local_ref" in
     refs/tags/*)
       node scripts/check-privacy.mjs --check-tag "$local_ref"
+      for commit in $(git rev-list "${local_oid}^{commit}" --not --remotes="$remote_name"); do
+        node scripts/check-privacy.mjs --check-commit "$commit"
+      done
       ;;
     *)
       if [ "$remote_oid" = "$zero_oid" ]; then
