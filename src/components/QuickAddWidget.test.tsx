@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QuickAddWidget } from './QuickAddWidget';
-import { getQuickAddPresets, getCategories, addTransaction } from '../db/database';
+import { addQuickAddPreset, deleteQuickAddPreset, getQuickAddPresets, getCategories, addTransaction } from '../db/database';
 
 // Mock dependencies
 vi.mock('../db/database', () => ({
@@ -24,13 +24,15 @@ const mockCategories = [
 describe('QuickAddWidget Component', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.stubGlobal('confirm', vi.fn(() => true));
         vi.mocked(getQuickAddPresets).mockResolvedValue(mockPresets);
         vi.mocked(getCategories).mockResolvedValue(mockCategories);
     });
 
     it('renders as a sidebar variant in closed state by default', async () => {
         render(<QuickAddWidget onTransactionAdded={() => {}} variant="sidebar" />);
-        
+
+        await waitFor(() => expect(getQuickAddPresets).toHaveBeenCalled());
         expect(screen.getByRole('button', { name: /quick add/i })).toBeInTheDocument();
         // Presets should NOT be visible initially in sidebar variant
         expect(screen.queryByText('Caffè')).not.toBeInTheDocument();
@@ -65,5 +67,24 @@ describe('QuickAddWidget Component', () => {
                 amount: -1.5
             }));
         });
+    });
+
+    it('creates and deletes presets through the sidebar editor', async () => {
+        render(<QuickAddWidget onTransactionAdded={() => {}} variant="sidebar" />);
+        fireEvent.click(screen.getByRole('button', { name: /quick add/i }));
+        await screen.findByRole('button', { name: /add caffè expense/i });
+
+        fireEvent.click(screen.getByRole('button', { name: /edit presets/i }));
+        fireEvent.click(screen.getByRole('button', { name: /delete caffè preset/i }));
+        fireEvent.click(screen.getByRole('button', { name: 'Delete preset' }));
+        await waitFor(() => expect(deleteQuickAddPreset).toHaveBeenCalledWith(1));
+
+        fireEvent.click(screen.getByRole('button', { name: /create new preset/i }));
+        fireEvent.change(screen.getByLabelText('NAME'), { target: { value: 'Lunch' } });
+        fireEvent.change(screen.getByLabelText('AMOUNT'), { target: { value: '12.50' } });
+        fireEvent.change(screen.getByLabelText('CATEGORY'), { target: { value: '1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'SAVE' }));
+
+        await waitFor(() => expect(addQuickAddPreset).toHaveBeenCalledWith({ name: 'Lunch', amount: 12.5, categoryId: 1, icon: '💰' }));
     });
 });

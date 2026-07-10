@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BudgetManager } from './BudgetManager';
-import { getBudgets, getCategories, getTransactions } from '../db/database';
+import { addBudget, deleteBudget, getBudgets, getCategories, getTransactions, updateBudget } from '../db/database';
 
 // Mock dependencies
 vi.mock('../db/database', () => ({
@@ -65,5 +65,32 @@ describe('BudgetManager Component', () => {
         await waitFor(() => {
             expect(screen.getByText('NO ACTIVE BUDGET')).toBeInTheDocument();
         });
+    });
+
+    it('creates a positive budget from the empty state', async () => {
+        vi.mocked(getBudgets).mockResolvedValue([]);
+        render(<BudgetManager />);
+        await screen.findByText('NO ACTIVE BUDGET');
+
+        fireEvent.click(screen.getByText('START SETUP'));
+        fireEvent.change(screen.getByLabelText('CATEGORY'), { target: { value: '1' } });
+        fireEvent.change(screen.getByLabelText('MONTHLY BUDGET (€)'), { target: { value: '250.50' } });
+        fireEvent.submit(screen.getByText('CREATE BUDGET').closest('form') as HTMLFormElement);
+
+        await waitFor(() => expect(addBudget).toHaveBeenCalledWith({ categoryId: 1, amount: 250.5, period: 'monthly' }));
+    });
+
+    it('edits and deletes an existing budget', async () => {
+        render(<BudgetManager />);
+        await screen.findByText('Alimentari');
+
+        fireEvent.click(screen.getByTitle('Edit'));
+        fireEvent.change(screen.getByLabelText('MONTHLY BUDGET (€)'), { target: { value: '300' } });
+        fireEvent.submit(screen.getByText('SAVE CHANGES').closest('form') as HTMLFormElement);
+        await waitFor(() => expect(updateBudget).toHaveBeenCalledWith(1, { categoryId: 1, amount: 300, period: 'monthly' }));
+
+        fireEvent.click(screen.getByTitle('Delete'));
+        fireEvent.click(screen.getByRole('button', { name: 'Delete budget' }));
+        await waitFor(() => expect(deleteBudget).toHaveBeenCalledWith(1));
     });
 });

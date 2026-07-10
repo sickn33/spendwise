@@ -51,7 +51,7 @@ function normalizeCategoryName(name: string): string {
 
 // Default categories based on Card data
 export const DEFAULT_CATEGORIES: Omit<Category, 'id'>[] = [
-    { name: 'Grocery & Supermarket', icon: '🛒', color: '#4CAF50', keywords: ['eurospin', 'coop', 'lidl', 'carrefour', 'conad', 'esselunga', 'pam', 'supermercato', 'alimentari', 'penny'], isDefault: true, isIncome: false },
+    { name: 'Grocery & Supermarket', icon: '🛒', color: '#4CAF50', keywords: ['supermarket', 'grocery', 'market', 'discount store', 'supermercato', 'alimentari', 'minimarket'], isDefault: true, isIncome: false },
     { name: 'Restaurants & Cafés', icon: '🍕', color: '#FF5722', keywords: ['pizzeria', 'gelateria', 'bar', 'ristorante', 'trattoria', 'osteria', 'pub', 'mcdonalds', 'burger'], isDefault: true, isIncome: false },
     { name: 'Transport, rentals, taxis & parking', icon: '🚕', color: '#2196F3', keywords: ['taxi', 'uber', 'noleggio', 'parcheggio', 'rent', 'autonoleggio'], isDefault: true, isIncome: false },
     { name: 'Train, Air, Ferry', icon: '✈️', color: '#673AB7', keywords: ['trenitalia', 'italo', 'ryanair', 'easyjet', 'alitalia', 'aereo', 'treno', 'nave', 'traghetto'], isDefault: true, isIncome: false },
@@ -68,7 +68,7 @@ export const DEFAULT_CATEGORIES: Omit<Category, 'id'>[] = [
     { name: 'Leisure', icon: '🎮', color: '#3F51B5', keywords: ['hobby', 'giochi', 'svago'], isDefault: true, isIncome: false },
     { name: 'Shows & museums', icon: '🎭', color: '#673AB7', keywords: ['cinema', 'teatro', 'museo', 'concerto', 'biglietto'], isDefault: true, isIncome: false },
     { name: 'Courses & sports', icon: '🏋️', color: '#009688', keywords: ['palestra', 'corso', 'sport', 'fitness', 'yoga'], isDefault: true, isIncome: false },
-    { name: 'Books, films & music', icon: '📚', color: '#795548', keywords: ['feltrinelli', 'mondadori', 'libro', 'amazon', 'spotify', 'netflix'], isDefault: true, isIncome: false },
+    { name: 'Books, films & music', icon: '📚', color: '#795548', keywords: ['bookstore', 'books', 'cinema', 'streaming', 'music', 'ebook', 'libro'], isDefault: true, isIncome: false },
     { name: 'Tech & electronics', icon: '💻', color: '#607D8B', keywords: ['apple', 'mediaworld', 'unieuro', 'tech', 'elettronica', 'computer'], isDefault: true, isIncome: false },
     { name: 'Mobile phone', icon: '📱', color: '#00BCD4', keywords: ['tim', 'vodafone', 'wind', 'iliad', 'telefono', 'cellulare', 'ricarica'], isDefault: true, isIncome: false },
     { name: 'Gifts', icon: '🎁', color: '#E91E63', keywords: ['regalo', 'gift'], isDefault: true, isIncome: false },
@@ -174,6 +174,18 @@ class SpendWiseDB extends Dexie {
 
 export const db = new SpendWiseDB();
 
+function assertFiniteNonZeroAmount(amount: number, label: string): void {
+    if (!Number.isFinite(amount) || amount === 0) {
+        throw new RangeError(`${label} must be a finite, non-zero amount`);
+    }
+}
+
+function assertPositiveAmount(amount: number, label: string): void {
+    if (!Number.isFinite(amount) || amount <= 0) {
+        throw new RangeError(`${label} must be greater than zero`);
+    }
+}
+
 async function normalizeDefaultCategories(): Promise<void> {
     const existingCategories = await db.categories.toArray();
     const canonicalCategoryBySignature = new Map<string, Category>();
@@ -253,6 +265,7 @@ export async function initializeDatabase(): Promise<void> {
 
 // Transaction operations
 export async function addTransaction(transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    assertFiniteNonZeroAmount(transaction.amount, 'Transaction amount');
     const id = await db.transactions.add({
         ...transaction,
         createdAt: new Date(),
@@ -262,6 +275,9 @@ export async function addTransaction(transaction: Omit<Transaction, 'id' | 'crea
 }
 
 export async function updateTransaction(id: number, updates: Partial<Transaction>): Promise<void> {
+    if (updates.amount !== undefined) {
+        assertFiniteNonZeroAmount(updates.amount, 'Transaction amount');
+    }
     await db.transactions.update(id, {
         ...updates,
         updatedAt: new Date()
@@ -328,6 +344,14 @@ export async function deleteCategory(id: number): Promise<void> {
     if (category?.isDefault) {
         throw new Error('Cannot delete default categories');
     }
+    const [transactionCount, budgetCount, presetCount] = await Promise.all([
+        db.transactions.where('categoryId').equals(id).count(),
+        db.budgets.where('categoryId').equals(id).count(),
+        db.quickAddPresets.where('categoryId').equals(id).count()
+    ]);
+    if (transactionCount + budgetCount + presetCount > 0) {
+        throw new Error('Cannot delete a category that is still in use');
+    }
     await db.categories.delete(id);
 }
 
@@ -348,6 +372,9 @@ export async function updateSettings(updates: Partial<UserSettings>): Promise<vo
 
 // Bulk operations
 export async function bulkAddTransactions(transactions: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<void> {
+    for (const transaction of transactions) {
+        assertFiniteNonZeroAmount(transaction.amount, 'Transaction amount');
+    }
     const now = new Date();
     const preparedTransactions = transactions.map(t => ({
         ...t,
@@ -372,6 +399,7 @@ export async function getBudgets(): Promise<Budget[]> {
 }
 
 export async function addBudget(budget: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    assertPositiveAmount(budget.amount, 'Budget amount');
     const id = await db.budgets.add({
         ...budget,
         createdAt: new Date(),
@@ -381,6 +409,9 @@ export async function addBudget(budget: Omit<Budget, 'id' | 'createdAt' | 'updat
 }
 
 export async function updateBudget(id: number, updates: Partial<Budget>): Promise<void> {
+    if (updates.amount !== undefined) {
+        assertPositiveAmount(updates.amount, 'Budget amount');
+    }
     await db.budgets.update(id, {
         ...updates,
         updatedAt: new Date()
@@ -405,11 +436,15 @@ function quickAddPresetSignature(preset: Pick<QuickAddPreset, 'name' | 'amount' 
 }
 
 export async function addQuickAddPreset(preset: Omit<QuickAddPreset, 'id'>): Promise<number> {
+    assertPositiveAmount(preset.amount, 'Preset amount');
     const id = await db.quickAddPresets.add(preset as QuickAddPreset);
     return id as number;
 }
 
 export async function updateQuickAddPreset(id: number, updates: Partial<QuickAddPreset>): Promise<void> {
+    if (updates.amount !== undefined) {
+        assertPositiveAmount(updates.amount, 'Preset amount');
+    }
     await db.quickAddPresets.update(id, updates);
 }
 
@@ -471,6 +506,10 @@ export async function getSavingsGoals(): Promise<SavingsGoal[]> {
 }
 
 export async function addSavingsGoal(goal: Omit<SavingsGoal, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    assertPositiveAmount(goal.targetAmount, 'Savings target');
+    if (!Number.isFinite(goal.currentAmount) || goal.currentAmount < 0) {
+        throw new RangeError('Current savings amount cannot be negative');
+    }
     const id = await db.savingsGoals.add({
         ...goal,
         createdAt: new Date(),
@@ -480,6 +519,12 @@ export async function addSavingsGoal(goal: Omit<SavingsGoal, 'id' | 'createdAt' 
 }
 
 export async function updateSavingsGoal(id: number, updates: Partial<SavingsGoal>): Promise<void> {
+    if (updates.targetAmount !== undefined) {
+        assertPositiveAmount(updates.targetAmount, 'Savings target');
+    }
+    if (updates.currentAmount !== undefined && (!Number.isFinite(updates.currentAmount) || updates.currentAmount < 0)) {
+        throw new RangeError('Current savings amount cannot be negative');
+    }
     await db.savingsGoals.update(id, {
         ...updates,
         updatedAt: new Date()
@@ -491,23 +536,27 @@ export async function deleteSavingsGoal(id: number): Promise<void> {
 }
 
 export async function addToSavingsGoal(id: number, amount: number): Promise<void> {
-    const goal = await db.savingsGoals.get(id);
-    if (goal) {
+    assertPositiveAmount(amount, 'Savings contribution');
+    await db.transaction('rw', db.savingsGoals, async () => {
+        const goal = await db.savingsGoals.get(id);
+        if (!goal) return;
         await db.savingsGoals.update(id, {
             currentAmount: goal.currentAmount + amount,
             updatedAt: new Date()
         });
-    }
+    });
 }
 
 export async function withdrawFromSavingsGoal(id: number, amount: number): Promise<void> {
-    const goal = await db.savingsGoals.get(id);
-    if (goal) {
+    assertPositiveAmount(amount, 'Savings withdrawal');
+    await db.transaction('rw', db.savingsGoals, async () => {
+        const goal = await db.savingsGoals.get(id);
+        if (!goal) return;
         await db.savingsGoals.update(id, {
             currentAmount: Math.max(0, goal.currentAmount - amount),
             updatedAt: new Date()
         });
-    }
+    });
 }
 
 // File Handle operations

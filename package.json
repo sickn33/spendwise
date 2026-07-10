@@ -1,7 +1,11 @@
 {
   "name": "spendwise",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "packageManager": "npm@11.17.0",
+  "engines": {
+    "node": ">=20.19"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,8 +13,16 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
+    "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "typecheck:e2e": "tsc -p tsconfig.e2e.json",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:ci": "playwright test",
+    "test:e2e:headed": "npm run build && playwright test --headed",
+    "verify:build": "node scripts/verify-build.mjs",
+    "check": "npm run lint && npm run test:coverage && npm run build && npm run verify:build",
+    "check:all": "npm run check && npm run typecheck:e2e && npm run test:e2e:ci"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
@@ -21,12 +33,14 @@
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.11.0",
     "read-excel-file": "^9.2.0",
     "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.61.1",
+    "@tailwindcss/vite": "^4.3.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -39,8 +53,10 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^16.5.0",
     "happy-dom": "^20.3.3",
+    "tailwindcss": "^4.3.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",

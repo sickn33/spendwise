@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { getMonthlyComparison } from '../services/comparison';
 import type { MonthlyComparisonData, CategoryComparison } from '../types';
 import { Bar } from 'react-chartjs-2';
@@ -35,16 +35,23 @@ export const MonthComparison = memo(function MonthComparison() {
     const [loading, setLoading] = useState(true);
     const [selectedMonth, setSelectedMonth] = useState(new Date());
     const [generating, setGenerating] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const requestSequence = useRef(0);
 
     const loadComparison = useCallback(async () => {
+        const requestId = ++requestSequence.current;
         setLoading(true);
+        setLoadError(null);
         try {
             const comparison = await getMonthlyComparison(selectedMonth);
+            if (requestId !== requestSequence.current) return;
             setData(comparison);
         } catch (error) {
+            if (requestId !== requestSequence.current) return;
             console.error('Error loading comparison:', error);
+            setLoadError('Comparison data could not be loaded.');
         } finally {
-            setLoading(false);
+            if (requestId === requestSequence.current) setLoading(false);
         }
     }, [selectedMonth]);
 
@@ -245,6 +252,10 @@ export const MonthComparison = memo(function MonthComparison() {
         );
     }
 
+    if (loadError) {
+        return <div role="alert" className="card text-danger">{loadError} <button className="btn btn-secondary" onClick={loadComparison}>Retry</button></div>;
+    }
+
     if (!data) {
         return (
             <div className="empty-state">
@@ -426,7 +437,7 @@ export const MonthComparison = memo(function MonthComparison() {
                     </h3>
                 </div>
                 <div className="chart-container chart-container-lg">
-                    <Bar data={chartData} options={chartOptions} />
+                    <Bar aria-label="Category spending comparison" data={chartData} options={chartOptions} />
                 </div>
             </div>
 

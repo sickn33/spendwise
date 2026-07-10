@@ -3,6 +3,8 @@ import { getBudgets, addBudget, updateBudget, deleteBudget, getCategories, getTr
 import type { Budget, Category, BudgetProgress } from '../types';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { Plus, Edit2, Trash2, X, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Dialog } from './Dialog';
+import { ConfirmDialog } from './ConfirmDialog';
 
 export const BudgetManager = memo(function BudgetManager() {
     const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -12,6 +14,9 @@ export const BudgetManager = memo(function BudgetManager() {
     const [showForm, setShowForm] = useState(false);
     const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
     const [formData, setFormData] = useState({ categoryId: 0, amount: '' });
+    const [formError, setFormError] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -39,7 +44,7 @@ export const BudgetManager = memo(function BudgetManager() {
                     .filter(t => t.categoryId === budget.categoryId && t.amount < 0)
                     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
                 const remaining = budget.amount - spent;
-                const percentage = (spent / budget.amount) * 100;
+                const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
 
                 return {
                     budget,
@@ -66,16 +71,21 @@ export const BudgetManager = memo(function BudgetManager() {
     const resetForm = useCallback(() => {
         setEditingBudget(null);
         setFormData({ categoryId: 0, amount: '' });
+        setFormError('');
         setShowForm(false);
     }, []);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.categoryId || !formData.amount) return;
+        const amount = Number(formData.amount.replace(',', '.'));
+        if (!formData.categoryId || !Number.isFinite(amount) || amount <= 0) {
+            setFormError('Choose a category and enter a budget greater than zero.');
+            return;
+        }
 
         const budgetData = {
             categoryId: formData.categoryId,
-            amount: parseFloat(formData.amount),
+            amount,
             period: 'monthly' as const
         };
 
@@ -89,12 +99,21 @@ export const BudgetManager = memo(function BudgetManager() {
         loadData();
     }, [formData, editingBudget, resetForm, loadData]);
 
-    const handleDelete = useCallback(async (id: number) => {
-        if (confirm('Are you sure you want to delete this budget?')) {
-            await deleteBudget(id);
+    const handleDelete = useCallback((id: number) => {
+        setDeleteTarget(id);
+    }, []);
+
+    const confirmDelete = useCallback(async () => {
+        if (deleteTarget === null) return;
+        setDeleting(true);
+        try {
+            await deleteBudget(deleteTarget);
+            setDeleteTarget(null);
             loadData();
+        } finally {
+            setDeleting(false);
         }
-    }, [loadData]);
+    }, [deleteTarget, loadData]);
 
     const handleEdit = useCallback((budget: Budget) => {
         setEditingBudget(budget);
@@ -219,7 +238,7 @@ export const BudgetManager = memo(function BudgetManager() {
                 <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
                     <AlertTriangle size={32} className="text-muted mb-md text-muted/50" />
                     <h3 className="text-sm font-mono uppercase text-muted mb-xs">NO ACTIVE BUDGET</h3>
-                    <p className="text-muted text-sm max-w-xs mb-md">
+                    <p className="text-muted text-sm max-w-[20rem] mb-md">
                         Set spending limits by category to monitor your goals.
                     </p>
                     <button 
@@ -233,15 +252,15 @@ export const BudgetManager = memo(function BudgetManager() {
 
             {/* Modal */}
             {showForm && (
-                <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={resetForm}>
-                    <div className="w-full max-w-sm bg-paper structural-border shadow-none" onClick={e => e.stopPropagation()}>
+                <Dialog titleId="budget-dialog-title" onClose={resetForm} className="max-w-[24rem] bg-paper structural-border shadow-none">
                         <div className="flex items-center justify-between p-md border-b border-border">
-                            <h2 className="text-sm font-mono uppercase tracking-wider">
+                            <h2 id="budget-dialog-title" className="text-sm font-mono uppercase tracking-wider">
                                 {editingBudget ? 'EDIT BUDGET' : 'NEW BUDGET'}
                             </h2>
                             <button 
                                 className="btn btn-ghost btn-icon structural-border border-0" 
                                 onClick={resetForm}
+                                aria-label="Close budget dialog"
                             >
                                 <X size={20} />
                             </button>
@@ -249,8 +268,9 @@ export const BudgetManager = memo(function BudgetManager() {
 
                         <form onSubmit={handleSubmit} className="p-md space-y-md">
                             <div>
-                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">CATEGORY</label>
+                                <label htmlFor="budget-category" className="text-tiny font-mono uppercase text-muted mb-xs block">CATEGORY</label>
                                 <select
+                                    id="budget-category"
                                     className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink appearance-none rounded-none"
                                     value={formData.categoryId}
                                     onChange={e => setFormData({ ...formData, categoryId: parseInt(e.target.value) })}
@@ -267,17 +287,20 @@ export const BudgetManager = memo(function BudgetManager() {
                             </div>
 
                             <div>
-                                <label className="text-tiny font-mono uppercase text-muted mb-xs block">MONTHLY BUDGET (€)</label>
+                                <label htmlFor="budget-amount" className="text-tiny font-mono uppercase text-muted mb-xs block">MONTHLY BUDGET (€)</label>
                                 <input
+                                    id="budget-amount"
                                     type="number"
                                     className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink"
                                     placeholder="0.00"
-                                    step="1"
-                                    min="0"
+                                    step="0.01"
+                                    min="0.01"
                                     value={formData.amount}
                                     onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                 />
                             </div>
+
+                            {formError && <p role="alert" className="text-xs text-danger font-mono">{formError}</p>}
 
                             <div className="pt-md border-t border-border flex justify-end gap-sm">
                                 <button type="button" className="btn btn-secondary text-xs uppercase tracking-wider" onClick={resetForm}>
@@ -292,9 +315,18 @@ export const BudgetManager = memo(function BudgetManager() {
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                </Dialog>
             )}
+            <ConfirmDialog
+                open={deleteTarget !== null}
+                title="Delete budget?"
+                description="This removes the selected budget limit. Transactions are not deleted."
+                confirmLabel="Delete budget"
+                danger
+                busy={deleting}
+                onCancel={() => setDeleteTarget(null)}
+                onConfirm={() => void confirmDelete()}
+            />
         </div>
     );
 });

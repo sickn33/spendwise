@@ -1,5 +1,32 @@
 /* SpendWise - Technical Editorial Design */
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-paper: var(--bg-paper);
+  --color-concrete: var(--bg-concrete);
+  --color-ink: var(--text-ink);
+  --color-text: var(--text-ink);
+  --color-muted: var(--text-muted);
+  --color-border: var(--border-structural);
+  --color-border-structural: var(--border-structural);
+  --color-accent-signal: var(--accent-signal);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-glass: var(--bg-glass);
+  --spacing-xs: var(--space-xs);
+  --spacing-sm: var(--space-sm);
+  --spacing-md: var(--space-md);
+  --spacing-lg: var(--space-lg);
+  --spacing-xl: var(--space-xl);
+  --spacing-2xl: var(--space-2xl);
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+}
 
 :root {
   /* Layout & Spacing */
@@ -19,9 +46,9 @@
   --radius-full: 0;
 
   /* Typography */
-  --font-display: "Space Grotesk", -apple-system, sans-serif;
-  --font-sans: "Inter", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-display: "Arial Narrow", "Avenir Next Condensed", system-ui, sans-serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
   /* Transitions - Snap/Sharp */
   --transition-fast: 50ms steps(1);
@@ -42,6 +69,21 @@
 
   --text-muted: #2c2c2c; /* Even darker for perfect contrast */
   --bg-glass: rgba(0, 0, 0, 0.08);
+  --bg-secondary: var(--bg-concrete);
+  --bg-tertiary: #deded8;
+  --text-primary: var(--text-ink);
+  --text-secondary: var(--text-muted);
+  --border: var(--border-structural);
+  --border-hover: var(--text-ink);
+  --accent-primary: var(--accent-signal);
+  --accent-gradient: linear-gradient(135deg, var(--accent-signal), #315b8f);
+  --success-bg: rgba(0, 96, 15, 0.12);
+  --danger-bg: rgba(227, 6, 19, 0.1);
+  --warning-bg: rgba(153, 112, 0, 0.14);
+  --shadow-md: 0 4px 12px rgba(15, 15, 15, 0.12);
+  --shadow-lg: 0 10px 24px rgba(15, 15, 15, 0.16);
+  --shadow-xl: 0 18px 36px rgba(15, 15, 15, 0.2);
+  --shadow-2xl: 0 24px 48px rgba(15, 15, 15, 0.24);
 }
 
 [data-theme="dark"] {
@@ -57,6 +99,21 @@
 
   --text-muted: #a0a0b0;
   --bg-glass: rgba(255, 255, 255, 0.05);
+  --bg-secondary: var(--bg-concrete);
+  --bg-tertiary: #242432;
+  --text-primary: var(--text-ink);
+  --text-secondary: var(--text-muted);
+  --border: var(--border-structural);
+  --border-hover: var(--text-ink);
+  --accent-primary: var(--accent-signal);
+  --accent-gradient: linear-gradient(135deg, var(--accent-signal), #78b3ff);
+  --success-bg: rgba(0, 200, 83, 0.12);
+  --danger-bg: rgba(255, 82, 82, 0.12);
+  --warning-bg: rgba(255, 214, 0, 0.14);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.38);
+  --shadow-xl: 0 18px 36px rgba(0, 0, 0, 0.45);
+  --shadow-2xl: 0 24px 48px rgba(0, 0, 0, 0.55);
 }
 
 /* Legacy Light theme cleanup */
@@ -530,6 +587,18 @@ select.input {
   width: 100%;
 }
 
+.chart-center-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.system-reset-btn {
+  white-space: nowrap;
+}
+
 /* Category Tags */
 .category-tag {
   display: inline-flex;
@@ -555,6 +624,37 @@ select.input {
   justify-content: center;
   z-index: 1000;
   padding: var(--space-lg);
+}
+
+.app-dialog-shell {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: var(--space-md);
+  border: 0;
+  background: transparent;
+  color: var(--text-ink);
+  overflow: hidden;
+}
+
+.app-dialog-shell[open] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-dialog-shell::backdrop {
+  background: rgba(15, 15, 15, 0.55);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.app-dialog-panel {
+  width: 100%;
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
 }
 
 .modal {
@@ -729,6 +829,56 @@ select.input {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .sidebar-v2 {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    border-right: 0;
+    border-top: 1px solid var(--border-structural);
+    z-index: 100;
+  }
+
+  .sidebar-v2 .sidebar-masthead,
+  .sidebar-v2 > .flex-1,
+  .sidebar-v2 .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar-v2 > .flex-shrink-0 {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sidebar-v2 .sidebar-nav {
+    flex-direction: row;
+    gap: 2px;
+    padding: var(--space-xs);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .sidebar-v2 .nav-item-v2 {
+    flex: 0 0 78px;
+    min-width: 78px;
+    min-height: 58px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--space-xs);
+    text-align: center;
+  }
+
+  .sidebar-v2 .nav-label {
+    font-size: 0.68rem;
+  }
+
+  .sidebar-v2 .active-dot {
+    display: none;
+  }
+
   .sidebar {
     position: fixed;
     bottom: 0;
@@ -763,8 +913,13 @@ select.input {
 
   .main-content {
     margin-left: 0;
-    margin-bottom: 70px;
+    margin-bottom: 72px;
     padding: var(--space-md);
+  }
+
+  .fab {
+    bottom: 84px;
+    right: var(--space-md);
   }
 
   .stats-grid {
@@ -1961,10 +2116,16 @@ select.input {
 
 .impact-badge.medium {
   background: var(--warning);
+  color: #0f0f14;
+}
+
+[data-theme="dark"] .impact-badge.high {
+  color: #0f0f14;
 }
 
 .impact-badge.low {
   background: var(--text-muted);
+  color: var(--bg-paper);
 }
 
 /* Chart container with height */
@@ -1987,6 +2148,15 @@ select.input {
 .comparison-table th {
   color: var(--text-muted);
   font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  flex-wrap: wrap;
 }
 
 .comparison-table th.text-left {
@@ -2076,7 +2246,7 @@ select.input {
   font-size: 0.7rem;
   padding: 2px 8px;
   background: var(--accent-signal);
-  color: white;
+  color: var(--bg-paper);
   margin-left: var(--space-sm);
   text-transform: uppercase;
 }
@@ -2598,4 +2768,70 @@ select.input {
 
 .animate-slideDown {
   animation: slideDown 0.1s ease-out forwards;
+}
+
+/* Keep responsive overrides after the sidebar/FAB component definitions. */
+@media (max-width: 768px) {
+  .sidebar-v2 {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    border-right: 0;
+    border-top: 1px solid var(--border-structural);
+    z-index: 100;
+  }
+
+  .sidebar-v2 .sidebar-masthead,
+  .sidebar-v2 > .flex-1,
+  .sidebar-v2 .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar-v2 > .flex-shrink-0 {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sidebar-v2 .sidebar-nav {
+    flex-direction: row;
+    gap: 2px;
+    padding: var(--space-xs);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .sidebar-v2 .nav-item-v2 {
+    flex: 0 0 78px;
+    min-width: 78px;
+    min-height: 58px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--space-xs);
+    text-align: center;
+  }
+
+  .sidebar-v2 .nav-label {
+    font-size: 0.68rem;
+  }
+
+  .sidebar-v2 .active-dot {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 0;
+    margin-bottom: 72px;
+    padding: var(--space-md);
+  }
+
+  .fab {
+    bottom: 84px;
+    right: var(--space-md);
+    width: 56px;
+    height: 56px;
+  }
 }

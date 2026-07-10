@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ImportPreviewResult, ImportPreviewItem } from '../services/importer';
 import { X, Check, AlertTriangle, Copy, RefreshCw } from 'lucide-react';
+import { Dialog } from './Dialog';
 
 interface ImportPreviewModalProps {
     preview: ImportPreviewResult;
@@ -11,6 +12,13 @@ interface ImportPreviewModalProps {
 
 export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: ImportPreviewModalProps) {
     const [updateExisting, setUpdateExisting] = useState(false);
+    const actionParts = [
+        preview.newCount > 0 ? `import ${preview.newCount} new` : '',
+        updateExisting && preview.modifiedCount > 0 ? `update ${preview.modifiedCount} existing` : '',
+    ].filter(Boolean);
+    const actionLabel = actionParts.length > 0
+        ? actionParts.join(' and ')
+        : `enable update for ${preview.modifiedCount} existing`;
 
     const getStatusIcon = (status: ImportPreviewItem['status']) => {
         switch (status) {
@@ -37,15 +45,20 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
     };
 
     return (
-        <div className="modal-overlay" onClick={onCancel}>
-            <div className="modal max-w-700 max-h-80vh" onClick={e => e.stopPropagation()}>
+        <Dialog
+            titleId="import-preview-title"
+            onClose={onCancel}
+            busy={importing}
+            className="modal max-w-700 max-h-80vh"
+        >
             <div className="modal-header">
-                    <h2 className="modal-title">Import Preview</h2>
+                    <h2 id="import-preview-title" className="modal-title">Import Preview</h2>
                     <button 
                         className="btn-icon" 
                         onClick={onCancel}
                         title="Close"
                         aria-label="Close"
+                        disabled={importing}
                     >
                         <X size={20} />
                     </button>
@@ -137,10 +150,9 @@ export function ImportPreviewModal({ preview, onConfirm, onCancel, importing }: 
                         onClick={() => onConfirm(updateExisting)}
                         disabled={importing || preview.newCount === 0 && (!updateExisting || preview.modifiedCount === 0)}
                     >
-                        {importing ? 'Importing...' : `Import ${preview.newCount} transactions`}
+                        {importing ? 'Importing...' : actionLabel}
                     </button>
                 </div>
-            </div>
-        </div>
+        </Dialog>
     );
 }

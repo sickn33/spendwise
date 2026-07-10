@@ -28,11 +28,18 @@ vi.mock('./db/database', () => ({
     initializeDatabase: vi.fn(),
     getTransactions: vi.fn().mockResolvedValue([]),
     getCategories: vi.fn().mockResolvedValue([]),
+    getBudgets: vi.fn().mockResolvedValue([]),
+    getSavingsGoals: vi.fn().mockResolvedValue([]),
+    getSettings: vi.fn().mockResolvedValue(undefined),
     getQuickAddPresets: vi.fn().mockResolvedValue([]),
+    updateSettings: vi.fn().mockResolvedValue(undefined),
     initializeQuickAddPresets: vi.fn().mockResolvedValue(undefined),
     addQuickAddPreset: vi.fn(),
     deleteQuickAddPreset: vi.fn(),
     addTransaction: vi.fn(),
+    getFileHandle: vi.fn().mockResolvedValue(undefined),
+    saveFileHandle: vi.fn(),
+    deleteFileHandle: vi.fn(),
 }));
 
 vi.mock('./services/classifier', () => ({

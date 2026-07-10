@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef, useState, memo } from 'react';
 import { importCardExcel, previewCardExcel, type ImportPreviewResult } from '../services/importer';
-import { getTransactions, getCategories, clearAllTransactions } from '../db/database';
+import {
+    getTransactions,
+    clearAllTransactions
+} from '../db/database';
 import { exportToExcel, exportToCSV } from '../services/importer';
 import { ImportPreviewModal } from './ImportPreviewModal';
+import { ConfirmDialog } from './ConfirmDialog';
+import { createBackupSnapshot, parseBackupText, restoreBackup, type BackupSnapshotV2 } from '../services/backup';
 import {
     loadGmailSyncSettings,
     saveGmailSyncSettings,
@@ -36,9 +41,11 @@ const LAST_GMAIL_SYNC_KEY = 'spendwise-gmail-last-sync';
 
 interface SettingsProps {
     onTransactionsImported?: () => void;
+    onBackupRestored?: (snapshot: BackupSnapshotV2) => void;
+    backupController?: ReturnType<typeof useLocalBackup>;
 }
 
-export const Settings = memo(function Settings({ onTransactionsImported }: SettingsProps) {
+export const Settings = memo(function Settings({ onTransactionsImported, onBackupRestored, backupController }: SettingsProps) {
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
     const [exporting, setExporting] = useState(false);
@@ -52,6 +59,10 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     const [gmailSyncing, setGmailSyncing] = useState(false);
     const [gmailCleaning, setGmailCleaning] = useState(false);
     const [gmailResult, setGmailResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [gmailCleanupConfirm, setGmailCleanupConfirm] = useState(false);
+    const [pendingRestore, setPendingRestore] = useState<BackupSnapshotV2 | null>(null);
+    const [restoring, setRestoring] = useState(false);
+    const ownBackupController = useLocalBackup();
     const { 
         fileHandle, 
         permissionStatus, 
@@ -59,9 +70,10 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
         disconnectBackup, 
         requestPermission,
         error: backupError
-    } = useLocalBackup();
+    } = backupController ?? ownBackupController;
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const restoreInputRef = useRef<HTMLInputElement>(null);
 
     async function handleFileSelect(file: File) {
         if (!file.name.endsWith('.xlsx')) {
@@ -100,14 +112,14 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
         
         setImporting(true);
         try {
-            const result = await importCardExcel(pendingFile);
+            const result = await importCardExcel(pendingFile, updateExisting);
             
             if (result.success) {
                 setImportResult({
                     success: true,
                     message: `Imported ${result.imported} transactions. ${result.skipped} duplicate(s) skipped.${updateExisting && result.updated > 0 ? ` ${result.updated} updated.` : ''}`
                 });
-                if (result.imported > 0) {
+                if (result.imported > 0 || result.updated > 0) {
                     onTransactionsImported?.();
                 }
             } else {
@@ -155,17 +167,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     async function handleExportJSON() {
         setExporting(true);
         try {
-            const [transactions, categories] = await Promise.all([
-                getTransactions(),
-                getCategories()
-            ]);
-
-            const exportData = {
-                version: '1.0',
-                exportedAt: new Date().toISOString(),
-                transactions,
-                categories
-            };
+            const exportData = await createBackupSnapshot();
 
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -178,6 +180,40 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             console.error('Export error:', error);
         } finally {
             setExporting(false);
+        }
+    }
+
+    async function handleRestoreFile(file: File) {
+        setImportResult(null);
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            setImportResult({ success: false, message: 'Please select a SpendWise JSON backup.' });
+            return;
+        }
+        try {
+            setPendingRestore(parseBackupText(await file.text()));
+        } catch (error) {
+            setImportResult({ success: false, message: error instanceof Error ? error.message : 'Invalid backup file.' });
+        } finally {
+            if (restoreInputRef.current) restoreInputRef.current.value = '';
+        }
+    }
+
+    async function handleConfirmRestore() {
+        if (!pendingRestore) return;
+        setRestoring(true);
+        try {
+            await restoreBackup(pendingRestore);
+            setImportResult({
+                success: true,
+                message: `Backup restored: ${pendingRestore.transactions.length} transactions, ${pendingRestore.categories.length} categories, ${pendingRestore.budgets.length} budgets, ${pendingRestore.savingsGoals.length} goals.`,
+            });
+            setPendingRestore(null);
+            if (onBackupRestored) onBackupRestored(pendingRestore);
+            else onTransactionsImported?.();
+        } catch (error) {
+            setImportResult({ success: false, message: error instanceof Error ? error.message : 'Restore failed without changing the ledger.' });
+        } finally {
+            setRestoring(false);
         }
     }
 
@@ -227,7 +263,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                 maxResults: gmailSettings.maxResults
             });
 
-            if (result.imported > 0) {
+            if (result.imported + result.updated + result.removed > 0) {
                 onTransactionsImported?.();
             }
 
@@ -241,6 +277,10 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             setGmailResult({ success: result.errors.length === 0, message });
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Error during Gmail sync';
+            if (message.includes('authorization expired') || message.includes('revoked')) {
+                clearGmailToken();
+                setGmailToken(null);
+            }
             setGmailResult({ success: false, message });
         } finally {
             setGmailSyncing(false);
@@ -269,6 +309,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
     }
 
     async function handleCleanupGmailDuplicates() {
+        setGmailCleanupConfirm(false);
         setGmailCleaning(true);
         try {
             const result = await cleanupLikelyGmailDuplicates();
@@ -277,7 +318,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
             }
             setGmailResult({
                 success: true,
-                message: `Cleanup completed:  transactions.`
+                message: `Cleanup completed: ${result.removed} duplicate transaction${result.removed === 1 ? '' : 's'} removed from ${result.scanned} scanned.`
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Error during duplicate cleanup';
@@ -475,7 +516,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 </button>
                                 <button
                                     className="btn btn-ghost text-[10px] col-span-2 border-border-structural"
-                                    onClick={() => void handleCleanupGmailDuplicates()}
+                                    onClick={() => setGmailCleanupConfirm(true)}
                                     disabled={gmailSyncing || gmailCleaning}
                                 >
                                     <Trash2 size={14} />
@@ -511,6 +552,28 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                     <span className="font-mono text-xs uppercase font-bold">EXPORT XLSX</span>
                                 </div>
                                 <Download size={14} className="opacity-0 group-hover:opacity-100" />
+                            </button>
+                            <input
+                                ref={restoreInputRef}
+                                type="file"
+                                accept="application/json,.json"
+                                className="sr-only"
+                                aria-label="Restore backup JSON file"
+                                onChange={event => {
+                                    const file = event.target.files?.[0];
+                                    if (file) void handleRestoreFile(file);
+                                }}
+                            />
+                            <button
+                                className="w-full flex items-center justify-between p-md border border-border-structural hover:border-text-ink hover:bg-concrete/30 transition-all group"
+                                onClick={() => restoreInputRef.current?.click()}
+                                disabled={restoring}
+                            >
+                                <div className="flex items-center gap-md">
+                                    <Upload size={16} className="text-muted" />
+                                    <span className="font-mono text-xs uppercase font-bold">RESTORE BACKUP JSON</span>
+                                </div>
+                                <RefreshCcw size={14} className="opacity-0 group-hover:opacity-100" />
                             </button>
                             <button
                                 className="w-full flex items-center justify-between p-md border border-border-structural hover:border-text-ink hover:bg-concrete/30 transition-all group"
@@ -624,7 +687,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 <div>
                                     <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">LOCAL INDEXEDDB STORAGE</div>
                                     <div className="font-sans text-xs text-muted leading-relaxed uppercase">
-                                        Date Persistance: Local Environment Only. No Cloud Transmission.
+                                        Core ledger: local IndexedDB. Gmail is contacted only after explicit authorization.
                                     </div>
                                 </div>
                             </div>
@@ -636,7 +699,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 <div>
                                     <div className="font-mono text-[10px] font-bold uppercase tracking-wider mb-1">SECURITY PROTOCOL</div>
                                     <div className="font-sans text-xs text-muted leading-relaxed uppercase">
-                                        Privacy Guarantee: Offline-First Architecture. Zero External Telemetry.
+                                        Offline-first architecture. No analytics telemetry; Gmail sync is opt-in.
                                     </div>
                                 </div>
                             </div>
@@ -656,7 +719,7 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                         !! WARNING: DATA_DESTRUCTION_PENDING !!
                                     </div>
                                     <p className="font-mono text-[9px] text-muted text-center uppercase">
-                                        Irreversible Action. This will clear the entire IndexedDB instance.
+                                        Irreversible action. This will clear all transaction records.
                                     </p>
                                     <div className="flex gap-md">
                                         <button
@@ -676,12 +739,12 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                                 </div>
                             ) : (
                                 <button
-                                    className="w-full flex items-center justify-between p-md border border-danger/30 text-danger hover:bg-danger/10 transition-colors group"
+                                    className="w-full flex items-center justify-between p-md border border-danger/30 text-danger bg-transparent hover:bg-danger/10 transition-colors group"
                                     onClick={() => setShowClearConfirm(true)}
                                 >
                                     <div className="flex items-center gap-md">
                                         <Trash2 size={16} />
-                                        <span className="font-mono text-xs uppercase font-bold">CLEAR ALL DATA</span>
+                                        <span className="font-mono text-xs uppercase font-bold">CLEAR ALL TRANSACTIONS</span>
                                     </div>
                                     <Shield size={14} className="opacity-0 group-hover:opacity-100" />
                                 </button>
@@ -700,6 +763,26 @@ export const Settings = memo(function Settings({ onTransactionsImported }: Setti
                     importing={importing}
                 />
             )}
+            <ConfirmDialog
+                open={gmailCleanupConfirm}
+                title="Remove likely Gmail duplicates?"
+                description="SpendWise will delete records identified by its duplicate heuristic. Export a backup first if these records are important."
+                confirmLabel="Remove duplicates"
+                danger
+                busy={gmailCleaning}
+                onCancel={() => setGmailCleanupConfirm(false)}
+                onConfirm={() => void handleCleanupGmailDuplicates()}
+            />
+            <ConfirmDialog
+                open={pendingRestore !== null}
+                title="Replace all SpendWise data?"
+                description={pendingRestore ? `Restore ${pendingRestore.transactions.length} transactions and ${pendingRestore.categories.length} categories from the ${pendingRestore.version} backup. The current ledger will be replaced atomically.` : ''}
+                confirmLabel="Restore backup"
+                danger
+                busy={restoring}
+                onCancel={() => setPendingRestore(null)}
+                onConfirm={() => void handleConfirmRestore()}
+            />
         </div>
     );
 });

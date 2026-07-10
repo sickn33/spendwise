@@ -21,7 +21,7 @@ vi.mock('./TransactionForm', () => ({
 }));
 
 const mockTransactions = [
-    { id: 1, date: '2023-05-15', amount: -50.00, categoryId: 1, description: 'Spesa Esselunga', type: 'expense' },
+    { id: 1, date: '2023-05-15', amount: -50.00, categoryId: 1, description: 'Grocery purchase', type: 'expense' },
     { id: 2, date: '2023-05-20', amount: 1200.00, categoryId: 2, description: 'Stipendio', type: 'income' },
 ];
 
@@ -66,10 +66,10 @@ describe('TransactionList Component', () => {
         render(<TransactionList />);
         
         await waitFor(() => {
-            expect(screen.getByText('Spesa Esselunga')).toBeInTheDocument();
+            expect(screen.getByText('Grocery purchase')).toBeInTheDocument();
         });
 
-        const row = screen.getByText('Spesa Esselunga').closest('.ledger-row');
+        const row = screen.getByText('Grocery purchase').closest('.ledger-row');
         expect(row).toBeInTheDocument();
         
         // Check structural elements
@@ -98,5 +98,25 @@ describe('TransactionList Component', () => {
         await waitFor(() => {
             expect(deleteTransaction).toHaveBeenCalledWith(2);
         });
+    });
+
+    it('keeps a 10,000-row ledger DOM bounded and pages through the full result set', async () => {
+        const largeLedger = Array.from({ length: 10_000 }, (_, index) => ({
+            id: index + 1,
+            date: new Date(2026, 0, 1 + (index % 28)),
+            amount: -(index + 1),
+            categoryId: 1,
+            description: `Transaction ${index + 1}`,
+            details: '', currency: 'EUR', isRecurring: false, tags: [], account: '', isContabilized: true,
+            createdAt: new Date(2026, 0, 1), updatedAt: new Date(2026, 0, 1),
+        }));
+        vi.mocked(getTransactions).mockResolvedValue(largeLedger);
+        const { container } = render(<TransactionList />);
+
+        expect(await screen.findByText('Showing 1–200 of 10000')).toBeInTheDocument();
+        expect(container.querySelectorAll('.ledger-row')).toHaveLength(200);
+        fireEvent.click(screen.getByRole('button', { name: 'Next transaction page' }));
+        expect(await screen.findByText('Showing 201–400 of 10000')).toBeInTheDocument();
+        expect(container.querySelectorAll('.ledger-row')).toHaveLength(200);
     });
 });

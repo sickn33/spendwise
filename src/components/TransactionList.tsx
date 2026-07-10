@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useDeferredValue, memo } from 'react';
+import { useState, useEffect, useMemo, useDeferredValue, memo, useRef } from 'react';
 import { getTransactions, getCategories, deleteTransaction } from '../db/database';
 import type { Transaction, Category } from '../types';
-import { format, startOfMonth, subMonths, parseISO } from 'date-fns';
+import { endOfDay, format, startOfMonth, subMonths, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { Search, Filter, Trash2, Edit2, X, TrendingDown, ArrowUpDown, Calendar, DollarSign } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
@@ -15,6 +15,8 @@ interface IndexedTransaction extends Transaction {
     dateKey: string;
     searchableText: string;
 }
+
+export const TRANSACTIONS_PER_PAGE = 200;
 
 export const TransactionList = memo(function TransactionList({ refreshTrigger }: TransactionListProps) {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -33,6 +35,8 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
     const [showFilters, setShowFilters] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const listRegionRef = useRef<HTMLDivElement>(null);
     const deferredSearchQuery = useDeferredValue(searchQuery);
 
     useEffect(() => {
@@ -87,7 +91,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
         const now = new Date();
         const query = deferredSearchQuery.trim().toLowerCase();
         const customDateFromTs = customDateFrom ? parseISO(customDateFrom).getTime() : null;
-        const customDateToTs = customDateTo ? parseISO(customDateTo).getTime() : null;
+        const customDateToTs = customDateTo ? endOfDay(parseISO(customDateTo)).getTime() : null;
 
         // Date range filter
         if (dateRange === 'month') {
@@ -149,11 +153,25 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
         return filtered;
     }, [indexedTransactions, dateRange, customDateFrom, customDateTo, transactionType, minAmount, maxAmount, selectedCategoryId, deferredSearchQuery, sortBy, sortOrder]);
 
+    const pageCount = Math.max(1, Math.ceil(filteredTransactions.length / TRANSACTIONS_PER_PAGE));
+    const visibleTransactions = useMemo(
+        () => filteredTransactions.slice(currentPage * TRANSACTIONS_PER_PAGE, (currentPage + 1) * TRANSACTIONS_PER_PAGE),
+        [filteredTransactions, currentPage]
+    );
+
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [dateRange, customDateFrom, customDateTo, transactionType, minAmount, maxAmount, selectedCategoryId, deferredSearchQuery, sortBy, sortOrder, refreshTrigger]);
+
+    useEffect(() => {
+        setCurrentPage(page => Math.min(page, pageCount - 1));
+    }, [pageCount]);
+
     // Group transactions by date
     const groupedTransactions = useMemo(() => {
         const groups: Record<string, IndexedTransaction[]> = {};
 
-        for (const t of filteredTransactions) {
+        for (const t of visibleTransactions) {
             const dateKey = t.dateKey;
             if (!groups[dateKey]) {
                 groups[dateKey] = [];
@@ -164,7 +182,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
         return Object.entries(groups).sort((a, b) =>
             sortOrder === 'desc' ? b[0].localeCompare(a[0]) : a[0].localeCompare(b[0])
         );
-    }, [filteredTransactions, sortOrder]);
+    }, [visibleTransactions, sortOrder]);
 
     const { totalFiltered, totalExpenses, totalIncome } = useMemo(() => {
         return filteredTransactions.reduce((acc, t) => {
@@ -194,6 +212,11 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
         setMinAmount('');
         setMaxAmount('');
         setSearchQuery('');
+    }
+
+    function changePage(page: number) {
+        setCurrentPage(Math.max(0, Math.min(page, pageCount - 1)));
+        window.requestAnimationFrame(() => listRegionRef.current?.focus());
     }
 
     if (loading) {
@@ -432,7 +455,7 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
             </div>
 
             {/* Transaction Groups */}
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div ref={listRegionRef} tabIndex={-1} aria-label="Transaction results" className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 {groupedTransactions.length > 0 ? (
                     groupedTransactions.map(([dateKey, txs]) => (
                         <div key={dateKey}>
@@ -520,6 +543,20 @@ export const TransactionList = memo(function TransactionList({ refreshTrigger }:
                     </div>
                 )}
             </div>
+
+            {filteredTransactions.length > 0 && (
+                <nav className="pagination-controls" aria-label="Transaction pages">
+                    <button className="btn btn-secondary" onClick={() => changePage(currentPage - 1)} disabled={currentPage === 0} aria-label="Previous transaction page">
+                        Previous
+                    </button>
+                    <span role="status" aria-live="polite" className="font-mono text-xs text-muted">
+                        Showing {currentPage * TRANSACTIONS_PER_PAGE + 1}–{Math.min((currentPage + 1) * TRANSACTIONS_PER_PAGE, filteredTransactions.length)} of {filteredTransactions.length}
+                    </span>
+                    <button className="btn btn-secondary" onClick={() => changePage(currentPage + 1)} disabled={currentPage >= pageCount - 1} aria-label="Next transaction page">
+                        Next
+                    </button>
+                </nav>
+            )}
 
             {/* Edit Modal */}
             {editingTransaction && (

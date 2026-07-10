@@ -43,7 +43,7 @@ describe('TransactionForm Component', () => {
         
         // Check for structural styling
         const modal = screen.getByRole('dialog');
-        expect(modal).toHaveClass('structural-border');
+        expect(modal.querySelector('.app-dialog-panel')).toHaveClass('structural-border');
     });
 
     it('handles expense/income toggle with strict style', async () => {
@@ -70,7 +70,7 @@ describe('TransactionForm Component', () => {
         
         // Fill form
         fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '50.00' } });
-        fireEvent.change(screen.getByPlaceholderText('e.g. Grocery shopping'), { target: { value: 'Spesa Esselunga' } });
+        fireEvent.change(screen.getByPlaceholderText('e.g. Grocery shopping'), { target: { value: 'Grocery purchase' } });
         
         // Select category
         const categoryBtn = screen.getByTitle('Select category');
@@ -84,10 +84,37 @@ describe('TransactionForm Component', () => {
         await waitFor(() => {
             expect(addTransaction).toHaveBeenCalledWith(expect.objectContaining({
                 amount: -50,
-                description: 'Spesa Esselunga',
+                description: 'Grocery purchase',
                 categoryId: 1
             }));
             expect(onSave).toHaveBeenCalled();
         });
+    });
+
+    it('rejects invalid amounts with an accessible error', async () => {
+        render(<TransactionForm onClose={() => {}} onSave={() => {}} />);
+        await screen.findByText('NEW TRANSACTION');
+
+        fireEvent.change(screen.getByLabelText('Amount'), { target: { value: 'abc' } });
+        fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Invalid row' } });
+        fireEvent.submit(screen.getByText('SAVE').closest('form') as HTMLFormElement);
+
+        expect(screen.getByRole('alert')).toHaveTextContent('greater than zero');
+        expect(addTransaction).not.toHaveBeenCalled();
+    });
+
+    it('switches to a compatible income category and saves positive amounts', async () => {
+        render(<TransactionForm onClose={() => {}} onSave={() => {}} />);
+        await screen.findByText('NEW TRANSACTION');
+
+        fireEvent.click(screen.getByText('Income'));
+        fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '1200' } });
+        fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Salary' } });
+        fireEvent.submit(screen.getByText('SAVE').closest('form') as HTMLFormElement);
+
+        await waitFor(() => expect(addTransaction).toHaveBeenCalledWith(expect.objectContaining({
+            amount: 1200,
+            categoryId: 2,
+        })));
     });
 });

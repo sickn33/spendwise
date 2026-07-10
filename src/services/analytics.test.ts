@@ -19,7 +19,8 @@ import {
   getSpendingTrend,
   getCategoryBreakdown,
   getTopExpenses,
-  getDailyAverageSpending
+  getDailyAverageSpending,
+  generateReportData
 } from './analytics';
 import { getCategories, getTransactions } from '../db/database';
 
@@ -58,6 +59,7 @@ describe('Analytics Service', () => {
       expect(result.totalIncome).toBe(1500);
       expect(result.totalExpenses).toBe(200);
       expect(result.transactionCount).toBe(4);
+      expect(result.categoryBreakdown).toEqual({ 2: 200 });
     });
 
     it('should create correct category breakdown', async () => {
@@ -87,6 +89,9 @@ describe('Analytics Service', () => {
   });
 
   describe('getSpendingTrend', () => {
+    it('rejects invalid month counts', async () => {
+      await expect(getSpendingTrend(0)).rejects.toThrow('positive integer');
+    });
     it('should return trend for specified number of months', async () => {
       vi.mocked(getTransactions).mockResolvedValue([]);
 
@@ -201,6 +206,9 @@ describe('Analytics Service', () => {
   });
 
   describe('getDailyAverageSpending', () => {
+    it('rejects invalid day counts', async () => {
+      await expect(getDailyAverageSpending(0)).rejects.toThrow('positive integer');
+    });
     it('should calculate daily average correctly', async () => {
       const mockTransactions = [
         { id: 1, amount: -300, categoryId: 1, date: new Date() },
@@ -222,6 +230,27 @@ describe('Analytics Service', () => {
       const result = await getDailyAverageSpending(30);
 
       expect(result).toBe(0);
+    });
+  });
+
+  describe('generateReportData', () => {
+    it('keeps income out of expense category percentages', async () => {
+      vi.mocked(getTransactions).mockResolvedValueOnce([
+        { id: 1, amount: 1000, categoryId: 1, date: new Date() },
+        { id: 2, amount: -100, categoryId: 2, date: new Date() },
+      ]);
+      vi.mocked(getCategories).mockResolvedValueOnce([
+        { id: 1, name: 'Income', icon: 'I', color: '#0a0', keywords: [], isDefault: true, isIncome: true },
+        { id: 2, name: 'Food', icon: 'F', color: '#a00', keywords: [], isDefault: true, isIncome: false },
+      ]);
+      vi.mocked(getTransactions).mockResolvedValue([]);
+
+      const report = await generateReportData(new Date(2026, 0, 1), new Date(2026, 0, 31));
+
+      expect(report.totalIncome).toBe(1000);
+      expect(report.totalExpenses).toBe(100);
+      expect(report.categoryBreakdown).toHaveLength(1);
+      expect(report.categoryBreakdown[0]).toMatchObject({ amount: 100, percentage: 100, transactionCount: 1 });
     });
   });
 });

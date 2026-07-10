@@ -1,5 +1,6 @@
 // Test setup file for Vitest
 import '@testing-library/jest-dom/vitest';
+import 'fake-indexeddb/auto';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 
@@ -37,8 +38,19 @@ Object.defineProperty(window, 'localStorage', {
   writable: true,
 });
 
+Object.defineProperty(globalThis, 'sessionStorage', {
+  value: createStorageMock(),
+  writable: true,
+});
+
+Object.defineProperty(window, 'sessionStorage', {
+  value: globalThis.sessionStorage,
+  writable: true,
+});
+
 beforeEach(() => {
   localStorage.clear();
+  sessionStorage.clear();
   vi.mocked(localStorage.getItem).mockClear();
   vi.mocked(localStorage.setItem).mockClear();
   vi.mocked(localStorage.removeItem).mockClear();
@@ -46,20 +58,21 @@ beforeEach(() => {
   vi.mocked(localStorage.clear).mockClear();
 });
 
+if (!HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute('open', '');
+  };
+}
+
+if (!HTMLDialogElement.prototype.close) {
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute('open');
+  };
+}
+
 // Polyfill TextEncoder for React 19
 import { TextEncoder, TextDecoder } from 'util';
 Object.assign(global, { TextEncoder, TextDecoder });
-
-// Mock IndexedDB for Dexie
-const indexedDB = {
-  open: vi.fn(),
-  deleteDatabase: vi.fn(),
-};
-
-Object.defineProperty(globalThis, 'indexedDB', {
-  value: indexedDB,
-  writable: true,
-});
 
 // Mock matchMedia for responsive tests
 Object.defineProperty(window, 'matchMedia', {

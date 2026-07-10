@@ -43,7 +43,7 @@ describe('syncCardTransactionsFromGmail import', () => {
             headers: [{ name: 'Subject', value: 'Card payment' }],
             mimeType: 'text/plain',
             body: {
-              data: toBase64Url('Hai effettuato una spesa di EUR 12,34 presso AMAZON MARKETPLACE il 10/02/2026 alle 14:21.')
+              data: toBase64Url('Hai effettuato una spesa di EUR 12,34 presso EXAMPLE MARKET il 10/02/2026 alle 14:21.')
             }
           }
         })
@@ -62,7 +62,7 @@ describe('syncCardTransactionsFromGmail import', () => {
     expect(bulkAddTransactions).toHaveBeenCalledWith([
       expect.objectContaining({
         amount: -12.34,
-        description: 'AMAZON MARKETPLACE',
+        description: 'EXAMPLE MARKET',
         categoryId: 99,
         tags: ['gmail', 'bank-card', 'gmail-msg:msg-1']
       })

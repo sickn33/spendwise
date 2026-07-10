@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { getCategories, addTransaction, updateTransaction } from '../db/database';
 import { classifyTransaction, learnFromCorrection } from '../services/classifier';
 import type { Category, Transaction } from '../types';
 import { X } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
+import { Dialog } from './Dialog';
 
 interface TransactionFormProps {
     transaction?: Transaction;
@@ -22,17 +23,19 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
     const [isExpense, setIsExpense] = useState(true);
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [formError, setFormError] = useState('');
+    const amountInputRef = useRef<HTMLInputElement>(null);
 
     const loadCategories = useCallback(async () => {
         const cats = await getCategories();
         setCategories(cats);
 
         // Set default category if not editing
-        if (!transaction && !categoryId) {
+        if (!transaction) {
             const defaultCat = cats.find(c => c.name === 'Other expenses');
-            if (defaultCat?.id) setCategoryId(defaultCat.id);
+            if (defaultCat?.id) setCategoryId(current => current ?? defaultCat.id!);
         }
-    }, [transaction, categoryId]);
+    }, [transaction]);
 
     useEffect(() => {
         loadCategories();
@@ -56,21 +59,46 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
         }
     }
 
+    function handleTypeChange(expense: boolean) {
+        setIsExpense(expense);
+        const selectedIsCompatible = categories.some(
+            category => category.id === categoryId && category.isIncome === !expense
+        );
+        if (!selectedIsCompatible) {
+            const fallback = categories.find(category => category.isIncome === !expense);
+            setCategoryId(fallback?.id ?? null);
+        }
+    }
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!amount || !description || !categoryId) return;
+        const normalizedAmount = amount.trim().replace(',', '.');
+        const parsedAmount = Number(normalizedAmount);
+        const parsedDate = parseISO(date);
+        if (!/^\d+(?:\.\d{1,2})?$/.test(normalizedAmount) || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+            setFormError('Enter an amount greater than zero with at most two decimal places.');
+            return;
+        }
+        if (!description.trim() || !categoryId) {
+            setFormError('Description and category are required.');
+            return;
+        }
+        if (!isValid(parsedDate)) {
+            setFormError('Enter a valid transaction date.');
+            return;
+        }
 
         setSaving(true);
+        setFormError('');
         try {
-            const parsedAmount = parseFloat(amount.replace(',', '.'));
             const finalAmount = isExpense ? -Math.abs(parsedAmount) : Math.abs(parsedAmount);
 
             if (transaction?.id) {
                 await updateTransaction(transaction.id, {
                     amount: finalAmount,
-                    description,
+                    description: description.trim(),
                     details,
-                    date: new Date(date),
+                    date: parsedDate,
                     categoryId,
                     isRecurring
                 });
@@ -81,9 +109,9 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
             } else {
                 await addTransaction({
                     amount: finalAmount,
-                    description,
+                    description: description.trim(),
                     details,
-                    date: new Date(date),
+                    date: parsedDate,
                     categoryId,
                     currency: 'EUR',
                     account: '',
@@ -91,13 +119,14 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
                     isRecurring,
                     tags: []
                 });
-                learnFromCorrection(description, categoryId);
+                learnFromCorrection(description.trim(), categoryId);
             }
 
             onSave();
             onClose();
         } catch (error) {
             console.error('Error saving transaction:', error);
+            setFormError('The transaction could not be saved. Please try again.');
         } finally {
             setSaving(false);
         }
@@ -108,16 +137,10 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
     const incomeCategories = categories.filter(c => c.isIncome);
 
     return (
-        <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={onClose}>
-            <div 
-                className="w-full max-w-md bg-paper structural-border shadow-none" 
-                onClick={e => e.stopPropagation()}
-                role="dialog"
-                aria-modal="true"
-            >
+        <Dialog titleId="transaction-dialog-title" onClose={onClose} busy={saving} initialFocusRef={amountInputRef} className="max-w-[28rem] bg-paper structural-border shadow-none">
                 {/* Header */}
                 <div className="flex items-center justify-between p-md border-b border-border">
-                    <h2 className="text-sm font-mono uppercase tracking-wider">
+                    <h2 id="transaction-dialog-title" className="text-sm font-mono uppercase tracking-wider">
                         {transaction ? 'EDIT TRANSACTION' : 'NEW TRANSACTION'}
                     </h2>
                     <button 
@@ -137,14 +160,16 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
                             <button
                                 type="button"
                                 className={`p-sm text-center font-mono uppercase text-xs tracking-wider transition-colors ${isExpense ? 'bg-ink text-paper' : 'bg-paper text-text hover:bg-concrete'}`}
-                                onClick={() => setIsExpense(true)}
+                                onClick={() => handleTypeChange(true)}
+                                aria-pressed={isExpense}
                             >
                                 Expense
                             </button>
                             <button
                                 type="button"
                                 className={`p-sm text-center font-mono uppercase text-xs tracking-wider transition-colors ${!isExpense ? 'bg-ink text-paper' : 'bg-paper text-text hover:bg-concrete'}`}
-                                onClick={() => setIsExpense(false)}
+                                onClick={() => handleTypeChange(false)}
+                                aria-pressed={!isExpense}
                             >
                                 Income
                             </button>
@@ -152,19 +177,23 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Amount */}
                         <div>
-                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
+                            <label htmlFor="transaction-amount" className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 Amount
                             </label>
                             <div className="relative">
                                 <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono text-lg text-muted/50">€</span>
                                 <input
+                                    ref={amountInputRef}
                                     type="text"
+                                    id="transaction-amount"
                                     inputMode="decimal"
-                                    className="w-full bg-paper border border-border p-sm pl-8 font-mono text-xl focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted/50"
+                                    className="w-full bg-paper text-ink border border-border p-sm pl-8 font-mono text-xl focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted/50"
                                     placeholder="0.00"
                                     value={amount}
                                     onChange={e => setAmount(e.target.value)}
                                     required
+                                    aria-invalid={formError ? true : undefined}
+                                    aria-describedby={formError ? 'transaction-form-error' : undefined}
                                     autoFocus
                                 />
                             </div>
@@ -172,12 +201,13 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Description */}
                         <div>
-                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
+                            <label htmlFor="transaction-description" className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 Description
                             </label>
                             <input
                                 type="text"
-                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted/50"
+                                id="transaction-description"
+                                className="w-full bg-paper text-ink border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted/50"
                                 placeholder="e.g. Grocery shopping"
                                 value={description}
                                 onChange={e => setDescription(e.target.value)}
@@ -188,12 +218,13 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Date */}
                         <div>
-                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
+                            <label htmlFor="transaction-date" className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 Date
                             </label>
                             <input
                                 type="date"
-                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink uppercase"
+                                id="transaction-date"
+                                className="w-full bg-paper text-ink border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink uppercase"
                                 value={date}
                                 onChange={e => setDate(e.target.value)}
                                 required
@@ -202,14 +233,18 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Category */}
                         <div>
-                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
+                            <span id="transaction-category-label" className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 Category
-                            </label>
+                            </span>
                             <button
                                 type="button"
-                                className={`w-full text-left border border-border p-sm font-mono text-sm flex items-center justify-between ${showCategoryPicker ? 'border-ink ring-1 ring-ink' : ''}`}
+                                className={`w-full text-left bg-paper text-ink border border-border p-sm font-mono text-sm flex items-center justify-between ${showCategoryPicker ? 'border-ink ring-1 ring-ink' : ''}`}
                                 onClick={() => setShowCategoryPicker(!showCategoryPicker)}
                                 title="Select category"
+                                aria-labelledby="transaction-category-label"
+                                aria-haspopup="listbox"
+                                aria-expanded={showCategoryPicker}
+                                aria-controls="transaction-category-options"
                             >
                                     {selectedCategory ? (
                                         <span className="flex items-center gap-2">
@@ -222,17 +257,19 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
                                 </button>
 
                             {showCategoryPicker && (
-                                <div className="mt-xs border border-border max-h-48 overflow-y-auto grid grid-cols-2 gap-px bg-border">
+                                <div id="transaction-category-options" role="listbox" className="mt-xs border border-border max-h-48 overflow-y-auto grid grid-cols-2 gap-px bg-border">
                                     {(isExpense ? expenseCategories : incomeCategories).map(cat => (
                                         <button
                                             key={cat.id}
                                             type="button"
-                                            className={`p-sm text-left bg-paper hover:bg-concrete flex items-center gap-2 transition-colors ${categoryId === cat.id ? 'bg-concrete' : ''}`}
+                                            className={`p-sm text-left bg-paper text-ink hover:bg-concrete flex items-center gap-2 transition-colors ${categoryId === cat.id ? 'bg-concrete' : ''}`}
                                             onClick={() => {
                                                 setCategoryId(cat.id!);
                                                 setShowCategoryPicker(false);
                                             }}
                                             title={`Select ${cat.name}`}
+                                            role="option"
+                                            aria-selected={categoryId === cat.id}
                                         >
                                             <span>{cat.icon}</span>
                                             <span className="font-mono text-xs uppercase truncate">
@@ -246,12 +283,13 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
 
                         {/* Details (optional) */}
                         <div>
-                            <label className="text-tiny font-mono uppercase text-muted mb-xs block">
+                            <label htmlFor="transaction-notes" className="text-tiny font-mono uppercase text-muted mb-xs block">
                                 NOTES (OPTIONAL)
                             </label>
                             <input
                                 type="text"
-                                className="w-full bg-paper border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted"
+                                id="transaction-notes"
+                                className="w-full bg-paper text-ink border border-border p-sm font-mono text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink placeholder:text-muted"
                                 placeholder="..."
                                 value={details}
                                 onChange={e => setDetails(e.target.value)}
@@ -265,12 +303,18 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
                                 id="recurring"
                                 checked={isRecurring}
                                 onChange={e => setIsRecurring(e.target.checked)}
-                                className="w-4 h-4 border-2 border-border text-ink focus:ring-ink rounded-none"
+                                className="w-6 h-6 border-2 border-border text-ink focus:ring-ink rounded-none"
                             />
                             <label htmlFor="recurring" className="font-mono text-xs uppercase cursor-pointer select-none">
                                 RECURRING
                             </label>
                         </div>
+
+                        {formError && (
+                            <p id="transaction-form-error" role="alert" className="text-xs text-danger font-mono">
+                                {formError}
+                            </p>
+                        )}
                     </div>
 
                     <div className="p-md border-t border-border flex justify-end gap-sm bg-concrete/20">
@@ -290,7 +334,6 @@ export const TransactionForm = memo(function TransactionForm({ transaction, onCl
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Dialog>
     );
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { getCategories, getTransactions } from '../db/database';
 import { getMonthlyStats, getCategoryBreakdown, getDailyAverageSpending } from '../services/analytics';
 import type { Transaction, Category, MonthlyStats, ChartDataPoint } from '../types';
@@ -25,10 +25,14 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction, refreshTrig
     const [dailyAverage, setDailyAverage] = useState<number>(0);
     const [trendData, setTrendData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] });
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const requestSequence = useRef(0);
 
     const loadDashboardData = useCallback(async () => {
+        const requestId = ++requestSequence.current;
         try {
             setLoading(true);
+            setLoadError(null);
             const startOfSelectedMonth = startOfMonth(selectedMonth);
             const endOfSelectedMonth = endOfMonth(selectedMonth);
             const previousMonth = subMonths(selectedMonth, 1);
@@ -59,6 +63,8 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction, refreshTrig
                 Promise.all(months.map(month => getMonthlyStats(month)))
             ]);
 
+            if (requestId !== requestSequence.current) return;
+
             setMonthlyStats(currentStats);
             setLastMonthStats(prevStats);
             setCategoryBreakdown(breakdown);
@@ -70,9 +76,11 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction, refreshTrig
                 values: trendStats.map(stats => stats.totalExpenses)
             });
         } catch (error) {
+            if (requestId !== requestSequence.current) return;
             console.error('Error loading dashboard:', error);
+            setLoadError('Dashboard data could not be loaded.');
         } finally {
-            setLoading(false);
+            if (requestId === requestSequence.current) setLoading(false);
         }
     }, [selectedMonth]);
 
@@ -162,6 +170,10 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction, refreshTrig
                 <div className="spinner"></div>
             </div>
         );
+    }
+
+    if (loadError) {
+        return <div role="alert" className="card text-danger">{loadError} <button className="btn btn-secondary" onClick={loadDashboardData}>Retry</button></div>;
     }
 
     return (
@@ -266,6 +278,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction, refreshTrig
                     <div className="chart-center-container">
                         {categoryBreakdown.length > 0 ? (
                             <Doughnut 
+                                aria-label="Expense distribution by category"
                                 data={{
                                     labels: categoryBreakdown.map(c => c.label),
                                     datasets: [{
@@ -306,7 +319,7 @@ export const Dashboard = memo(function Dashboard({ onAddTransaction, refreshTrig
                         <h2 className="font-display text-lg">6-MONTH TREND</h2>
                     </div>
                     <div className="chart-container" style={{ height: '260px' }}>
-                        <Line data={lineData} options={{
+                        <Line aria-label="Six-month spending trend" data={lineData} options={{
                             ...lineOptions,
                             plugins: { legend: { display: false } },
                             scales: {

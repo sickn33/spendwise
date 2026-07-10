@@ -103,4 +103,15 @@ describe('Dashboard Component', () => {
         const totals = screen.getAllByText(/€\s*450\.00/);
         expect(totals.length).toBeGreaterThan(0);
     });
+
+    it('shows a retryable error instead of empty financial data', async () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.mocked(getCategories).mockRejectedValueOnce(new Error('database unavailable'));
+        render(<Dashboard onAddTransaction={() => {}} />);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Dashboard data could not be loaded');
+        fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+        expect(await screen.findByText(/CONTROL PANEL/i)).toBeInTheDocument();
+        consoleError.mockRestore();
+    });
 });

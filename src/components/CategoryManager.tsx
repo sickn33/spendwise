@@ -2,6 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import { getCategories, addCategory, updateCategory, deleteCategory } from '../db/database';
 import type { Category } from '../types';
 import { Plus, Edit2, Trash2, X, Save } from 'lucide-react';
+import { Dialog } from './Dialog';
 
 const EMOJI_OPTIONS = ['🛒', '🍕', '🚕', '✈️', '⛽', '🏠', '💊', '💅', '👕', '🎮', '🎭', '📚', '💻', '📱', '🎁', '❤️', '💰', '💸', '📈', '📉', '📦', '🔄', '💡', '🔥', '🚌', '🏋️', '🤝', '🚬'];
 
@@ -286,18 +287,20 @@ export const CategoryManager = memo(function CategoryManager() {
 
             {/* Add/Edit Modal */}
             {showAddForm && (
-                <div className="fixed inset-0 bg-paper/60 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={() => setShowAddForm(false)}>
-                    <div 
-                        className="bg-paper structural-border w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200" 
-                        onClick={e => e.stopPropagation()}
-                    >
+                <Dialog
+                    titleId="category-dialog-title"
+                    onClose={() => setShowAddForm(false)}
+                    busy={saving}
+                    className="bg-paper structural-border max-w-[32rem] shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                >
                         <div className="flex items-center justify-between p-md border-b border-border bg-subtle">
-                            <h2 className="text-sm font-mono font-bold uppercase tracking-wider">
+                            <h2 id="category-dialog-title" className="text-sm font-mono font-bold uppercase tracking-wider">
                                 {editingCategory ? 'EDIT CATEGORY' : 'NEW CATEGORY'}
                             </h2>
                             <button 
                                 className="text-muted hover:text-ink transition-colors"
                                 onClick={() => setShowAddForm(false)}
+                                aria-label="Close category editor"
                             >
                                 <X size={20} />
                             </button>
@@ -311,8 +314,9 @@ export const CategoryManager = memo(function CategoryManager() {
                             )}
 
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">CATEGORY NAME</label>
+                                <label htmlFor="category-name" className="text-tiny font-mono uppercase text-muted">CATEGORY NAME</label>
                                 <input
+                                    id="category-name"
                                     type="text"
                                     className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
                                     placeholder="CATEGORY NAME"
@@ -332,6 +336,8 @@ export const CategoryManager = memo(function CategoryManager() {
                                                 type="button"
                                                 className={`aspect-square flex items-center justify-center rounded-sm text-lg transition-colors ${formIcon === emoji ? 'bg-primary text-white' : 'hover:bg-concrete/20'}`}
                                                 onClick={() => setFormIcon(emoji)}
+                                                aria-label={`Use ${emoji} icon`}
+                                                aria-pressed={formIcon === emoji}
                                             >
                                                 {emoji}
                                             </button>
@@ -349,6 +355,8 @@ export const CategoryManager = memo(function CategoryManager() {
                                                 className={`aspect-square rounded-full transition-transform ${formColor === color ? 'ring-2 ring-primary scale-90' : 'hover:scale-110'}`}
                                                 style={{ backgroundColor: color }}
                                                 onClick={() => setFormColor(color)}
+                                                aria-label={`Use color ${color}`}
+                                                aria-pressed={formColor === color}
                                             />
                                         ))}
                                     </div>
@@ -356,11 +364,12 @@ export const CategoryManager = memo(function CategoryManager() {
                             </div>
 
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">AUTOMATION KEYWORDS</label>
+                                <label htmlFor="category-keywords" className="text-tiny font-mono uppercase text-muted">AUTOMATION KEYWORDS</label>
                                 <input
+                                    id="category-keywords"
                                     type="text"
                                     className="w-full bg-concrete/20 border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
-                                    placeholder="E.g. AMAZON, PAYPAL, STRIPE"
+                                    placeholder="E.g. BOOKSTORE, STREAMING, MARKET"
                                     value={formKeywords}
                                     onChange={e => setFormKeywords(e.target.value)}
                                 />
@@ -400,8 +409,7 @@ export const CategoryManager = memo(function CategoryManager() {
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                </Dialog>
             )}
         </div>
     );

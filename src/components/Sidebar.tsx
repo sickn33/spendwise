@@ -1,4 +1,15 @@
-import { LayoutDashboard, List, Tag, FileText, Settings as SettingsIcon, Sun, Moon } from 'lucide-react';
+import {
+    BarChart3,
+    FileText,
+    LayoutDashboard,
+    List,
+    Moon,
+    PiggyBank,
+    Settings as SettingsIcon,
+    Sun,
+    Tag,
+    Target
+} from 'lucide-react';
 import { QuickAddWidget } from './QuickAddWidget';
 
 export type Page = 'dashboard' | 'transactions' | 'categories' | 'budgets' | 'savings' | 'reports' | 'comparison' | 'settings';
@@ -6,12 +17,13 @@ export type Page = 'dashboard' | 'transactions' | 'categories' | 'budgets' | 'sa
 interface SidebarProps {
     currentPage: Page;
     onNavigate: (page: Page) => void;
+    hrefFor?: (page: Page) => string;
     theme: 'dark' | 'light';
     onThemeToggle: () => void;
     onTransactionAdded: () => void;
 }
 
-export function Sidebar({ currentPage, onNavigate, theme, onThemeToggle, onTransactionAdded }: SidebarProps) {
+export function Sidebar({ currentPage, onNavigate, hrefFor = page => `?page=${page}`, theme, onThemeToggle, onTransactionAdded }: SidebarProps) {
     return (
         <aside className="sidebar-v2 flex flex-col h-full overflow-hidden" role="complementary">
             {/* Top Section: Masthead + Primary Nav */}
@@ -34,22 +46,31 @@ export function Sidebar({ currentPage, onNavigate, theme, onThemeToggle, onTrans
                     {[
                         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                         { id: 'transactions', label: 'Transactions', icon: List },
+                        { id: 'budgets', label: 'Budgets', icon: PiggyBank },
+                        { id: 'savings', label: 'Savings', icon: Target },
                         { id: 'reports', label: 'Reports', icon: FileText },
+                        { id: 'comparison', label: 'Comparison', icon: BarChart3 },
                         { id: 'categories', label: 'Categories', icon: Tag },
                         { id: 'settings', label: 'Settings', icon: SettingsIcon },
                     ].map((item) => {
                         const isActive = currentPage === item.id;
                         const Icon = item.icon;
                         return (
-                            <button
+                            <a
                                 key={item.id}
                                 className={`nav-item-v2 ${isActive ? 'active' : ''}`}
-                                onClick={() => onNavigate(item.id as Page)}
+                                href={hrefFor(item.id as Page)}
+                                onClick={event => {
+                                    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                                    event.preventDefault();
+                                    onNavigate(item.id as Page);
+                                }}
+                                aria-current={isActive ? 'page' : undefined}
                             >
                                 <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
                                 <span className="nav-label">{item.label}</span>
                                 {isActive && <div className="active-dot"></div>}
-                            </button>
+                            </a>
                         );
                     })}
                 </nav>

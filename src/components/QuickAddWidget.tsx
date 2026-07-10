@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { getQuickAddPresets, addTransaction, getCategories, addQuickAddPreset, deleteQuickAddPreset, initializeQuickAddPresets } from '../db/database';
 import type { QuickAddPreset, Category } from '../types';
 import { Plus, X, Settings, Check, Trash2, ArrowRight, ChevronRight } from 'lucide-react';
+import { Dialog } from './Dialog';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface QuickAddWidgetProps {
     onTransactionAdded: () => void;
@@ -15,8 +17,13 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
     const [isOpen, setIsOpen] = useState(false); // Used for Dropdown in sidebar variant
     const [isEditing, setIsEditing] = useState(false);
     const [addingSuccess, setAddingSuccess] = useState<number | null>(null);
+    const [addingPresetId, setAddingPresetId] = useState<number | null>(null);
     const [showAddNew, setShowAddNew] = useState(false);
+    const [deletePresetId, setDeletePresetId] = useState<number | null>(null);
+    const [deletingPreset, setDeletingPreset] = useState(false);
     const [newPreset, setNewPreset] = useState({ name: '', amount: '', categoryId: 0, icon: '💰' });
+    const successTimerRef = useRef<number | null>(null);
+    const mountedRef = useRef(true);
 
     const loadData = useCallback(async () => {
         await initializeQuickAddPresets();
@@ -24,19 +31,27 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
             getQuickAddPresets(),
             getCategories()
         ]);
+        if (!mountedRef.current) return;
         setPresets(p);
         setCategories(c);
     }, []);
 
     useEffect(() => {
-        // eslint-disable-next-line
-        loadData();
+        mountedRef.current = true;
+        void Promise.resolve().then(loadData);
+        return () => {
+            mountedRef.current = false;
+            if (successTimerRef.current !== null) {
+                window.clearTimeout(successTimerRef.current);
+            }
+        };
     }, [loadData]);
 
     async function handleQuickAdd(preset: QuickAddPreset) {
-        if (isEditing) return;
+        if (isEditing || addingPresetId !== null) return;
 
         try {
+            setAddingPresetId(preset.id!);
             await addTransaction({
                 date: new Date(),
                 description: preset.name,
@@ -51,21 +66,28 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
             });
 
             setAddingSuccess(preset.id!);
-            setTimeout(() => {
+            onTransactionAdded();
+            if (successTimerRef.current !== null) {
+                window.clearTimeout(successTimerRef.current);
+            }
+            successTimerRef.current = window.setTimeout(() => {
                 setAddingSuccess(null);
-                onTransactionAdded();
+                successTimerRef.current = null;
             }, 1000);
         } catch (error) {
             console.error('Error adding transaction:', error);
+        } finally {
+            if (mountedRef.current) setAddingPresetId(null);
         }
     }
 
     async function handleAddNewPreset() {
-        if (!newPreset.name || !newPreset.amount || !newPreset.categoryId) return;
+        const amount = Number(newPreset.amount.replace(',', '.'));
+        if (!newPreset.name.trim() || !Number.isFinite(amount) || amount <= 0 || !newPreset.categoryId) return;
 
         await addQuickAddPreset({
-            name: newPreset.name,
-            amount: parseFloat(newPreset.amount),
+            name: newPreset.name.trim(),
+            amount,
             categoryId: newPreset.categoryId,
             icon: newPreset.icon
         });
@@ -75,9 +97,20 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
         loadData();
     }
 
-    async function handleDeletePreset(id: number) {
-        await deleteQuickAddPreset(id);
-        loadData();
+    function handleDeletePreset(id: number) {
+        setDeletePresetId(id);
+    }
+
+    async function confirmDeletePreset() {
+        if (deletePresetId === null) return;
+        setDeletingPreset(true);
+        try {
+            await deleteQuickAddPreset(deletePresetId);
+            setDeletePresetId(null);
+            loadData();
+        } finally {
+            setDeletingPreset(false);
+        }
     }
 
     const getCategoryById = (id: number) => categories.find(c => c.id === id);
@@ -87,39 +120,32 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
     if (variant === 'sidebar') {
         return (
             <div className={`quick-add-sidebar ${isOpen ? 'is-open' : ''}`}>
-                <button
-                    type="button"
-                    aria-expanded={isOpen}
-                    aria-controls="quick-add-sidebar-presets"
-                    className="panel-header py-xs px-md flex items-center justify-between cursor-pointer hover:bg-concrete/50 transition-colors"
-                    onClick={() => setIsOpen(!isOpen)}
-                >
-                    <div className="flex items-center gap-2">
+                <div className="panel-header py-xs px-md flex items-center justify-between">
+                    <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        aria-controls="quick-add-sidebar-presets"
+                            className="flex flex-1 items-center gap-2 cursor-pointer hover:bg-concrete/50 transition-colors bg-transparent border-0 text-ink"
+                        onClick={() => setIsOpen(!isOpen)}
+                    >
                         <ChevronRight 
                             size={14} 
                             className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
                         />
                         <span className="panel-title">QUICK ADD</span>
-                    </div>
+                    </button>
                     {isOpen && (
-                        <span
-                            role="button"
-                            tabIndex={0}
+                        <button
+                            type="button"
                             aria-label={isEditing ? "Done editing presets" : "Edit presets"}
                             className={`p-1 hover:bg-concrete rounded-sm transition-colors ${isEditing ? 'text-ink' : 'text-muted'}`}
                             onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
-                            onKeyDown={(e) => {
-                                if (e.key !== 'Enter' && e.key !== ' ') return;
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setIsEditing(!isEditing);
-                            }}
                             title={isEditing ? "Done editing" : "Edit preset"}
                         >
                             <Settings size={12} />
-                        </span>
+                        </button>
                     )}
-                </button>
+                </div>
 
                 {isOpen && (
                     <div id="quick-add-sidebar-presets" className="flex flex-col animate-slideDown">
@@ -135,6 +161,8 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                                             className={`preset-item-sidebar ${isSuccess ? 'success' : ''}`}
                                             onClick={() => handleQuickAdd(preset)}
                                             aria-label={getPresetLabel(preset, category)}
+                                            disabled={addingPresetId !== null}
+                                            aria-busy={addingPresetId === preset.id}
                                         >
                                             <div className="flex items-center gap-sm flex-1 min-w-0">
                                                 <span className="text-lg">
@@ -186,6 +214,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                     onSave={handleAddNewPreset}
                     categories={categories}
                 />}
+                <ConfirmDialog open={deletePresetId !== null} title="Delete quick-add preset?" description="The preset will be removed; existing transactions are unchanged." confirmLabel="Delete preset" danger busy={deletingPreset} onCancel={() => setDeletePresetId(null)} onConfirm={() => void confirmDeletePreset()} />
             </div>
         );
     }
@@ -222,6 +251,8 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                                                 type="button"
                                                 className={`preset-item ${isSuccess ? 'bg-concrete' : ''}`}
                                                 onClick={() => handleQuickAdd(preset)}
+                                                disabled={addingPresetId !== null}
+                                                aria-busy={addingPresetId === preset.id}
                                                 aria-label={getPresetLabel(preset, category)}
                                             >
                                                 <div className="preset-content">
@@ -290,6 +321,7 @@ export const QuickAddWidget = memo(function QuickAddWidget({ onTransactionAdded,
                 onSave={handleAddNewPreset}
                 categories={categories}
             />}
+            <ConfirmDialog open={deletePresetId !== null} title="Delete quick-add preset?" description="The preset will be removed; existing transactions are unchanged." confirmLabel="Delete preset" danger busy={deletingPreset} onCancel={() => setDeletePresetId(null)} onConfirm={() => void confirmDeletePreset()} />
         </>
     );
 });
@@ -303,11 +335,13 @@ interface AddNewPresetModalProps {
 }
 
 function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categories }: AddNewPresetModalProps) {
+    const parsedAmount = Number(newPreset.amount.replace(',', '.'));
+    const isValid = Boolean(newPreset.name.trim()) && Number.isFinite(parsedAmount) && parsedAmount > 0 && newPreset.categoryId > 0;
+
     return (
-        <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-[60] flex items-center justify-center p-md modal-overlay" onClick={onClose}>
-            <div className="modal-condensed" onClick={e => e.stopPropagation()}>
+        <Dialog titleId="preset-dialog-title" onClose={onClose} className="modal-condensed">
                 <div className="panel-header">
-                    <h2 className="text-sm font-mono uppercase tracking-wider m-0">NEW PRESET</h2>
+                    <h2 id="preset-dialog-title" className="text-sm font-mono uppercase tracking-wider m-0">NEW PRESET</h2>
                     <button className="text-ink/50 hover:text-ink" onClick={onClose} aria-label="Close" title="Close">
                         <X size={20} />
                     </button>
@@ -316,8 +350,9 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
                 <div className="p-lg space-y-lg">
                     {/* Name */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">NAME</label>
+                        <label htmlFor="preset-name" className="text-[10px] font-mono uppercase text-muted mb-xs block">NAME</label>
                         <input
+                            id="preset-name"
                             type="text"
                             className="input w-full"
                             placeholder="e.g. Coffee"
@@ -328,14 +363,16 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
 
                     {/* Amount */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">AMOUNT</label>
+                        <label htmlFor="preset-amount" className="text-[10px] font-mono uppercase text-muted mb-xs block">AMOUNT</label>
                         <div className="relative">
                             <span className="absolute left-sm top-1/2 -translate-y-1/2 font-mono text-muted">€</span>
                             <input
                                 type="number"
+                                id="preset-amount"
                                 className="input w-full pl-8 font-mono"
                                 placeholder="1.00"
                                 step="0.01"
+                                min="0.01"
                                 value={newPreset.amount}
                                 onChange={e => setNewPreset({ ...newPreset, amount: e.target.value })}
                             />
@@ -344,8 +381,9 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
 
                     {/* Category */}
                     <div>
-                        <label className="text-[10px] font-mono uppercase text-muted mb-xs block">CATEGORY</label>
+                        <label htmlFor="preset-category" className="text-[10px] font-mono uppercase text-muted mb-xs block">CATEGORY</label>
                         <select
+                            id="preset-category"
                             className="input w-full appearance-none rounded-none"
                             value={newPreset.categoryId}
                             onChange={e => setNewPreset({ ...newPreset, categoryId: parseInt(e.target.value) })}
@@ -369,13 +407,12 @@ function AddNewPresetModal({ newPreset, setNewPreset, onClose, onSave, categorie
                     <button
                         className="btn btn-primary text-xs flex items-center gap-2"
                         onClick={onSave}
-                        disabled={!newPreset.name || !newPreset.amount || !newPreset.categoryId}
+                        disabled={!isValid}
                     >
                         <span>SAVE</span>
                         <ArrowRight size={12} />
                     </button>
                 </div>
-            </div>
-        </div>
+        </Dialog>
     );
 }

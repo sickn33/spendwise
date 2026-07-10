@@ -3,6 +3,8 @@ import { getSavingsGoals, addSavingsGoal, updateSavingsGoal, deleteSavingsGoal, 
 import type { SavingsGoal } from '../types';
 import { format, differenceInDays } from 'date-fns';
 import { Plus, Edit2, Trash2, X, Save, Target, TrendingUp, Calendar, PlusCircle } from 'lucide-react';
+import { Dialog } from './Dialog';
+import { ConfirmDialog } from './ConfirmDialog';
 
 export const SavingsGoals = memo(function SavingsGoals() {
     const [goals, setGoals] = useState<SavingsGoal[]>([]);
@@ -11,6 +13,8 @@ export const SavingsGoals = memo(function SavingsGoals() {
     const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
     const [showContribute, setShowContribute] = useState<number | null>(null);
     const [contributeAmount, setContributeAmount] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         targetAmount: '',
@@ -38,12 +42,17 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!formData.name || !formData.targetAmount) return;
+        const targetAmount = Number(formData.targetAmount.replace(',', '.'));
+        const currentAmount = formData.currentAmount.trim() === ''
+            ? 0
+            : Number(formData.currentAmount.replace(',', '.'));
+        if (!formData.name.trim() || !Number.isFinite(targetAmount) || targetAmount <= 0) return;
+        if (!Number.isFinite(currentAmount) || currentAmount < 0) return;
 
         const goalData = {
-            name: formData.name,
-            targetAmount: parseFloat(formData.targetAmount),
-            currentAmount: parseFloat(formData.currentAmount) || 0,
+            name: formData.name.trim(),
+            targetAmount,
+            currentAmount,
             icon: formData.icon,
             color: formData.color,
             deadline: formData.deadline ? new Date(formData.deadline) : undefined
@@ -59,14 +68,25 @@ export const SavingsGoals = memo(function SavingsGoals() {
         loadGoals();
     }
 
-    async function handleDelete(id: number) {
-        await deleteSavingsGoal(id);
-        loadGoals();
+    function handleDelete(id: number) {
+        setDeleteTarget(id);
+    }
+
+    async function confirmDelete() {
+        if (deleteTarget === null) return;
+        setDeleting(true);
+        try {
+            await deleteSavingsGoal(deleteTarget);
+            setDeleteTarget(null);
+            loadGoals();
+        } finally {
+            setDeleting(false);
+        }
     }
 
     async function handleContribute(id: number, isWithdraw: boolean) {
-        const amount = parseFloat(contributeAmount);
-        if (!amount || amount <= 0) return;
+        const amount = Number(contributeAmount.replace(',', '.'));
+        if (!Number.isFinite(amount) || amount <= 0) return;
 
         if (isWithdraw) {
             await withdrawFromSavingsGoal(id, amount);
@@ -283,7 +303,7 @@ export const SavingsGoals = memo(function SavingsGoals() {
                 <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
                     <Target size={32} className="text-muted mb-md text-muted" />
                     <h3 className="text-sm font-mono uppercase text-muted mb-xs">NO GOALS DEFINED</h3>
-                    <p className="text-muted text-sm max-w-xs mb-md">
+                    <p className="text-muted text-sm max-w-[20rem] mb-md">
                         Define your first savings goal to start tracking.
                     </p>
                     <button className="btn btn-primary text-xs uppercase tracking-wider" onClick={() => setShowForm(true)}>
@@ -295,10 +315,9 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
             {/* Add/Edit Goal Modal - Data Entry Sheet Style */}
             {showForm && (
-                <div className="fixed inset-0 bg-paper/90 backdrop-blur-sm z-50 flex items-center justify-center p-md" onClick={resetForm}>
-                    <div className="w-full max-w-md bg-paper structural-border shadow-none" onClick={e => e.stopPropagation()}>
+                <Dialog titleId="savings-dialog-title" onClose={resetForm} className="max-w-[28rem] bg-paper structural-border shadow-none">
                         <div className="flex items-center justify-between p-md border-b border-border">
-                            <h2 className="text-sm font-mono uppercase tracking-wider">
+                            <h2 id="savings-dialog-title" className="text-sm font-mono uppercase tracking-wider">
                                 {editingGoal ? 'EDIT GOAL' : 'NEW GOAL'}
                             </h2>
                             <button 
@@ -312,8 +331,9 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
                         <form onSubmit={handleSubmit} className="p-lg space-y-md">
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">GOAL NAME</label>
+                                <label htmlFor="savings-goal-name" className="text-tiny font-mono uppercase text-muted">GOAL NAME</label>
                                 <input
+                                    id="savings-goal-name"
                                     type="text"
                                     className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none placeholder:text-muted/50"
                                     placeholder="GOAL NAME"
@@ -325,20 +345,22 @@ export const SavingsGoals = memo(function SavingsGoals() {
 
                             <div className="grid grid-cols-2 gap-md">
                                 <div className="space-y-xs">
-                                    <label className="text-tiny font-mono uppercase text-muted">TARGET (€)</label>
+                                    <label htmlFor="savings-target" className="text-tiny font-mono uppercase text-muted">TARGET (€)</label>
                                     <input
+                                        id="savings-target"
                                         type="number"
                                         className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none"
                                         placeholder="0.00"
                                         step="1"
-                                        min="0"
+                                        min="0.01"
                                         value={formData.targetAmount}
                                         onChange={e => setFormData({ ...formData, targetAmount: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-xs">
-                                    <label className="text-tiny font-mono uppercase text-muted">CURRENT (€)</label>
+                                    <label htmlFor="savings-current" className="text-tiny font-mono uppercase text-muted">CURRENT (€)</label>
                                     <input
+                                        id="savings-current"
                                         type="number"
                                         className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none"
                                         placeholder="0.00"
@@ -351,8 +373,9 @@ export const SavingsGoals = memo(function SavingsGoals() {
                             </div>
 
                             <div className="space-y-xs">
-                                <label className="text-tiny font-mono uppercase text-muted">DEADLINE (OPTIONAL)</label>
+                                <label htmlFor="savings-deadline" className="text-tiny font-mono uppercase text-muted">DEADLINE (OPTIONAL)</label>
                                 <input
+                                    id="savings-deadline"
                                     type="date"
                                     className="w-full bg-transparent border-b border-border focus:border-ink py-xs font-mono text-sm focus:outline-none uppercase"
                                     value={formData.deadline}
@@ -369,6 +392,8 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                             type="button"
                                             className={`w-10 h-10 flex items-center justify-center text-lg transition-colors border ${formData.icon === icon ? 'bg-concrete border-ink' : 'bg-transparent border-transparent hover:bg-concrete/50'}`}
                                             onClick={() => setFormData({ ...formData, icon })}
+                                            aria-label={`Use ${icon} icon`}
+                                            aria-pressed={formData.icon === icon}
                                         >
                                             {icon}
                                         </button>
@@ -385,6 +410,8 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                             type="button"
                                             className="w-8 h-8 structural-border border-border transition-transform hover:scale-110"
                                             onClick={() => setFormData({ ...formData, color })}
+                                            aria-label={`Use color ${color}`}
+                                            aria-pressed={formData.color === color}
                                             style={{
                                                 backgroundColor: color,
                                                 borderColor: formData.color === color ? 'var(--ink)' : 'transparent',
@@ -409,9 +436,18 @@ export const SavingsGoals = memo(function SavingsGoals() {
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                </Dialog>
             )}
+            <ConfirmDialog
+                open={deleteTarget !== null}
+                title="Delete savings goal?"
+                description="This removes the goal and its current progress. This action cannot be undone."
+                confirmLabel="Delete goal"
+                danger
+                busy={deleting}
+                onCancel={() => setDeleteTarget(null)}
+                onConfirm={() => void confirmDelete()}
+            />
         </div>
     );
 });

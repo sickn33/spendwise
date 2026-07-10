@@ -119,7 +119,7 @@ function extractDate(text: string, fallbackDate: Date): Date {
   const day = Number.parseInt(dateMatch[1], 10);
   const month = Number.parseInt(dateMatch[2], 10);
   const yearPart = dateMatch[3];
-  const year = yearPart
+  let year = yearPart
     ? (Number.parseInt(yearPart, 10) < 100
       ? 2000 + Number.parseInt(yearPart, 10)
       : Number.parseInt(yearPart, 10))
@@ -127,8 +127,21 @@ function extractDate(text: string, fallbackDate: Date): Date {
   const hours = Number.parseInt(dateMatch[4] ?? '0', 10);
   const minutes = Number.parseInt(dateMatch[5] ?? '0', 10);
 
-  const parsed = new Date(year, month - 1, day, hours, minutes, 0, 0);
-  if (Number.isNaN(parsed.getTime())) return fallbackDate;
+  let parsed = new Date(year, month - 1, day, hours, minutes, 0, 0);
+  if (!yearPart && parsed.getTime() > fallbackDate.getTime() + 24 * 60 * 60 * 1000) {
+    year -= 1;
+    parsed = new Date(year, month - 1, day, hours, minutes, 0, 0);
+  }
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day ||
+    parsed.getHours() !== hours ||
+    parsed.getMinutes() !== minutes
+  ) {
+    return fallbackDate;
+  }
   return parsed;
 }
 

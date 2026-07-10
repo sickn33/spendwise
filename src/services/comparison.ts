@@ -478,6 +478,10 @@ export async function generateMonthlyInsights(
 
 // Generate ML-based predictions
 export async function generatePrediction(monthsBack: number = 6): Promise<MonthlyPrediction> {
+    if (!Number.isInteger(monthsBack) || monthsBack < 1) {
+        throw new RangeError('monthsBack must be a positive integer');
+    }
+
     const now = new Date();
     const historyMonths = Array.from({ length: monthsBack }, (_, index) => subMonths(now, index + 1));
     const monthlyData: MonthlyStats[] = await Promise.all(historyMonths.map(month => getMonthlyStats(month)));

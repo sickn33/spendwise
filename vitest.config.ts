@@ -8,6 +8,8 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./src/test/setup.ts'],
+    // XLSX/browser entry points are transform-heavy under parallel coverage in CI.
+    testTimeout: 20_000,
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     coverage: {
       provider: 'v8',
@@ -22,6 +24,6 @@ export default defineConfig({
       }
     },
     reporters: ['verbose'],
-    passWithNoTests: true
+    passWithNoTests: false
   }
 });

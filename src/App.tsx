@@ -1,11 +1,17 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { initializeDatabase, getTransactions, getCategories } from './db/database';
+import {
+    initializeDatabase,
+    updateSettings
+} from './db/database';
 import { buildMerchantCacheFromHistory } from './services/classifier';
 import { useLocalBackup } from './hooks/useLocalBackup';
 import { TransactionForm } from './components/TransactionForm';
 import { Plus, Wallet, Keyboard } from 'lucide-react';
 import './index.css';
-import { Sidebar, type Page } from './components/Sidebar';
+import { Sidebar } from './components/Sidebar';
+import { Dialog } from './components/Dialog';
+import { usePageRoute } from './hooks/usePageRoute';
+import { createBackupSnapshot } from './services/backup';
 
 const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
 const TransactionList = lazy(() => import('./components/TransactionList').then(m => ({ default: m.TransactionList })));
@@ -18,28 +24,34 @@ const Settings = lazy(() => import('./components/Settings').then(m => ({ default
 
 
 function App() {
-    const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+    const { currentPage, navigate: navigatePage, hrefFor } = usePageRoute();
     const [showTransactionForm, setShowTransactionForm] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [initError, setInitError] = useState<string | null>(null);
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
     const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
     const [announcement, setAnnouncement] = useState('');
 
-    const { fileHandle, permissionStatus, saveToBackup } = useLocalBackup();
+    const localBackup = useLocalBackup();
+    const { fileHandle, permissionStatus, saveToBackup } = localBackup;
+
+    const initializeApp = useCallback(async () => {
+        setLoading(true);
+        setInitError(null);
+        try {
+            await initializeDatabase();
+            await buildMerchantCacheFromHistory();
+        } catch (error) {
+            console.error('Error initializing database:', error);
+            setInitError('SpendWise could not open its local database.');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        async function init() {
-            try {
-                await initializeDatabase();
-                await buildMerchantCacheFromHistory();
-            } catch (error) {
-                console.error('Error initializing database:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        init();
+        void initializeApp();
 
         // Load saved theme
         const savedTheme = localStorage.getItem('spendwise-theme') as 'dark' | 'light' | null;
@@ -50,7 +62,7 @@ function App() {
             // Default to dark if no saved theme
             document.documentElement.setAttribute('data-theme', 'dark');
         }
-    }, []);
+    }, [initializeApp]);
 
     function handleTransactionSaved() {
         setShowTransactionForm(false);
@@ -62,16 +74,7 @@ function App() {
         if (fileHandle && permissionStatus === 'granted') {
             const performBackup = async () => {
                 try {
-                    const [transactions, categories] = await Promise.all([
-                        getTransactions(),
-                        getCategories()
-                    ]);
-                    await saveToBackup({
-                        version: '1.0',
-                        exportedAt: new Date().toISOString(),
-                        transactions,
-                        categories
-                    });
+                    await saveToBackup(await createBackupSnapshot());
                 } catch (err) {
                     console.error('Auto-backup failed:', err);
                 }
@@ -85,7 +88,20 @@ function App() {
         setTheme(newTheme);
         localStorage.setItem('spendwise-theme', newTheme);
         document.documentElement.setAttribute('data-theme', newTheme);
+        void updateSettings({ theme: newTheme }).catch(error => console.error('Could not persist theme:', error));
         announce(`Theme changed to ${newTheme === 'dark' ? 'dark' : 'light'}`);
+    }
+
+    function handleBackupRestored(snapshot: Awaited<ReturnType<typeof createBackupSnapshot>>) {
+        const restoredPreference = snapshot.settings?.theme;
+        const restoredTheme: 'dark' | 'light' = restoredPreference === 'auto'
+            ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+            : restoredPreference ?? 'dark';
+        setTheme(restoredTheme);
+        localStorage.setItem('spendwise-theme', restoredTheme);
+        document.documentElement.setAttribute('data-theme', restoredTheme);
+        setRefreshTrigger(previous => previous + 1);
+        void buildMerchantCacheFromHistory();
     }
 
     // Screen reader announcement helper
@@ -101,6 +117,7 @@ function App() {
             const target = e.target as HTMLElement;
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
             if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (document.querySelector('dialog[open]')) return;
 
             switch (e.key.toLowerCase()) {
                 case 'n':
@@ -110,53 +127,44 @@ function App() {
                     break;
                 case 'd':
                     e.preventDefault();
-                    setCurrentPage('dashboard');
+                    navigatePage('dashboard');
                     announce('Dashboard');
                     break;
                 case 't':
                     e.preventDefault();
-                    setCurrentPage('transactions');
+                    navigatePage('transactions');
                     announce('Transactions');
                     break;
                 case 'b':
                     e.preventDefault();
-                    setCurrentPage('budgets');
+                    navigatePage('budgets');
                     announce('Budget');
                     break;
                 case 'c':
                     e.preventDefault();
-                    setCurrentPage('comparison');
+                    navigatePage('comparison');
                     announce('Monthly comparison');
                     break;
                 case 'r':
                     e.preventDefault();
-                    setCurrentPage('reports');
+                    navigatePage('reports');
                     announce('Reports');
                     break;
                 case 's':
                     e.preventDefault();
-                    setCurrentPage('settings');
+                    navigatePage('settings');
                     announce('Settings');
                     break;
                 case '?':
                     e.preventDefault();
                     setShowShortcutsHelp(prev => !prev);
                     break;
-                case 'escape':
-                    if (showTransactionForm) {
-                        setShowTransactionForm(false);
-                        announce('Dialog closed');
-                    }
-                    if (showShortcutsHelp) {
-                        setShowShortcutsHelp(false);
-                    }
-                    break;
             }
         }
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [showTransactionForm, showShortcutsHelp, announce]);
+    }, [announce, navigatePage]);
 
     if (loading) {
         return (
@@ -169,6 +177,17 @@ function App() {
                 </div>
                 <div className="spinner"></div>
                 <p className="system-status">INITIALIZING_SYSTEM...</p>
+            </div>
+        );
+    }
+
+
+    if (initError) {
+        return (
+            <div className="loading-screen bg-paper" role="alert">
+                <div className="logo logo-large"><Wallet size={32} /><span>SpendWise</span></div>
+                <p>{initError}</p>
+                <button className="btn btn-primary" onClick={initializeApp}>Retry initialization</button>
             </div>
         );
     }
@@ -197,7 +216,13 @@ function App() {
                 case 'comparison':
                     return <MonthComparison />;
                 case 'settings':
-                    return <Settings onTransactionsImported={() => setRefreshTrigger(prev => prev + 1)} />;
+                    return (
+                        <Settings
+                            onTransactionsImported={() => setRefreshTrigger(prev => prev + 1)}
+                            onBackupRestored={handleBackupRestored}
+                            backupController={localBackup}
+                        />
+                    );
                 default:
                     return <Dashboard onAddTransaction={() => setShowTransactionForm(true)} refreshTrigger={refreshTrigger} />;
             }
@@ -225,7 +250,8 @@ function App() {
             {/* Sidebar */}
             <Sidebar 
                 currentPage={currentPage} 
-                onNavigate={setCurrentPage} 
+                onNavigate={navigatePage}
+                hrefFor={hrefFor}
                 theme={theme} 
                 onThemeToggle={handleThemeToggle} 
                 onTransactionAdded={() => setRefreshTrigger(prev => prev + 1)}
@@ -256,10 +282,11 @@ function App() {
 
             {/* Keyboard Shortcuts Help */}
             {showShortcutsHelp && (
-                <div className="shortcuts-help" role="dialog" aria-labelledby="shortcuts-title">
+                <Dialog titleId="shortcuts-title" onClose={() => setShowShortcutsHelp(false)} className="shortcuts-help">
                     <div className="shortcuts-help-title" id="shortcuts-title">
                         <Keyboard size={18} />
                         Keyboard shortcuts
+                        <button className="btn btn-ghost btn-icon" onClick={() => setShowShortcutsHelp(false)} aria-label="Close shortcuts">×</button>
                     </div>
                     <div className="shortcuts-list">
                         <div className="shortcut-item">
@@ -299,7 +326,7 @@ function App() {
                             <span className="shortcut-key">?</span>
                         </div>
                     </div>
-                </div>
+                </Dialog>
             )}
         </div>
     );

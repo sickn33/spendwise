@@ -25,7 +25,9 @@ export async function getMonthlyStats(month: Date): Promise<MonthlyStats> {
             totalExpenses += Math.abs(t.amount);
         }
 
-        categoryBreakdown[t.categoryId] = (categoryBreakdown[t.categoryId] || 0) + Math.abs(t.amount);
+        if (t.amount < 0) {
+            categoryBreakdown[t.categoryId] = (categoryBreakdown[t.categoryId] || 0) + Math.abs(t.amount);
+        }
     }
 
     return {
@@ -39,6 +41,10 @@ export async function getMonthlyStats(month: Date): Promise<MonthlyStats> {
 
 // Get spending trend over multiple months
 export async function getSpendingTrend(months: number = 6): Promise<TimeSeriesDataPoint[]> {
+    if (!Number.isInteger(months) || months < 1) {
+        throw new RangeError('months must be a positive integer');
+    }
+
     const now = new Date();
     const startDate = subMonths(now, months - 1);
 
@@ -172,11 +178,13 @@ export async function generateReportData(startDate: Date, endDate: Date): Promis
             totalExpenses += Math.abs(t.amount);
         }
 
-        if (!categoryAmounts[t.categoryId]) {
-            categoryAmounts[t.categoryId] = { amount: 0, count: 0 };
+        if (t.amount < 0) {
+            if (!categoryAmounts[t.categoryId]) {
+                categoryAmounts[t.categoryId] = { amount: 0, count: 0 };
+            }
+            categoryAmounts[t.categoryId].amount += Math.abs(t.amount);
+            categoryAmounts[t.categoryId].count++;
         }
-        categoryAmounts[t.categoryId].amount += Math.abs(t.amount);
-        categoryAmounts[t.categoryId].count++;
     }
 
     const categoryBreakdown = Object.entries(categoryAmounts)
@@ -210,6 +218,10 @@ export async function generateReportData(startDate: Date, endDate: Date): Promis
 
 // Calculate daily average spending
 export async function getDailyAverageSpending(days: number = 30): Promise<number> {
+    if (!Number.isInteger(days) || days < 1) {
+        throw new RangeError('days must be a positive integer');
+    }
+
     const endDate = new Date();
     const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - days);

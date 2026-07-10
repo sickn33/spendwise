@@ -1,10 +1,11 @@
 // Card Excel importer
 import { readSheet } from 'read-excel-file/browser';
 import writeXlsxFile, { type SheetData as XlsxSheetData } from 'write-excel-file/browser';
-import { db, getCategories, bulkAddTransactions } from '../db/database';
+import { db, getCategories, bulkAddTransactions, updateTransaction } from '../db/database';
 import { classifyTransaction } from './classifier';
 import { hasLikelyExistingDuplicate } from './gmailSync';
 import type { Transaction } from '../types';
+import { format } from 'date-fns';
 
 interface ImportResult {
     success: boolean;
@@ -38,10 +39,14 @@ export interface ImportPreviewResult {
 
 // Generate a robust hash for duplicate detection
 function generateTransactionHash(date: Date, amount: number, description: string, details: string): string {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = format(date, 'yyyy-MM-dd');
     const normalizedDesc = description.toLowerCase().trim();
     const normalizedDetails = (details || '').toLowerCase().trim();
     return `${dateStr}|${amount}|${normalizedDesc}|${normalizedDetails}`;
+}
+
+function generateTransactionPartialHash(date: Date, description: string, details: string): string {
+    return `${format(date, 'yyyy-MM-dd')}|${description.toLowerCase().trim()}|${(details || '').toLowerCase().trim()}`;
 }
 
 type ExcelCellPrimitive = string | number | boolean | Date | null;
@@ -99,7 +104,7 @@ function downloadBlob(blob: Blob, filename: string): void {
 }
 
 // Parse Card Excel file
-export async function importCardExcel(file: File): Promise<ImportResult> {
+export async function importCardExcel(file: File, updateExisting: boolean = false): Promise<ImportResult> {
     const result: ImportResult = {
         success: false,
         imported: 0,
@@ -149,12 +154,20 @@ export async function importCardExcel(file: File): Promise<ImportResult> {
             details: transaction.details
         }));
         const existingHashMap = new Map<string, number>();
+        const existingPartialHashMap = new Map<string, Array<{ id: number; amount: number }>>();
         for (const t of existingTransactions) {
             const hash = generateTransactionHash(t.date, t.amount, t.description, t.details);
             existingHashMap.set(hash, t.id!);
+            const partialHash = generateTransactionPartialHash(t.date, t.description, t.details);
+            const matches = existingPartialHashMap.get(partialHash) ?? [];
+            matches.push({ id: t.id!, amount: t.amount });
+            existingPartialHashMap.set(partialHash, matches);
         }
 
         const transactionsToAdd: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>[] = [];
+        const transactionsToUpdate: Array<{ id: number; updates: Partial<Transaction> }> = [];
+        const stagedUpdateKeys = new Set<string>();
+        let hasAmbiguousMatches = false;
 
         for (const row of dataRows) {
             if (!row || !row.length) continue;
@@ -199,6 +212,45 @@ export async function importCardExcel(file: File): Promise<ImportResult> {
                 continue;
             }
 
+            const partialHash = generateTransactionPartialHash(date, operazione || '', dettagli || '');
+            const partialMatches = existingPartialHashMap.get(partialHash) ?? [];
+            if (partialMatches.length > 1 || stagedUpdateKeys.has(partialHash)) {
+                result.errors.push(`Ambiguous modified transaction match: ${operazione} on ${format(date, 'yyyy-MM-dd')}`);
+                hasAmbiguousMatches = true;
+                result.skipped++;
+                continue;
+            }
+            const modifiedExisting = partialMatches[0];
+            if (modifiedExisting) {
+                if (!updateExisting) {
+                    result.skipped++;
+                    continue;
+                }
+
+                const classification = await classifyTransaction(
+                    operazione || '',
+                    dettagli || '',
+                    importo,
+                    categoria
+                );
+                transactionsToUpdate.push({
+                    id: modifiedExisting.id,
+                    updates: {
+                        date,
+                        description: operazione || '',
+                        details: dettagli || '',
+                        amount: importo,
+                        currency: valuta || 'EUR',
+                        categoryId: classification.categoryId,
+                        account: conto || '',
+                        isContabilized: contabilizzazione === 'SI'
+                    }
+                });
+                stagedUpdateKeys.add(partialHash);
+                existingHashMap.set(hash, modifiedExisting.id);
+                continue;
+            }
+
             if (hasLikelyExistingDuplicate(date, importo, operazione || '', existingForImportDedup)) {
                 result.skipped++;
                 continue;
@@ -233,11 +285,23 @@ export async function importCardExcel(file: File): Promise<ImportResult> {
             });
         }
 
-        if (transactionsToAdd.length > 0) {
-            await bulkAddTransactions(transactionsToAdd);
-            result.imported = transactionsToAdd.length;
+        if (hasAmbiguousMatches) {
+            return result;
         }
 
+        if (transactionsToAdd.length > 0 || transactionsToUpdate.length > 0) {
+            await db.transaction('rw', db.transactions, async () => {
+                for (const transaction of transactionsToUpdate) {
+                    await updateTransaction(transaction.id, transaction.updates);
+                }
+                if (transactionsToAdd.length > 0) {
+                    await bulkAddTransactions(transactionsToAdd);
+                }
+            });
+        }
+
+        result.imported = transactionsToAdd.length;
+        result.updated = transactionsToUpdate.length;
         result.success = true;
         return result;
     } catch (error) {
@@ -293,12 +357,16 @@ export async function previewCardExcel(file: File): Promise<ImportPreviewResult>
             description: transaction.description,
             details: transaction.details
         }));
-        const existingHashMap = new Map<string, { id: number; amount: number }>();
+        const existingHashMap = new Map<string, Array<{ id: number; amount: number }>>();
         for (const t of existingTransactions) {
             // Use date + description + details (without amount) for detecting modifications
-            const partialHash = `${t.date.toISOString().split('T')[0]}|${t.description.toLowerCase().trim()}|${(t.details || '').toLowerCase().trim()}`;
-            existingHashMap.set(partialHash, { id: t.id!, amount: t.amount });
+            const partialHash = generateTransactionPartialHash(t.date, t.description, t.details);
+            const matches = existingHashMap.get(partialHash) ?? [];
+            matches.push({ id: t.id!, amount: t.amount });
+            existingHashMap.set(partialHash, matches);
         }
+
+        let hasAmbiguousMatches = false;
 
         for (const row of dataRows) {
             if (!row || !row.length) continue;
@@ -334,8 +402,25 @@ export async function previewCardExcel(file: File): Promise<ImportPreviewResult>
 
             const classification = await classifyTransaction(operazione || '', dettagli || '', importo, categoria);
 
-            const partialHash = `${date.toISOString().split('T')[0]}|${(operazione || '').toLowerCase().trim()}|${(dettagli || '').toLowerCase().trim()}`;
-            const existing = existingHashMap.get(partialHash);
+            const partialHash = generateTransactionPartialHash(date, operazione || '', dettagli || '');
+            const existingMatches = existingHashMap.get(partialHash) ?? [];
+            if (existingMatches.length > 1) {
+                result.errors.push(`Ambiguous modified transaction match: ${operazione} on ${format(date, 'yyyy-MM-dd')}`);
+                result.duplicateCount++;
+                hasAmbiguousMatches = true;
+                result.items.push({
+                    date,
+                    description: operazione || '',
+                    details: dettagli || '',
+                    amount: importo,
+                    currency: valuta || 'EUR',
+                    account: conto || '',
+                    categoryId: classification.categoryId,
+                    status: 'duplicate'
+                });
+                continue;
+            }
+            const existing = existingMatches[0];
 
             let status: 'new' | 'duplicate' | 'modified' = 'new';
             let existingId: number | undefined = undefined;
@@ -369,7 +454,7 @@ export async function previewCardExcel(file: File): Promise<ImportPreviewResult>
             });
         }
 
-        result.success = true;
+        result.success = !hasAmbiguousMatches;
         return result;
     } catch (error) {
         result.errors.push(`Preview error: ${error instanceof Error ? error.message : 'Unknown error'}`);

@@ -2,6 +2,7 @@ import { bulkAddTransactions, db } from '../db/database';
 import type { Transaction } from '../types';
 import { classifyTransaction } from './classifier';
 import { parseCardEmailText } from './cardEmailParser';
+import { format } from 'date-fns';
 
 const GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
@@ -69,6 +70,7 @@ interface GmailMessageRef {
 
 interface GmailMessageListResponse {
   messages?: GmailMessageRef[];
+  nextPageToken?: string;
 }
 
 interface GmailMessageBody {
@@ -152,7 +154,7 @@ export function saveGmailSyncSettings(settings: GmailSyncSettings): void {
 }
 
 export function loadGmailToken(): GmailAccessToken | null {
-  const raw = localStorage.getItem(GMAIL_TOKEN_STORAGE_KEY);
+  const raw = sessionStorage.getItem(GMAIL_TOKEN_STORAGE_KEY);
   if (!raw) return null;
 
   try {
@@ -165,10 +167,11 @@ export function loadGmailToken(): GmailAccessToken | null {
 }
 
 export function saveGmailToken(token: GmailAccessToken): void {
-  localStorage.setItem(GMAIL_TOKEN_STORAGE_KEY, JSON.stringify(token));
+  sessionStorage.setItem(GMAIL_TOKEN_STORAGE_KEY, JSON.stringify(token));
 }
 
 export function clearGmailToken(): void {
+  sessionStorage.removeItem(GMAIL_TOKEN_STORAGE_KEY);
   localStorage.removeItem(GMAIL_TOKEN_STORAGE_KEY);
 }
 
@@ -192,14 +195,14 @@ export function generateTransactionHash(
   description: string,
   details: string
 ): string {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = format(date, 'yyyy-MM-dd');
   const normalizedDescription = description.toLowerCase().trim();
   const normalizedDetails = details.toLowerCase().trim();
   return `${dateStr}|${amount}|${normalizedDescription}|${normalizedDetails}`;
 }
 
 export function buildDateAmountKey(date: Date, amount: number): string {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = format(date, 'yyyy-MM-dd');
   return `${dateStr}|${amount.toFixed(2)}`;
 }
 
@@ -584,18 +587,24 @@ async function gmailGet<T>(
     query.set(key, String(value));
   }
 
-  const response = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/${path}?${query.toString()}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`
+  const url = `https://gmail.googleapis.com/gmail/v1/users/me/${path}?${query.toString()}`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (response.ok) return response.json() as Promise<T>;
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Gmail authorization expired or was revoked. Reconnect the account.');
     }
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Gmail API error (${response.status}): ${text}`);
+    const retryable = response.status === 429 || response.status >= 500;
+    if (!retryable || attempt === 2) {
+      throw new Error(`Gmail API request failed (${response.status} ${response.statusText})`);
+    }
+    const retryAfter = Number(response.headers?.get?.('Retry-After') ?? 0);
+    const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? Math.min(retryAfter * 1_000, 5_000)
+      : 100 * 2 ** attempt;
+    await new Promise(resolve => window.setTimeout(resolve, delayMs));
   }
-
-  return response.json() as Promise<T>;
+  throw new Error('Gmail API request failed after retries');
 }
 
 export async function loadGoogleIdentityScript(): Promise<void> {
@@ -674,14 +683,29 @@ export async function syncCardTransactionsFromGmail(options: {
     senderEmail: options.senderEmail,
     searchQuery: options.searchQuery ?? ''
   });
-  const maxResults = options.maxResults ?? 25;
+  const maxResults = Math.min(500, Math.max(1, Math.trunc(options.maxResults ?? 25)));
 
-  const listResponse = await gmailGet<GmailMessageListResponse>(options.accessToken, 'messages', {
-    q: query,
-    maxResults
-  });
-
-  const messageRefs = listResponse.messages ?? [];
+  const messageRefs: GmailMessageRef[] = [];
+  const seenMessageIds = new Set<string>();
+  const seenPageTokens = new Set<string>();
+  let pageToken: string | undefined;
+  do {
+    const listResponse = await gmailGet<GmailMessageListResponse>(options.accessToken, 'messages', {
+      q: query,
+      maxResults: maxResults - messageRefs.length,
+      pageToken
+    });
+    for (const message of listResponse.messages ?? []) {
+      if (seenMessageIds.has(message.id)) continue;
+      seenMessageIds.add(message.id);
+      messageRefs.push(message);
+      if (messageRefs.length >= maxResults) break;
+    }
+    const nextPageToken = listResponse.nextPageToken;
+    if (nextPageToken && seenPageTokens.has(nextPageToken)) break;
+    if (nextPageToken) seenPageTokens.add(nextPageToken);
+    pageToken = nextPageToken;
+  } while (pageToken && messageRefs.length < maxResults);
   if (!messageRefs.length) {
     return {
       success: true,

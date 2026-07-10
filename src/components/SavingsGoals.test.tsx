@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SavingsGoals } from './SavingsGoals';
-import { getSavingsGoals } from '../db/database';
+import { addSavingsGoal, addToSavingsGoal, deleteSavingsGoal, getSavingsGoals, updateSavingsGoal, withdrawFromSavingsGoal } from '../db/database';
 
 // Mock dependencies
 vi.mock('../db/database', () => ({
@@ -51,5 +51,37 @@ describe('SavingsGoals Component', () => {
 
         expect(screen.getByRole('heading', { name: /NEW GOAL/i })).toBeInTheDocument();
         expect(screen.getByPlaceholderText('GOAL NAME')).toBeInTheDocument();
+    });
+
+    it('creates, edits, funds, withdraws, and deletes goals', async () => {
+        render(<SavingsGoals />);
+        await screen.findByText('SAVINGS GOALS');
+
+        fireEvent.click(screen.getByText(/NEW GOAL/i));
+        fireEvent.change(screen.getByPlaceholderText('GOAL NAME'), { target: { value: 'Emergency fund' } });
+        const amounts = screen.getAllByPlaceholderText('0.00');
+        fireEvent.change(amounts[0], { target: { value: '1200' } });
+        fireEvent.change(amounts[1], { target: { value: '100' } });
+        fireEvent.click(screen.getByText('CREATE GOAL'));
+        await waitFor(() => expect(addSavingsGoal).toHaveBeenCalled());
+
+        fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+        fireEvent.change(screen.getByPlaceholderText('GOAL NAME'), { target: { value: 'Updated goal' } });
+        fireEvent.click(screen.getByText('Save changes'));
+        await waitFor(() => expect(updateSavingsGoal).toHaveBeenCalled());
+
+        fireEvent.click(screen.getByRole('button', { name: 'MANAGE_FUNDS' }));
+        fireEvent.change(screen.getByPlaceholderText('Amount...'), { target: { value: '25' } });
+        fireEvent.click(screen.getByText('ADD'));
+        await waitFor(() => expect(addToSavingsGoal).toHaveBeenCalledWith(1, 25));
+
+        fireEvent.click(screen.getByRole('button', { name: 'MANAGE_FUNDS' }));
+        fireEvent.change(screen.getByPlaceholderText('Amount...'), { target: { value: '10' } });
+        fireEvent.click(screen.getByText('WITHDRAW'));
+        await waitFor(() => expect(withdrawFromSavingsGoal).toHaveBeenCalledWith(1, 10));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Delete goal' }));
+        await waitFor(() => expect(deleteSavingsGoal).toHaveBeenCalledWith(1));
     });
 });

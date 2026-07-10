@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Reports } from './Reports';
 import { getTransactions, getCategories } from '../db/database';
@@ -53,5 +53,16 @@ describe('Reports Component', () => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
             expect(screen.getByText('Current month')).toBeInTheDocument();
         });
+    });
+
+    it('shows a retryable error when report data cannot be read', async () => {
+        const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.mocked(getTransactions).mockRejectedValueOnce(new Error('database unavailable'));
+        render(<Reports />);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Report data could not be loaded');
+        fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+        expect(await screen.findByText('MONTHLY REPORT')).toBeInTheDocument();
+        consoleError.mockRestore();
     });
 });

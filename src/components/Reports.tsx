@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import { generateReportData } from '../services/analytics';
 import { getCategories } from '../db/database';
 import type { ReportData, Category } from '../types';
@@ -17,9 +17,13 @@ export const Reports = memo(function Reports() {
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState<'month' | '3months' | 'year'>('month');
     const [generating, setGenerating] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const requestSequence = useRef(0);
 
     const loadReport = useCallback(async () => {
+        const requestId = ++requestSequence.current;
         setLoading(true);
+        setLoadError(null);
         try {
             const now = new Date();
             let startDate: Date;
@@ -41,12 +45,16 @@ export const Reports = memo(function Reports() {
                 getCategories()
             ]);
 
+            if (requestId !== requestSequence.current) return;
+
             setReportData(report);
             setCategories(cats);
         } catch (error) {
+            if (requestId !== requestSequence.current) return;
             console.error('Error loading report:', error);
+            setLoadError('Report data could not be loaded.');
         } finally {
-            setLoading(false);
+            if (requestId === requestSequence.current) setLoading(false);
         }
     }, [dateRange]);
 
@@ -219,12 +227,16 @@ export const Reports = memo(function Reports() {
         );
     }
 
+    if (loadError) {
+        return <div role="alert" className="card text-danger">{loadError} <button className="btn btn-secondary" onClick={loadReport}>Retry</button></div>;
+    }
+
     if (!reportData) {
         return (
                 <div className="flex flex-col items-center justify-center p-xl border border-dashed border-border text-center bg-paper structural-border">
                     <TrendingUp size={32} className="text-muted mb-md text-muted" />
                     <h3 className="text-sm font-mono uppercase text-muted mb-xs">NO_ANALYTICS_DATA</h3>
-                    <p className="text-muted text-sm max-w-xs mb-md">
+                    <p className="text-muted text-sm max-w-[20rem] mb-md">
                         Add your first transactions to generate reports.
                     </p>
                 </div>
@@ -243,7 +255,7 @@ export const Reports = memo(function Reports() {
                 </div>
                 <div className="flex items-center gap-sm">
                     <select
-                        className="bg-paper border border-border p-xs font-mono text-xs uppercase focus:outline-none focus:border-ink appearance-none pl-2 pr-8"
+                        className="bg-paper text-ink border border-border p-xs font-mono text-xs uppercase focus:outline-none focus:border-ink appearance-none pl-2 pr-8"
                         style={{ backgroundImage: 'none' }}
                         value={dateRange}
                         onChange={handleDateRangeChange}
@@ -303,6 +315,7 @@ export const Reports = memo(function Reports() {
                     <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">EXPENSES BY CATEGORY</h3>
                     <div className="h-[280px] w-full">
                         <Doughnut
+                            aria-label="Report expenses by category"
                             data={doughnutData}
                             options={doughnutOptions as never}
                         />
@@ -312,7 +325,7 @@ export const Reports = memo(function Reports() {
                 <div className="bg-paper structural-border p-md">
                     <h3 className="text-xs font-mono uppercase text-muted mb-md tracking-wider">MONTHLY TREND</h3>
                     <div className="h-[280px] w-full">
-                        <Bar data={barData} options={barOptions as never} />
+                        <Bar aria-label="Report monthly trend" data={barData} options={barOptions as never} />
                     </div>
                 </div>
             </div>
